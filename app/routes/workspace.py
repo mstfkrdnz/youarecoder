@@ -73,7 +73,8 @@ def create():
 
         return redirect(url_for('main.dashboard'))
 
-    return render_template('workspace/create.html', form=form)
+    # GET request - return modal for HTMX
+    return render_template('workspace/create_modal.html', form=form)
 
 
 @bp.route('/<int:workspace_id>/delete', methods=['POST'])
