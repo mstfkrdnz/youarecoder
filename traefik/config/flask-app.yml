@@ -11,8 +11,7 @@ http:
       service: flask-app
       middlewares:
         - secureHeaders
-      tls:
-        certResolver: letsencrypt
+      tls: {}
 
     # Root domain router
     flask-app-root:
@@ -22,8 +21,7 @@ http:
       service: flask-app
       middlewares:
         - secureHeaders
-      tls:
-        certResolver: letsencrypt
+      tls: {}
 
   services:
     # Flask application service
