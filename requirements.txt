@@ -15,6 +15,7 @@ Flask-Bcrypt==1.0.1
 # Forms & Security
 Flask-WTF==1.2.1
 WTForms==3.1.2
+email-validator==2.2.0
 
 # Rate limiting
 Flask-Limiter==3.8.0
