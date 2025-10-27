@@ -38,13 +38,13 @@ class TraefikManager:
             with open(self.workspaces_config_file, 'r') as f:
                 config = yaml.safe_load(f) or {}
                 # Ensure structure exists
-                if 'http' not in config:
+                if 'http' not in config or config['http'] is None:
                     config['http'] = {}
-                if 'routers' not in config['http']:
+                if 'routers' not in config['http'] or config['http']['routers'] is None:
                     config['http']['routers'] = {}
-                if 'services' not in config['http']:
+                if 'services' not in config['http'] or config['http']['services'] is None:
                     config['http']['services'] = {}
-                if 'middlewares' not in config['http']:
+                if 'middlewares' not in config['http'] or config['http']['middlewares'] is None:
                     config['http']['middlewares'] = self._get_default_middlewares()
                 return config
         except Exception as e:
