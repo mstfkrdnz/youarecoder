@@ -1,0 +1,88 @@
+{% extends "email/base.html" %}
+
+{% block content %}
+<h2>Security Alert 🔒</h2>
+
+<p>Hi {{ user.full_name }},</p>
+
+<p>We detected unusual activity on your YouAreCoder account and wanted to notify you immediately.</p>
+
+<div class="info-box" style="border-left-color: #DC2626; background: #FEF2F2;">
+    <p style="margin: 0 0 12px 0; font-weight: 600; color: #991B1B;">
+        ⚠️ Security Event Detected:
+    </p>
+    <ul style="margin: 0; color: #991B1B;">
+        <li><strong>Alert Type:</strong> {{ alert_type|title }}</li>
+        <li><strong>Time:</strong> {{ details.timestamp }}</li>
+        {% if details.ip_address %}
+        <li><strong>IP Address:</strong> {{ details.ip_address }}</li>
+        {% endif %}
+        {% if details.location %}
+        <li><strong>Location:</strong> {{ details.location }}</li>
+        {% endif %}
+        {% if details.user_agent %}
+        <li><strong>Device:</strong> {{ details.user_agent }}</li>
+        {% endif %}
+    </ul>
+</div>
+
+{% if alert_type == 'failed_login' %}
+<h3 style="color: #1F2937; font-size: 18px;">What Happened?</h3>
+<p>Multiple failed login attempts were detected on your account. This could indicate:</p>
+<ul style="color: #4B5563; line-height: 1.8;">
+    <li>Someone attempting to access your account without authorization</li>
+    <li>You forgot your password and made multiple attempts</li>
+    <li>An automated attack targeting your account</li>
+</ul>
+{% elif alert_type == 'unusual_location' %}
+<h3 style="color: #1F2937; font-size: 18px;">What Happened?</h3>
+<p>A successful login was detected from an unusual location that differs from your typical login patterns.</p>
+{% elif alert_type == 'password_changed' %}
+<h3 style="color: #1F2937; font-size: 18px;">What Happened?</h3>
+<p>Your account password was successfully changed. If you made this change, you can safely ignore this email.</p>
+{% endif %}
+
+<div class="divider"></div>
+
+<h3 style="color: #1F2937; font-size: 18px;">Recommended Actions</h3>
+
+{% if alert_type == 'failed_login' %}
+<ul style="color: #4B5563; line-height: 1.8;">
+    <li><strong>If this was you:</strong> Try resetting your password if you can't remember it</li>
+    <li><strong>If this wasn't you:</strong> Immediately change your password and review your account activity</li>
+    <li>Enable two-factor authentication for additional security</li>
+    <li>Review authorized devices and sessions</li>
+</ul>
+{% elif alert_type == 'unusual_location' %}
+<ul style="color: #4B5563; line-height: 1.8;">
+    <li><strong>If this was you:</strong> No action needed</li>
+    <li><strong>If this wasn't you:</strong> Change your password immediately and contact support</li>
+    <li>Review recent account activity</li>
+    <li>Enable two-factor authentication</li>
+</ul>
+{% elif alert_type == 'password_changed' %}
+<ul style="color: #4B5563; line-height: 1.8;">
+    <li><strong>If you made this change:</strong> No action needed</li>
+    <li><strong>If you didn't make this change:</strong> Contact support immediately</li>
+    <li>Someone may have unauthorized access to your account</li>
+</ul>
+{% endif %}
+
+<p style="text-align: center; margin: 30px 0;">
+    <a href="https://youarecoder.com/auth/login" class="button">Login to Your Account</a>
+</p>
+
+<div class="info-box">
+    <p style="margin: 0; color: #1F2937;">
+        <strong>Need Help?</strong>
+    </p>
+    <p style="margin: 8px 0 0 0; color: #4B5563;">
+        If you believe your account has been compromised or need assistance, please contact our security team immediately at <a href="mailto:security@youarecoder.com">security@youarecoder.com</a>
+    </p>
+</div>
+
+<p style="margin-top: 30px; color: #6B7280;">
+    Best regards,<br>
+    <strong>The YouAreCoder Security Team</strong>
+</p>
+{% endblock %}

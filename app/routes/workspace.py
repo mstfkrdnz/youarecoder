@@ -7,6 +7,7 @@ from app import db
 from app.models import Workspace
 from app.forms import WorkspaceForm
 from app.services.workspace_provisioner import WorkspaceProvisioner, WorkspaceProvisionerError
+from app.services.email_service import send_workspace_ready_email
 from app.utils.decorators import require_workspace_ownership
 
 bp = Blueprint('workspace', __name__, url_prefix='/workspace')
@@ -62,7 +63,14 @@ def create():
             result = provisioner.provision_workspace(workspace)
 
             if result['success']:
-                flash(f'Workspace "{form.name.data}" created and provisioned successfully!', 'success')
+                # Send workspace ready email
+                try:
+                    send_workspace_ready_email(current_user, workspace)
+                    current_app.logger.info(f"Workspace ready email sent for {workspace.id}")
+                except Exception as e:
+                    current_app.logger.error(f"Failed to send workspace email to {current_user.email}: {str(e)}")
+
+                flash(f'Workspace "{form.name.data}" created and provisioned successfully! Check your email.', 'success')
                 current_app.logger.info(f"Workspace created: {workspace.id} on port {port}")
             else:
                 flash(f'Workspace created but provisioning incomplete', 'warning')

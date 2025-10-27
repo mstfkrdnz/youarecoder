@@ -1,0 +1,41 @@
+Your Workspace is Ready!
+========================
+
+Hi {{ user.full_name }},
+
+Great news! Your workspace "{{ workspace.name }}" has been successfully provisioned and is ready to use.
+
+WORKSPACE DETAILS:
+- Name: {{ workspace.name }}
+- URL: {{ workspace.get_url() }}
+- Subdomain: {{ workspace.subdomain }}.youarecoder.com
+- Port: {{ workspace.port }}
+- Storage: {{ workspace.disk_quota_gb }} GB
+- Status: ● Active
+
+OPEN YOUR WORKSPACE:
+{{ workspace.get_url() }}
+
+GETTING STARTED
+
+Your workspace comes with a full VS Code environment running in your browser. Here's what you can do:
+
+* Code Immediately: Start coding right away with VS Code
+* Install Extensions: Add your favorite VS Code extensions
+* Run Terminal Commands: Full terminal access with shell support
+* Collaborate: Share your workspace URL with team members
+* Persistent Storage: Your work is automatically saved
+
+💡 Pro Tip: Bookmark your workspace URL for quick access!
+
+If you encounter any issues or need help getting started, our support team is here to assist you.
+
+Happy coding! 💻
+
+Best regards,
+The YouAreCoder Team
+
+---
+Need help? Contact us at support@youarecoder.com
+© 2025 YouAreCoder. All rights reserved.
+This email was sent from a notification-only address. Please do not reply to this email.

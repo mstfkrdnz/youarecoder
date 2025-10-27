@@ -1,0 +1,45 @@
+{% extends "email/base.html" %}
+
+{% block content %}
+<h2>Welcome to YouAreCoder! 🎉</h2>
+
+<p>Hi {{ user.full_name }},</p>
+
+<p>Your account has been successfully created! We're excited to have you on board and help you build amazing projects in your own cloud development environment.</p>
+
+<div class="info-box">
+    <p style="margin: 0 0 12px 0; font-weight: 600; color: #1F2937;">Your Account Details:</p>
+    <ul style="margin: 0;">
+        <li><strong>Email:</strong> {{ user.email }}</li>
+        <li><strong>Company:</strong> {{ user.company.name }}</li>
+        <li><strong>Subdomain:</strong> {{ user.company.subdomain }}.youarecoder.com</li>
+        <li><strong>Plan:</strong> {{ user.company.plan|title }}</li>
+    </ul>
+</div>
+
+<p style="text-align: center; margin: 30px 0;">
+    <a href="https://youarecoder.com/auth/login" class="button">Login to Dashboard</a>
+</p>
+
+<div class="divider"></div>
+
+<h3 style="color: #1F2937; font-size: 18px;">What's Next?</h3>
+
+<p>Here's what you can do with YouAreCoder:</p>
+
+<ul style="color: #4B5563; line-height: 1.8;">
+    <li><strong>Create Workspaces:</strong> Set up isolated development environments</li>
+    <li><strong>Code Anywhere:</strong> Access VS Code in your browser from any device</li>
+    <li><strong>Collaborate:</strong> Share workspaces with your team</li>
+    <li><strong>Deploy Fast:</strong> Your code is always ready and accessible</li>
+</ul>
+
+<p>If you have any questions or need assistance getting started, our support team is here to help!</p>
+
+<p style="margin-top: 30px;">Happy coding! 🚀</p>
+
+<p style="margin-top: 20px; color: #6B7280;">
+    Best regards,<br>
+    <strong>The YouAreCoder Team</strong>
+</p>
+{% endblock %}

@@ -44,6 +44,17 @@ class Config:
     # File paths
     WORKSPACE_BASE_DIR = '/home'
 
+    # Email configuration (Mailjet SMTP)
+    MAIL_SERVER = os.environ.get('MAIL_SERVER', 'in-v3.mailjet.com')
+    MAIL_PORT = int(os.environ.get('MAIL_PORT', 587))
+    MAIL_USE_TLS = True
+    MAIL_USE_SSL = False
+    MAIL_USERNAME = os.environ.get('MAIL_USERNAME')  # Mailjet API Key
+    MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')  # Mailjet Secret Key
+    MAIL_DEFAULT_SENDER = os.environ.get('MAIL_DEFAULT_SENDER', 'noreply@youarecoder.com')
+    MAIL_MAX_EMAILS = None
+    MAIL_ASCII_ATTACHMENTS = False
+
 
 class DevelopmentConfig(Config):
     """Development environment configuration."""
@@ -52,12 +63,20 @@ class DevelopmentConfig(Config):
     SQLALCHEMY_ECHO = True
     SESSION_COOKIE_SECURE = False  # Allow HTTP in development
 
+    # Email settings for development
+    MAIL_SUPPRESS_SEND = True  # Don't send real emails, print to console
+    MAIL_DEBUG = True
+
 
 class ProductionConfig(Config):
     """Production environment configuration."""
     DEBUG = False
     TESTING = False
     SESSION_COOKIE_SECURE = True
+
+    # Email settings for production
+    MAIL_SUPPRESS_SEND = False  # Send real emails via Mailjet
+    MAIL_DEBUG = False
 
     # Override with production secrets
     def __init__(self):
@@ -75,6 +94,10 @@ class TestConfig(Config):
     WTF_CSRF_ENABLED = False
     RATELIMIT_ENABLED = False
     SESSION_COOKIE_SECURE = False
+
+    # Email settings for testing
+    MAIL_SUPPRESS_SEND = True  # Don't send emails during tests
+    MAIL_DEBUG = False
 
 
 # Configuration dictionary

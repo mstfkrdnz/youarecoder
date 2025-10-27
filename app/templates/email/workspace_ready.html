@@ -1,0 +1,53 @@
+{% extends "email/base.html" %}
+
+{% block content %}
+<h2>Your Workspace is Ready! 🚀</h2>
+
+<p>Hi {{ user.full_name }},</p>
+
+<p>Great news! Your workspace "<strong>{{ workspace.name }}</strong>" has been successfully provisioned and is ready to use.</p>
+
+<div class="info-box">
+    <p style="margin: 0 0 12px 0; font-weight: 600; color: #1F2937;">Workspace Details:</p>
+    <ul style="margin: 0;">
+        <li><strong>Name:</strong> {{ workspace.name }}</li>
+        <li><strong>URL:</strong> <a href="{{ workspace.get_url() }}">{{ workspace.subdomain }}.youarecoder.com</a></li>
+        <li><strong>Port:</strong> {{ workspace.port }}</li>
+        <li><strong>Storage:</strong> {{ workspace.disk_quota_gb }} GB</li>
+        <li><strong>Status:</strong> <span style="color: #059669;">● Active</span></li>
+    </ul>
+</div>
+
+<p style="text-align: center; margin: 30px 0;">
+    <a href="{{ workspace.get_url() }}" class="button">Open Workspace</a>
+</p>
+
+<div class="divider"></div>
+
+<h3 style="color: #1F2937; font-size: 18px;">Getting Started</h3>
+
+<p>Your workspace comes with a full VS Code environment running in your browser. Here's what you can do:</p>
+
+<ul style="color: #4B5563; line-height: 1.8;">
+    <li><strong>Code Immediately:</strong> Start coding right away with VS Code</li>
+    <li><strong>Install Extensions:</strong> Add your favorite VS Code extensions</li>
+    <li><strong>Run Terminal Commands:</strong> Full terminal access with shell support</li>
+    <li><strong>Collaborate:</strong> Share your workspace URL with team members</li>
+    <li><strong>Persistent Storage:</strong> Your work is automatically saved</li>
+</ul>
+
+<div class="info-box" style="border-left-color: #059669; background: #ECFDF5;">
+    <p style="margin: 0; color: #065F46;">
+        <strong>💡 Pro Tip:</strong> Bookmark your workspace URL for quick access!
+    </p>
+</div>
+
+<p>If you encounter any issues or need help getting started, our support team is here to assist you.</p>
+
+<p style="margin-top: 30px;">Happy coding! 💻</p>
+
+<p style="margin-top: 20px; color: #6B7280;">
+    Best regards,<br>
+    <strong>The YouAreCoder Team</strong>
+</p>
+{% endblock %}

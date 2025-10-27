@@ -1,0 +1,36 @@
+Welcome to YouAreCoder!
+========================
+
+Hi {{ user.full_name }},
+
+Your account has been successfully created! We're excited to have you on board and help you build amazing projects in your own cloud development environment.
+
+YOUR ACCOUNT DETAILS:
+- Email: {{ user.email }}
+- Company: {{ user.company.name }}
+- Subdomain: {{ user.company.subdomain }}.youarecoder.com
+- Plan: {{ user.company.plan|title }}
+
+Login to your dashboard:
+https://youarecoder.com/auth/login
+
+WHAT'S NEXT?
+
+Here's what you can do with YouAreCoder:
+
+* Create Workspaces: Set up isolated development environments
+* Code Anywhere: Access VS Code in your browser from any device
+* Collaborate: Share workspaces with your team
+* Deploy Fast: Your code is always ready and accessible
+
+If you have any questions or need assistance getting started, our support team is here to help!
+
+Happy coding! 🚀
+
+Best regards,
+The YouAreCoder Team
+
+---
+Need help? Contact us at support@youarecoder.com
+© 2025 YouAreCoder. All rights reserved.
+This email was sent from a notification-only address. Please do not reply to this email.

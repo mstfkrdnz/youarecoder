@@ -2,11 +2,12 @@
 Authentication routes (login, logout, register).
 """
 from datetime import datetime, timedelta
-from flask import Blueprint, render_template, redirect, url_for, flash, request
+from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app
 from flask_login import login_user, logout_user, login_required, current_user
 from app import db, limiter
 from app.models import User, Company, LoginAttempt
 from app.forms import LoginForm, RegistrationForm
+from app.services.email_service import send_registration_email
 
 bp = Blueprint('auth', __name__, url_prefix='/auth')
 
@@ -138,7 +139,14 @@ def register():
         db.session.add(user)
         db.session.commit()
 
-        flash('Registration successful! Please log in.', 'success')
+        # Send welcome email
+        try:
+            send_registration_email(user)
+            current_app.logger.info(f"Welcome email sent to {user.email}")
+        except Exception as e:
+            current_app.logger.error(f"Failed to send welcome email to {user.email}: {str(e)}")
+
+        flash('Registration successful! Check your email and then log in.', 'success')
         return redirect(url_for('auth.login'))
 
     return render_template('auth/register.html', form=form)

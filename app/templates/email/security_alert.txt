@@ -1,0 +1,67 @@
+Security Alert
+===============
+
+Hi {{ user.full_name }},
+
+We detected unusual activity on your YouAreCoder account and wanted to notify you immediately.
+
+SECURITY EVENT DETECTED:
+⚠️ Alert Type: {{ alert_type|title }}
+⚠️ Time: {{ details.timestamp }}
+{% if details.ip_address %}⚠️ IP Address: {{ details.ip_address }}{% endif %}
+{% if details.location %}⚠️ Location: {{ details.location }}{% endif %}
+{% if details.user_agent %}⚠️ Device: {{ details.user_agent }}{% endif %}
+
+{% if alert_type == 'failed_login' %}
+WHAT HAPPENED?
+
+Multiple failed login attempts were detected on your account. This could indicate:
+* Someone attempting to access your account without authorization
+* You forgot your password and made multiple attempts
+* An automated attack targeting your account
+
+RECOMMENDED ACTIONS:
+
+* If this was you: Try resetting your password if you can't remember it
+* If this wasn't you: Immediately change your password and review your account activity
+* Enable two-factor authentication for additional security
+* Review authorized devices and sessions
+
+{% elif alert_type == 'unusual_location' %}
+WHAT HAPPENED?
+
+A successful login was detected from an unusual location that differs from your typical login patterns.
+
+RECOMMENDED ACTIONS:
+
+* If this was you: No action needed
+* If this wasn't you: Change your password immediately and contact support
+* Review recent account activity
+* Enable two-factor authentication
+
+{% elif alert_type == 'password_changed' %}
+WHAT HAPPENED?
+
+Your account password was successfully changed. If you made this change, you can safely ignore this email.
+
+RECOMMENDED ACTIONS:
+
+* If you made this change: No action needed
+* If you didn't make this change: Contact support immediately
+* Someone may have unauthorized access to your account
+{% endif %}
+
+LOGIN TO YOUR ACCOUNT:
+https://youarecoder.com/auth/login
+
+NEED HELP?
+
+If you believe your account has been compromised or need assistance, please contact our security team immediately at security@youarecoder.com
+
+Best regards,
+The YouAreCoder Security Team
+
+---
+Need help? Contact us at support@youarecoder.com
+© 2025 YouAreCoder. All rights reserved.
+This email was sent from a notification-only address. Please do not reply to this email.
