@@ -119,13 +119,14 @@ class TraefikManager:
             # Sanitize router/service name (replace dots with dashes)
             router_name = f"workspace-{workspace_subdomain.replace('.', '-')}"
 
-            # Add router
+            # Add router with high priority to override Flask app wildcard
             config['http']['routers'][router_name] = {
                 'rule': f"Host(`{workspace_subdomain}.youarecoder.com`)",
                 'entryPoints': ['websecure'],
                 'service': router_name,
                 'middlewares': ['secureHeaders', 'rateLimitWorkspace'],
-                'tls': {}  # Use default certificate from tls.yml
+                'tls': {},  # Use default certificate from tls.yml
+                'priority': 100  # Higher priority than Flask app wildcard (default is 0)
             }
 
             # Add service
