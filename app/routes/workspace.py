@@ -44,7 +44,7 @@ def create():
             # Create workspace record
             workspace = Workspace(
                 name=form.name.data,
-                subdomain=f"{form.name.data}.{current_user.company.subdomain}",
+                subdomain=f"{current_user.company.subdomain}-{form.name.data}",
                 linux_username=f"{current_user.company.subdomain}_{form.name.data}",
                 port=port,
                 code_server_password=code_server_password,
