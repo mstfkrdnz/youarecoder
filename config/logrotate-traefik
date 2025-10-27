@@ -1,0 +1,32 @@
+# Log rotation configuration for Traefik Reverse Proxy
+
+# Access logs (high volume, separate handling)
+/var/log/traefik/access.log {
+    daily
+    missingok
+    rotate 14
+    compress
+    delaycompress
+    notifempty
+    create 0640 root root
+    size 100M
+    sharedscripts
+    postrotate
+        systemctl reload traefik.service > /dev/null 2>&1 || true
+    endscript
+}
+
+# Other Traefik logs (traefik.log, etc.)
+/var/log/traefik/traefik.log {
+    daily
+    missingok
+    rotate 30
+    compress
+    delaycompress
+    notifempty
+    create 0640 root root
+    sharedscripts
+    postrotate
+        systemctl reload traefik.service > /dev/null 2>&1 || true
+    endscript
+}

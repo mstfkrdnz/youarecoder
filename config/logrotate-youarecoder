@@ -1,0 +1,27 @@
+# Log rotation configuration for YouAreCoder Flask Application
+
+# Application logs (access and error)
+/var/log/youarecoder/access.log /var/log/youarecoder/error.log {
+    daily
+    missingok
+    rotate 30
+    compress
+    delaycompress
+    notifempty
+    create 0640 root root
+    sharedscripts
+    postrotate
+        systemctl reload youarecoder.service > /dev/null 2>&1 || true
+    endscript
+}
+
+# Backup and restore logs (lower frequency)
+/var/log/youarecoder/backup.log /var/log/youarecoder/restore.log {
+    weekly
+    missingok
+    rotate 12
+    compress
+    delaycompress
+    notifempty
+    create 0640 root root
+}
