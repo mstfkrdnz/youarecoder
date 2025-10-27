@@ -24,12 +24,13 @@ limiter = Limiter(
 talisman = Talisman()
 
 
-def create_app(config_name='default'):
+def create_app(config_name=None):
     """
     Flask application factory.
 
     Args:
         config_name: Configuration name ('development', 'production', 'test')
+                    If None, uses FLASK_ENV environment variable
 
     Returns:
         Flask application instance
@@ -38,6 +39,12 @@ def create_app(config_name='default'):
 
     # Load configuration
     from config import config
+    import os
+
+    # Use FLASK_ENV if config_name not specified
+    if config_name is None:
+        config_name = os.environ.get('FLASK_ENV', 'development')
+
     app.config.from_object(config[config_name])
 
     # Initialize extensions with app
@@ -73,7 +80,8 @@ def create_app(config_name='default'):
                 'connect-src': ["'self'"],
                 'frame-ancestors': ["'none'"],  # Prevent clickjacking
             },
-            content_security_policy_nonce_in=['script-src', 'style-src'],
+            # Disable CSP nonce for Tailwind CDN compatibility
+            content_security_policy_nonce_in=[],
             feature_policy={
                 'geolocation': "'none'",
                 'microphone': "'none'",
@@ -89,11 +97,15 @@ def create_app(config_name='default'):
     login_manager.session_protection = 'strong'
 
     # Register blueprints
-    from app.routes import auth, main, workspace, api
+    from app.routes import auth, main, workspace, api, billing
     app.register_blueprint(auth.bp)
     app.register_blueprint(main.bp)
     app.register_blueprint(workspace.bp)
     app.register_blueprint(api.bp)
+    app.register_blueprint(billing.bp)
+
+    # Exempt billing callback from CSRF protection
+    billing.init_billing_csrf_exempt(csrf)
 
     # User loader for Flask-Login
     from app.models import User

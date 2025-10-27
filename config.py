@@ -55,6 +55,71 @@ class Config:
     MAIL_MAX_EMAILS = None
     MAIL_ASCII_ATTACHMENTS = False
 
+    # PayTR Payment Gateway Configuration
+    PAYTR_MERCHANT_ID = os.environ.get('PAYTR_MERCHANT_ID', '')
+    PAYTR_MERCHANT_KEY = os.environ.get('PAYTR_MERCHANT_KEY', '')
+    PAYTR_MERCHANT_SALT = os.environ.get('PAYTR_MERCHANT_SALT', '')
+    PAYTR_TEST_MODE = os.environ.get('PAYTR_TEST_MODE', '1')  # '1' for test, '0' for production
+    PAYTR_TIMEOUT_LIMIT = os.environ.get('PAYTR_TIMEOUT_LIMIT', '30')  # minutes
+
+    # Base URL for payment callbacks
+    BASE_URL = os.environ.get('BASE_URL', 'http://localhost:5000')
+
+    # Trial Configuration
+    TRIAL_DAYS = 14
+
+    # Subscription Plans
+    PLANS = {
+        'starter': {
+            'name': 'Starter',
+            'price_usd': 29,      # $29/month
+            'price_try': 870,     # ₺870/month (approx 30:1 ratio)
+            'workspaces': 5,
+            'storage_gb': 10,
+            'features': [
+                '5 Development Workspaces',
+                '10GB Storage per Workspace',
+                'Code-Server IDE',
+                'SSL Certificates',
+                'Email Support'
+            ],
+            'popular': False
+        },
+        'team': {
+            'name': 'Team',
+            'price_usd': 99,      # $99/month
+            'price_try': 2970,    # ₺2,970/month
+            'workspaces': 20,
+            'storage_gb': 50,
+            'features': [
+                '20 Development Workspaces',
+                '50GB Storage per Workspace',
+                'Code-Server IDE',
+                'SSL Certificates',
+                'Priority Support',
+                'Team Collaboration Tools'
+            ],
+            'popular': True
+        },
+        'enterprise': {
+            'name': 'Enterprise',
+            'price_usd': 299,     # $299/month
+            'price_try': 8970,    # ₺8,970/month
+            'workspaces': -1,     # Unlimited
+            'storage_gb': 250,
+            'features': [
+                'Unlimited Development Workspaces',
+                '250GB Storage per Workspace',
+                'Code-Server IDE',
+                'SSL Certificates',
+                'Dedicated Support',
+                'Custom Integrations',
+                'SLA Guarantee'
+            ],
+            'popular': False
+        }
+    }
+
 
 class DevelopmentConfig(Config):
     """Development environment configuration."""

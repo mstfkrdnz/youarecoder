@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} - YouAreCoder</title>
+</head>
+<body>
+    <div class="container">
+        <h1>Payment Successful!</h1>
+        <p>Your payment has been processed successfully.</p>
+        {% if merchant_oid %}
+        <p>Order ID: {{ merchant_oid }}</p>
+        {% endif %}
+        <p>Your subscription is now active. You can start creating workspaces!</p>
+        <a href="{{ url_for('main.index') }}">Go to Dashboard</a>
+    </div>
+</body>
+</html>

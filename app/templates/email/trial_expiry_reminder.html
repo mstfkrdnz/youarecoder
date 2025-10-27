@@ -1,0 +1,77 @@
+{% extends "email/base.html" %}
+
+{% block content %}
+<h2>Your Trial is Ending Soon ⏰</h2>
+
+<p>Hi {{ user.full_name }},</p>
+
+<p>Your {{ subscription.plan|title }} plan trial period for {{ user.company.name }} is ending soon. We hope you're enjoying your cloud development environment!</p>
+
+<div class="info-box" style="background: #FEF3C7; border-left-color: #F59E0B;">
+    <p style="margin: 0 0 8px 0; font-weight: 600; color: #92400E;">⏳ Trial Expires in {{ days_remaining }} Day{% if days_remaining != 1 %}s{% endif %}</p>
+    <p style="margin: 0; color: #B45309; font-size: 14px;">
+        Your trial ends on {{ subscription.trial_ends_at.strftime('%B %d, %Y at %H:%M') }} UTC.
+        After this date, your workspaces will be paused until you subscribe.
+    </p>
+</div>
+
+<div class="info-box">
+    <p style="margin: 0 0 12px 0; font-weight: 600; color: #1F2937;">Your Current Plan:</p>
+    <ul style="margin: 0;">
+        <li><strong>Plan:</strong> {{ subscription.plan|title }}</li>
+        <li><strong>Trial Started:</strong> {{ subscription.trial_starts_at.strftime('%B %d, %Y') }}</li>
+        <li><strong>Trial Ends:</strong> {{ subscription.trial_ends_at.strftime('%B %d, %Y') }}</li>
+    </ul>
+</div>
+
+<p style="text-align: center; margin: 30px 0;">
+    <a href="https://youarecoder.com/billing/" class="button">Subscribe Now</a>
+</p>
+
+<div class="divider"></div>
+
+<h3 style="color: #1F2937; font-size: 18px;">Continue Where You Left Off</h3>
+
+<p>Subscribe now to keep your workspaces active and continue coding without interruption:</p>
+
+{% set plan_config = {
+    'starter': {'price': '$29/month', 'workspaces': 5, 'storage': '10 GB'},
+    'team': {'price': '$99/month', 'workspaces': 20, 'storage': '50 GB'},
+    'enterprise': {'price': '$299/month', 'workspaces': 'Unlimited', 'storage': '250 GB'}
+} %}
+
+{% set plan_info = plan_config.get(subscription.plan, plan_config['starter']) %}
+
+<ul style="color: #4B5563; line-height: 1.8;">
+    <li><strong>{{ subscription.plan|title }} Plan:</strong> {{ plan_info.price }}</li>
+    <li><strong>Workspaces:</strong> Up to {{ plan_info.workspaces }} development environments</li>
+    <li><strong>Storage:</strong> {{ plan_info.storage }} total disk space</li>
+    <li><strong>All Features:</strong> Full access to VS Code, collaboration, and priority support</li>
+</ul>
+
+<div class="divider"></div>
+
+<h3 style="color: #1F2937; font-size: 18px;">What Happens After Trial?</h3>
+
+<ul style="color: #4B5563; line-height: 1.8;">
+    <li><strong>Day {{ days_remaining }}:</strong> This reminder email (you are here)</li>
+    <li><strong>After Trial Ends:</strong> Your workspaces will be paused automatically</li>
+    <li><strong>Data Retention:</strong> We keep your data for 30 days</li>
+    <li><strong>Reactivation:</strong> Subscribe anytime to restore access immediately</li>
+</ul>
+
+<div class="divider"></div>
+
+<h3 style="color: #1F2937; font-size: 18px;">Not Ready to Subscribe?</h3>
+
+<p>No problem! If you're not ready to continue, your workspaces will be paused after the trial period. You can reactivate your account anytime within 30 days without losing any data.</p>
+
+<p>Have questions or need help? Contact us at <a href="mailto:support@youarecoder.com">support@youarecoder.com</a>. We're here to assist!</p>
+
+<p style="margin-top: 30px;">Thank you for trying YouAreCoder! 🚀</p>
+
+<p style="margin-top: 20px; color: #6B7280;">
+    Best regards,<br>
+    <strong>The YouAreCoder Team</strong>
+</p>
+{% endblock %}

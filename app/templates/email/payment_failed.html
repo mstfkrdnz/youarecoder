@@ -1,0 +1,56 @@
+{% extends "email/base.html" %}
+
+{% block content %}
+<h2>Payment Failed ⚠️</h2>
+
+<p>Hi {{ user.full_name }},</p>
+
+<p>We were unable to process your payment for {{ user.company.name }}. Don't worry - this happens sometimes and is usually easy to fix!</p>
+
+<div class="info-box" style="background: #FEF2F2; border-left-color: #EF4444;">
+    <p style="margin: 0 0 8px 0; font-weight: 600; color: #991B1B;">❌ Payment Unsuccessful</p>
+    <p style="margin: 0; color: #B91C1C; font-size: 14px;">
+        {% if payment.failure_reason_message %}
+            Reason: {{ payment.failure_reason_message }}
+        {% else %}
+            Your payment could not be completed. Please try again with a different payment method.
+        {% endif %}
+    </p>
+</div>
+
+<div class="info-box">
+    <p style="margin: 0 0 12px 0; font-weight: 600; color: #1F2937;">Transaction Details:</p>
+    <ul style="margin: 0;">
+        <li><strong>Amount:</strong> {{ "%.2f"|format(payment.amount / 100.0) }} {{ payment.currency }}</li>
+        <li><strong>Attempted:</strong> {{ payment.created_at.strftime('%B %d, %Y at %H:%M') }}</li>
+        <li><strong>Transaction ID:</strong> {{ payment.paytr_merchant_oid }}</li>
+    </ul>
+</div>
+
+<p style="text-align: center; margin: 30px 0;">
+    <a href="https://youarecoder.com/billing/" class="button">Try Again</a>
+</p>
+
+<div class="divider"></div>
+
+<h3 style="color: #1F2937; font-size: 18px;">Common Solutions</h3>
+
+<ul style="color: #4B5563; line-height: 1.8;">
+    <li><strong>Insufficient Funds:</strong> Ensure your account has enough balance</li>
+    <li><strong>Card Declined:</strong> Contact your bank to authorize international transactions</li>
+    <li><strong>Incorrect Details:</strong> Double-check card number, expiry date, and CVV</li>
+    <li><strong>Expired Card:</strong> Try using a different payment method</li>
+    <li><strong>3D Secure:</strong> Complete any authentication steps from your bank</li>
+</ul>
+
+<div class="divider"></div>
+
+<h3 style="color: #1F2937; font-size: 18px;">Need Help?</h3>
+
+<p>If you continue experiencing issues, please contact our support team at <a href="mailto:support@youarecoder.com">support@youarecoder.com</a>. We're here to help you get back up and running!</p>
+
+<p style="margin-top: 30px; color: #6B7280;">
+    Best regards,<br>
+    <strong>The YouAreCoder Team</strong>
+</p>
+{% endblock %}

@@ -1,0 +1,64 @@
+{% extends "email/base.html" %}
+
+{% block content %}
+<h2>Payment Successful! 💳</h2>
+
+<p>Hi {{ user.full_name }},</p>
+
+<p>We've successfully processed your payment for {{ user.company.name }}. Thank you for your business!</p>
+
+<div class="info-box">
+    <p style="margin: 0 0 12px 0; font-weight: 600; color: #1F2937;">Payment Details:</p>
+    <ul style="margin: 0;">
+        <li><strong>Invoice Number:</strong> {{ invoice.invoice_number }}</li>
+        <li><strong>Amount:</strong> {{ "%.2f"|format(payment.amount / 100.0) }} {{ payment.currency }}</li>
+        <li><strong>Payment Date:</strong> {{ payment.created_at.strftime('%B %d, %Y') }}</li>
+        <li><strong>Plan:</strong> {{ subscription.plan|title }}</li>
+        <li><strong>Transaction ID:</strong> {{ payment.paytr_merchant_oid }}</li>
+    </ul>
+</div>
+
+<div class="info-box" style="background: #ECFDF5; border-left-color: #10B981;">
+    <p style="margin: 0 0 8px 0; font-weight: 600; color: #065F46;">✅ Subscription Active</p>
+    <p style="margin: 0; color: #047857; font-size: 14px;">
+        Your subscription is now active until {{ subscription.current_period_end.strftime('%B %d, %Y') }}.
+    </p>
+</div>
+
+<p style="text-align: center; margin: 30px 0;">
+    <a href="https://youarecoder.com/billing/" class="button">View Billing Dashboard</a>
+</p>
+
+<div class="divider"></div>
+
+<h3 style="color: #1F2937; font-size: 18px;">What's Included in Your Plan?</h3>
+
+{% set plan_config = {
+    'starter': {'workspaces': 5, 'storage': '10 GB'},
+    'team': {'workspaces': 20, 'storage': '50 GB'},
+    'enterprise': {'workspaces': 'Unlimited', 'storage': '250 GB'}
+} %}
+
+{% set plan_info = plan_config.get(subscription.plan, plan_config['starter']) %}
+
+<ul style="color: #4B5563; line-height: 1.8;">
+    <li><strong>Workspaces:</strong> Up to {{ plan_info.workspaces }} development environments</li>
+    <li><strong>Storage:</strong> {{ plan_info.storage }} total disk space</li>
+    <li><strong>Code-Server:</strong> VS Code in your browser</li>
+    <li><strong>Team Collaboration:</strong> Share workspaces with your team</li>
+    <li><strong>Priority Support:</strong> 24/7 email and chat support</li>
+</ul>
+
+<div class="divider"></div>
+
+<h3 style="color: #1F2937; font-size: 18px;">Need a Receipt?</h3>
+
+<p>You can download your invoice anytime from the billing dashboard. If you need assistance or have questions about your subscription, we're here to help!</p>
+
+<p style="margin-top: 30px;">Thank you for choosing YouAreCoder! 🚀</p>
+
+<p style="margin-top: 20px; color: #6B7280;">
+    Best regards,<br>
+    <strong>The YouAreCoder Team</strong>
+</p>
+{% endblock %}

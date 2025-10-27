@@ -1,0 +1,46 @@
+Payment Failed
+
+Hi {{ user.full_name }},
+
+We were unable to process your payment for {{ user.company.name }}. Don't worry - this happens sometimes and is usually easy to fix!
+
+❌ Payment Unsuccessful
+
+{% if payment.failure_reason_message %}
+Reason: {{ payment.failure_reason_message }}
+{% else %}
+Your payment could not be completed. Please try again with a different payment method.
+{% endif %}
+
+Transaction Details:
+- Amount: {{ "%.2f"|format(payment.amount / 100.0) }} {{ payment.currency }}
+- Attempted: {{ payment.created_at.strftime('%B %d, %Y at %H:%M') }}
+- Transaction ID: {{ payment.paytr_merchant_oid }}
+
+Try Again: https://youarecoder.com/billing/
+
+---
+
+Common Solutions:
+
+- Insufficient Funds: Ensure your account has enough balance
+- Card Declined: Contact your bank to authorize international transactions
+- Incorrect Details: Double-check card number, expiry date, and CVV
+- Expired Card: Try using a different payment method
+- 3D Secure: Complete any authentication steps from your bank
+
+---
+
+Need Help?
+
+If you continue experiencing issues, please contact our support team at support@youarecoder.com. We're here to help you get back up and running!
+
+Best regards,
+The YouAreCoder Team
+
+---
+
+© 2025 YouAreCoder. All rights reserved.
+Need help? Contact us at support@youarecoder.com
+
+This email was sent from a notification-only address. Please do not reply to this email.

@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} - YouAreCoder</title>
+</head>
+<body>
+    <div class="container">
+        <h1>Payment Failed</h1>
+        <p>Unfortunately, your payment could not be processed.</p>
+        {% if reason %}
+        <p>Reason: {{ reason }}</p>
+        {% endif %}
+        {% if merchant_oid %}
+        <p>Order ID: {{ merchant_oid }}</p>
+        {% endif %}
+        <p>Please try again or contact support if the problem persists.</p>
+        <a href="{{ url_for('billing.billing_dashboard') }}">Back to Billing</a>
+    </div>
+</body>
+</html>

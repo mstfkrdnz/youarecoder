@@ -165,3 +165,126 @@ def send_security_alert_email(user, alert_type, details):
     except Exception as e:
         current_app.logger.error(f"Failed to render security alert email for {user.email}: {str(e)}")
         return False
+
+
+def send_payment_success_email(user, payment, invoice, subscription):
+    """
+    Send payment success confirmation email with invoice details.
+
+    Args:
+        user: User model instance (company admin)
+        payment: Payment model instance with transaction details
+        invoice: Invoice model instance with billing information
+        subscription: Subscription model instance with plan details
+
+    Returns:
+        bool: True if email sent successfully
+
+    Example:
+        send_payment_success_email(
+            user=admin_user,
+            payment=payment_record,
+            invoice=generated_invoice,
+            subscription=active_subscription
+        )
+    """
+    subject = "Payment Successful - YouAreCoder"
+
+    try:
+        html_body = render_template(
+            'email/payment_success.html',
+            user=user,
+            payment=payment,
+            invoice=invoice,
+            subscription=subscription
+        )
+        text_body = render_template(
+            'email/payment_success.txt',
+            user=user,
+            payment=payment,
+            invoice=invoice,
+            subscription=subscription
+        )
+        return send_email(subject, [user.email], text_body, html_body)
+
+    except Exception as e:
+        current_app.logger.error(f"Failed to render payment success email for {user.email}: {str(e)}")
+        return False
+
+
+def send_payment_failed_email(user, payment):
+    """
+    Send payment failure alert email with retry instructions.
+
+    Args:
+        user: User model instance (company admin)
+        payment: Payment model instance with failure details
+
+    Returns:
+        bool: True if email sent successfully
+
+    Example:
+        send_payment_failed_email(
+            user=admin_user,
+            payment=failed_payment_record
+        )
+    """
+    subject = "Payment Failed - YouAreCoder"
+
+    try:
+        html_body = render_template(
+            'email/payment_failed.html',
+            user=user,
+            payment=payment
+        )
+        text_body = render_template(
+            'email/payment_failed.txt',
+            user=user,
+            payment=payment
+        )
+        return send_email(subject, [user.email], text_body, html_body)
+
+    except Exception as e:
+        current_app.logger.error(f"Failed to render payment failed email for {user.email}: {str(e)}")
+        return False
+
+
+def send_trial_expiry_reminder_email(user, subscription, days_remaining):
+    """
+    Send trial period expiration reminder email.
+
+    Args:
+        user: User model instance (company admin)
+        subscription: Subscription model instance with trial details
+        days_remaining: Number of days until trial expires (int)
+
+    Returns:
+        bool: True if email sent successfully
+
+    Example:
+        send_trial_expiry_reminder_email(
+            user=admin_user,
+            subscription=trial_subscription,
+            days_remaining=7
+        )
+    """
+    subject = f"Your Trial Expires in {days_remaining} Days - YouAreCoder"
+
+    try:
+        html_body = render_template(
+            'email/trial_expiry_reminder.html',
+            user=user,
+            subscription=subscription,
+            days_remaining=days_remaining
+        )
+        text_body = render_template(
+            'email/trial_expiry_reminder.txt',
+            user=user,
+            subscription=subscription,
+            days_remaining=days_remaining
+        )
+        return send_email(subject, [user.email], text_body, html_body)
+
+    except Exception as e:
+        current_app.logger.error(f"Failed to render trial expiry email for {user.email}: {str(e)}")
+        return False

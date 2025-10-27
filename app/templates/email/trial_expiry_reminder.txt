@@ -1,0 +1,64 @@
+Your Trial is Ending Soon
+
+Hi {{ user.full_name }},
+
+Your {{ subscription.plan|title }} plan trial period for {{ user.company.name }} is ending soon. We hope you're enjoying your cloud development environment!
+
+⏳ Trial Expires in {{ days_remaining }} Day{% if days_remaining != 1 %}s{% endif %}
+
+Your trial ends on {{ subscription.trial_ends_at.strftime('%B %d, %Y at %H:%M') }} UTC.
+After this date, your workspaces will be paused until you subscribe.
+
+Your Current Plan:
+- Plan: {{ subscription.plan|title }}
+- Trial Started: {{ subscription.trial_starts_at.strftime('%B %d, %Y') }}
+- Trial Ends: {{ subscription.trial_ends_at.strftime('%B %d, %Y') }}
+
+Subscribe Now: https://youarecoder.com/billing/
+
+---
+
+Continue Where You Left Off
+
+Subscribe now to keep your workspaces active and continue coding without interruption:
+
+{% set plan_config = {
+    'starter': {'price': '$29/month', 'workspaces': 5, 'storage': '10 GB'},
+    'team': {'price': '$99/month', 'workspaces': 20, 'storage': '50 GB'},
+    'enterprise': {'price': '$299/month', 'workspaces': 'Unlimited', 'storage': '250 GB'}
+} %}
+{% set plan_info = plan_config.get(subscription.plan, plan_config['starter']) %}
+
+- {{ subscription.plan|title }} Plan: {{ plan_info.price }}
+- Workspaces: Up to {{ plan_info.workspaces }} development environments
+- Storage: {{ plan_info.storage }} total disk space
+- All Features: Full access to VS Code, collaboration, and priority support
+
+---
+
+What Happens After Trial?
+
+- Day {{ days_remaining }}: This reminder email (you are here)
+- After Trial Ends: Your workspaces will be paused automatically
+- Data Retention: We keep your data for 30 days
+- Reactivation: Subscribe anytime to restore access immediately
+
+---
+
+Not Ready to Subscribe?
+
+No problem! If you're not ready to continue, your workspaces will be paused after the trial period. You can reactivate your account anytime within 30 days without losing any data.
+
+Have questions or need help? Contact us at support@youarecoder.com. We're here to assist!
+
+Thank you for trying YouAreCoder!
+
+Best regards,
+The YouAreCoder Team
+
+---
+
+© 2025 YouAreCoder. All rights reserved.
+Need help? Contact us at support@youarecoder.com
+
+This email was sent from a notification-only address. Please do not reply to this email.

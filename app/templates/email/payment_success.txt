@@ -1,0 +1,53 @@
+Payment Successful!
+
+Hi {{ user.full_name }},
+
+We've successfully processed your payment for {{ user.company.name }}. Thank you for your business!
+
+Payment Details:
+- Invoice Number: {{ invoice.invoice_number }}
+- Amount: {{ "%.2f"|format(payment.amount / 100.0) }} {{ payment.currency }}
+- Payment Date: {{ payment.created_at.strftime('%B %d, %Y') }}
+- Plan: {{ subscription.plan|title }}
+- Transaction ID: {{ payment.paytr_merchant_oid }}
+
+✅ Subscription Active
+
+Your subscription is now active until {{ subscription.current_period_end.strftime('%B %d, %Y') }}.
+
+View Billing Dashboard: https://youarecoder.com/billing/
+
+---
+
+What's Included in Your Plan?
+
+{% set plan_config = {
+    'starter': {'workspaces': 5, 'storage': '10 GB'},
+    'team': {'workspaces': 20, 'storage': '50 GB'},
+    'enterprise': {'workspaces': 'Unlimited', 'storage': '250 GB'}
+} %}
+{% set plan_info = plan_config.get(subscription.plan, plan_config['starter']) %}
+
+- Workspaces: Up to {{ plan_info.workspaces }} development environments
+- Storage: {{ plan_info.storage }} total disk space
+- Code-Server: VS Code in your browser
+- Team Collaboration: Share workspaces with your team
+- Priority Support: 24/7 email and chat support
+
+---
+
+Need a Receipt?
+
+You can download your invoice anytime from the billing dashboard. If you need assistance or have questions about your subscription, we're here to help!
+
+Thank you for choosing YouAreCoder!
+
+Best regards,
+The YouAreCoder Team
+
+---
+
+© 2025 YouAreCoder. All rights reserved.
+Need help? Contact us at support@youarecoder.com
+
+This email was sent from a notification-only address. Please do not reply to this email.
