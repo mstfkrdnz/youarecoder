@@ -19,7 +19,7 @@ def index():
 @login_required
 def dashboard():
     """User dashboard route."""
-    workspaces = current_user.workspaces.all()
+    workspaces = current_user.workspaces.order_by('created_at desc').limit(6).all()
     company = current_user.company
 
     return render_template('dashboard.html',

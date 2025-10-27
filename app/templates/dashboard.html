@@ -214,7 +214,7 @@
 
         {% if workspaces %}
         <div class="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {% for workspace in workspaces|sort(attribute='created_at', reverse=True)[:6] %}
+            {% for workspace in workspaces %}
             <div class="workspace-card relative flex flex-col overflow-hidden rounded-lg bg-white shadow hover:shadow-xl transition-shadow">
                 <!-- Status badge -->
                 <div class="absolute right-4 top-4 z-10">
