@@ -7,6 +7,7 @@ from app import db
 from app.models import Workspace
 from app.forms import WorkspaceForm
 from app.services.workspace_provisioner import WorkspaceProvisioner, WorkspaceProvisionerError
+from app.utils.decorators import require_workspace_ownership
 
 bp = Blueprint('workspace', __name__, url_prefix='/workspace')
 
@@ -79,14 +80,10 @@ def create():
 
 @bp.route('/<int:workspace_id>/delete', methods=['POST'])
 @login_required
+@require_workspace_ownership
 def delete(workspace_id):
     """Delete workspace route with full deprovisioning."""
     workspace = Workspace.query.get_or_404(workspace_id)
-
-    # Check ownership
-    if workspace.owner_id != current_user.id and not current_user.is_admin():
-        flash('Permission denied', 'error')
-        return redirect(url_for('main.dashboard'))
 
     # Initialize provisioner
     provisioner = WorkspaceProvisioner()
@@ -110,26 +107,17 @@ def delete(workspace_id):
 
 @bp.route('/<int:workspace_id>')
 @login_required
+@require_workspace_ownership
 def view(workspace_id):
     """View workspace details route."""
     workspace = Workspace.query.get_or_404(workspace_id)
-
-    # Check access
-    if workspace.company_id != current_user.company_id:
-        flash('Permission denied', 'error')
-        return redirect(url_for('main.dashboard'))
-
     return render_template('workspace/view.html', workspace=workspace)
 
 
 @bp.route('/<int:workspace_id>/manage')
 @login_required
+@require_workspace_ownership
 def manage(workspace_id):
     """Manage workspace modal - returns HTML fragment for HTMX."""
     workspace = Workspace.query.get_or_404(workspace_id)
-
-    # Check access
-    if workspace.company_id != current_user.company_id:
-        return jsonify({'error': 'Permission denied'}), 403
-
     return render_template('workspace/manage_modal.html', workspace=workspace)

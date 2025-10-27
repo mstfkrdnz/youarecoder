@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouAreCoder - Cloud Development Workspaces</title>
+    <meta name="description" content="Professional cloud-based development workspaces with VS Code in your browser. Start coding in seconds.">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .feature-card {
+            transition: all 0.3s ease;
+        }
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+        .pricing-card {
+            transition: all 0.3s ease;
+        }
+        .pricing-card:hover {
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body class="h-full bg-white">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm fixed w-full z-50">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div class="flex h-16 justify-between items-center">
+                <div class="flex items-center">
+                    <svg class="h-8 w-8 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                    </svg>
+                    <span class="ml-2 text-xl font-bold text-gray-900">YouAreCoder</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="{{ url_for('auth.login') }}" class="text-gray-700 hover:text-indigo-600 px-3 py-2 text-sm font-medium">
+                        Sign In
+                    </a>
+                    <a href="{{ url_for('auth.register') }}" class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
+                        Start Free Trial
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <div class="gradient-bg pt-24 pb-16 sm:pt-32 sm:pb-24">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div class="text-center">
+                <h1 class="text-4xl font-bold tracking-tight text-white sm:text-6xl">
+                    Your Development Workspace,
+                    <span class="block">Anywhere, Anytime</span>
+                </h1>
+                <p class="mt-6 text-lg leading-8 text-indigo-100 max-w-2xl mx-auto">
+                    Professional cloud-based development environments with VS Code in your browser.
+                    No setup, no configuration. Just code.
+                </p>
+                <div class="mt-10 flex items-center justify-center gap-x-6">
+                    <a href="{{ url_for('auth.register') }}" class="rounded-md bg-white px-6 py-3 text-base font-semibold text-indigo-600 shadow-sm hover:bg-indigo-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">
+                        Start Free Trial
+                    </a>
+                    <a href="#features" class="text-base font-semibold leading-7 text-white">
+                        Learn more <span aria-hidden="true">→</span>
+                    </a>
+                </div>
+                <div class="mt-8 flex items-center justify-center gap-x-8 text-indigo-100">
+                    <div class="flex items-center gap-x-2">
+                        <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd" />
+                        </svg>
+                        <span class="text-sm">No credit card required</span>
+                    </div>
+                    <div class="flex items-center gap-x-2">
+                        <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd" />
+                        </svg>
+                        <span class="text-sm">14-day free trial</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Features Section -->
+    <div id="features" class="py-24 bg-gray-50">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+                    Everything you need to code effectively
+                </h2>
+                <p class="mt-4 text-lg text-gray-600">
+                    Professional development environments ready in seconds
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+                <!-- Feature 1 -->
+                <div class="feature-card bg-white rounded-lg p-8 shadow-md">
+                    <div class="flex h-12 w-12 items-center justify-center rounded-md bg-indigo-600 text-white">
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                    </div>
+                    <h3 class="mt-4 text-lg font-semibold text-gray-900">Instant Setup</h3>
+                    <p class="mt-2 text-gray-600">
+                        Launch fully configured VS Code workspaces in seconds. No downloads, no installations.
+                    </p>
+                </div>
+
+                <!-- Feature 2 -->
+                <div class="feature-card bg-white rounded-lg p-8 shadow-md">
+                    <div class="flex h-12 w-12 items-center justify-center rounded-md bg-indigo-600 text-white">
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                        </svg>
+                    </div>
+                    <h3 class="mt-4 text-lg font-semibold text-gray-900">Secure & Isolated</h3>
+                    <p class="mt-2 text-gray-600">
+                        Each workspace runs in its own isolated environment with enterprise-grade security.
+                    </p>
+                </div>
+
+                <!-- Feature 3 -->
+                <div class="feature-card bg-white rounded-lg p-8 shadow-md">
+                    <div class="flex h-12 w-12 items-center justify-center rounded-md bg-indigo-600 text-white">
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+                        </svg>
+                    </div>
+                    <h3 class="mt-4 text-lg font-semibold text-gray-900">Access Anywhere</h3>
+                    <p class="mt-2 text-gray-600">
+                        Work from any device with a browser. Your code is always accessible and in sync.
+                    </p>
+                </div>
+
+                <!-- Feature 4 -->
+                <div class="feature-card bg-white rounded-lg p-8 shadow-md">
+                    <div class="flex h-12 w-12 items-center justify-center rounded-md bg-indigo-600 text-white">
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                    </div>
+                    <h3 class="mt-4 text-lg font-semibold text-gray-900">Team Collaboration</h3>
+                    <p class="mt-2 text-gray-600">
+                        Share workspaces with your team. Manage multiple developers from one dashboard.
+                    </p>
+                </div>
+
+                <!-- Feature 5 -->
+                <div class="feature-card bg-white rounded-lg p-8 shadow-md">
+                    <div class="flex h-12 w-12 items-center justify-center rounded-md bg-indigo-600 text-white">
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+                        </svg>
+                    </div>
+                    <h3 class="mt-4 text-lg font-semibold text-gray-900">Full Customization</h3>
+                    <p class="mt-2 text-gray-600">
+                        Install extensions, configure settings, and personalize your development environment.
+                    </p>
+                </div>
+
+                <!-- Feature 6 -->
+                <div class="feature-card bg-white rounded-lg p-8 shadow-md">
+                    <div class="flex h-12 w-12 items-center justify-center rounded-md bg-indigo-600 text-white">
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                        </svg>
+                    </div>
+                    <h3 class="mt-4 text-lg font-semibold text-gray-900">Scalable Storage</h3>
+                    <p class="mt-2 text-gray-600">
+                        From 10GB to 250GB per workspace. Scale as your projects grow.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pricing Section -->
+    <div id="pricing" class="py-24 bg-white">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+                    Simple, transparent pricing
+                </h2>
+                <p class="mt-4 text-lg text-gray-600">
+                    Choose the plan that fits your team size and needs
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 gap-8 lg:grid-cols-3 lg:gap-6">
+                <!-- Starter Plan -->
+                <div class="pricing-card bg-white rounded-2xl shadow-lg ring-1 ring-gray-200 p-8">
+                    <h3 class="text-lg font-semibold text-gray-900">Starter</h3>
+                    <p class="mt-4 text-sm text-gray-600">Perfect for individual developers</p>
+                    <p class="mt-6 flex items-baseline gap-x-1">
+                        <span class="text-4xl font-bold tracking-tight text-gray-900">$29</span>
+                        <span class="text-sm font-semibold text-gray-600">/month</span>
+                    </p>
+                    <ul class="mt-8 space-y-3 text-sm text-gray-600">
+                        <li class="flex gap-x-3">
+                            <svg class="h-6 w-5 flex-none text-indigo-600" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" />
+                            </svg>
+                            5 workspaces
+                        </li>
+                        <li class="flex gap-x-3">
+                            <svg class="h-6 w-5 flex-none text-indigo-600" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" />
+                            </svg>
+                            10 GB storage per workspace
+                        </li>
+                        <li class="flex gap-x-3">
+                            <svg class="h-6 w-5 flex-none text-indigo-600" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" />
+                            </svg>
+                            SSL certificates included
+                        </li>
+                        <li class="flex gap-x-3">
+                            <svg class="h-6 w-5 flex-none text-indigo-600" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" />
+                            </svg>
+                            Email support
+                        </li>
+                    </ul>
+                    <a href="{{ url_for('auth.register') }}" class="mt-8 block w-full rounded-md bg-indigo-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
+                        Start free trial
+                    </a>
+                </div>
+
+                <!-- Team Plan (Featured) -->
+                <div class="pricing-card bg-indigo-600 rounded-2xl shadow-xl ring-2 ring-indigo-600 p-8 relative">
+                    <div class="absolute -top-4 left-0 right-0 mx-auto w-32">
+                        <div class="rounded-full bg-indigo-500 px-3 py-1 text-xs font-semibold text-white text-center">
+                            MOST POPULAR
+                        </div>
+                    </div>
+                    <h3 class="text-lg font-semibold text-white">Team</h3>
+                    <p class="mt-4 text-sm text-indigo-100">For growing development teams</p>
+                    <p class="mt-6 flex items-baseline gap-x-1">
+                        <span class="text-4xl font-bold tracking-tight text-white">$99</span>
+                        <span class="text-sm font-semibold text-indigo-100">/month</span>
+                    </p>
+                    <ul class="mt-8 space-y-3 text-sm text-indigo-100">
+                        <li class="flex gap-x-3">
+                            <svg class="h-6 w-5 flex-none text-white" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" />
+                            </svg>
+                            20 workspaces
+                        </li>
+                        <li class="flex gap-x-3">
+                            <svg class="h-6 w-5 flex-none text-white" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" />
+                            </svg>
+                            50 GB storage per workspace
+                        </li>
+                        <li class="flex gap-x-3">
+                            <svg class="h-6 w-5 flex-none text-white" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" />
+                            </svg>
+                            SSL certificates included
+                        </li>
+                        <li class="flex gap-x-3">
+                            <svg class="h-6 w-5 flex-none text-white" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" />
+                            </svg>
+                            Priority support
+                        </li>
+                        <li class="flex gap-x-3">
+                            <svg class="h-6 w-5 flex-none text-white" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" />
+                            </svg>
+                            Team collaboration tools
+                        </li>
+                    </ul>
+                    <a href="{{ url_for('auth.register') }}" class="mt-8 block w-full rounded-md bg-white px-3 py-2 text-center text-sm font-semibold text-indigo-600 shadow-sm hover:bg-indigo-50">
+                        Start free trial
+                    </a>
+                </div>
+
+                <!-- Enterprise Plan -->
+                <div class="pricing-card bg-white rounded-2xl shadow-lg ring-1 ring-gray-200 p-8">
+                    <h3 class="text-lg font-semibold text-gray-900">Enterprise</h3>
+                    <p class="mt-4 text-sm text-gray-600">For large organizations</p>
+                    <p class="mt-6 flex items-baseline gap-x-1">
+                        <span class="text-4xl font-bold tracking-tight text-gray-900">$299</span>
+                        <span class="text-sm font-semibold text-gray-600">/month</span>
+                    </p>
+                    <ul class="mt-8 space-y-3 text-sm text-gray-600">
+                        <li class="flex gap-x-3">
+                            <svg class="h-6 w-5 flex-none text-indigo-600" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" />
+                            </svg>
+                            Unlimited workspaces
+                        </li>
+                        <li class="flex gap-x-3">
+                            <svg class="h-6 w-5 flex-none text-indigo-600" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" />
+                            </svg>
+                            250 GB storage per workspace
+                        </li>
+                        <li class="flex gap-x-3">
+                            <svg class="h-6 w-5 flex-none text-indigo-600" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" />
+                            </svg>
+                            SSL certificates included
+                        </li>
+                        <li class="flex gap-x-3">
+                            <svg class="h-6 w-5 flex-none text-indigo-600" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" />
+                            </svg>
+                            24/7 premium support
+                        </li>
+                        <li class="flex gap-x-3">
+                            <svg class="h-6 w-5 flex-none text-indigo-600" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" />
+                            </svg>
+                            Advanced security features
+                        </li>
+                        <li class="flex gap-x-3">
+                            <svg class="h-6 w-5 flex-none text-indigo-600" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" />
+                            </svg>
+                            Custom integrations
+                        </li>
+                    </ul>
+                    <a href="{{ url_for('auth.register') }}" class="mt-8 block w-full rounded-md bg-indigo-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
+                        Start free trial
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CTA Section -->
+    <div class="gradient-bg">
+        <div class="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+            <div class="text-center">
+                <h2 class="text-3xl font-bold tracking-tight text-white sm:text-4xl">
+                    Ready to start coding?
+                </h2>
+                <p class="mt-4 text-lg text-indigo-100">
+                    Join developers who trust YouAreCoder for their cloud development needs.
+                </p>
+                <div class="mt-8 flex items-center justify-center gap-x-6">
+                    <a href="{{ url_for('auth.register') }}" class="rounded-md bg-white px-6 py-3 text-base font-semibold text-indigo-600 shadow-sm hover:bg-indigo-50">
+                        Start Free Trial
+                    </a>
+                    <a href="{{ url_for('auth.login') }}" class="text-base font-semibold leading-7 text-white">
+                        Sign in <span aria-hidden="true">→</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 py-12">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div class="text-center">
+                <div class="flex items-center justify-center mb-4">
+                    <svg class="h-8 w-8 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                    </svg>
+                    <span class="ml-2 text-xl font-bold text-white">YouAreCoder</span>
+                </div>
+                <p class="text-gray-400 text-sm">
+                    © 2025 YouAreCoder. Professional cloud development workspaces.
+                </p>
+                <div class="mt-4 flex items-center justify-center gap-x-6 text-sm text-gray-400">
+                    <a href="#" class="hover:text-white">Privacy Policy</a>
+                    <a href="#" class="hover:text-white">Terms of Service</a>
+                    <a href="#" class="hover:text-white">Contact</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

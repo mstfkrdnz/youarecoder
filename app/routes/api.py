@@ -4,21 +4,20 @@ API routes for workspace management.
 import subprocess
 from flask import Blueprint, jsonify, current_app
 from flask_login import login_required, current_user
+from app import limiter
 from app.models import Workspace
 from app.services.workspace_provisioner import WorkspaceProvisioner
+from app.utils.decorators import require_workspace_ownership
 
 bp = Blueprint('api', __name__, url_prefix='/api')
 
 
 @bp.route('/workspace/<int:workspace_id>/status', methods=['GET'])
 @login_required
+@require_workspace_ownership
 def workspace_status(workspace_id):
     """Get workspace status including service health."""
     workspace = Workspace.query.get_or_404(workspace_id)
-
-    # Check access
-    if workspace.company_id != current_user.company_id:
-        return jsonify({'error': 'Permission denied'}), 403
 
     # Check systemd service status
     try:
@@ -49,13 +48,11 @@ def workspace_status(workspace_id):
 
 @bp.route('/workspace/<int:workspace_id>/restart', methods=['POST'])
 @login_required
+@require_workspace_ownership
+@limiter.limit("5 per minute")  # Prevent restart abuse
 def restart_workspace(workspace_id):
     """Restart workspace code-server service."""
     workspace = Workspace.query.get_or_404(workspace_id)
-
-    # Check ownership or admin
-    if workspace.owner_id != current_user.id and not current_user.is_admin():
-        return jsonify({'error': 'Permission denied'}), 403
 
     try:
         # Restart systemd service
@@ -85,13 +82,11 @@ def restart_workspace(workspace_id):
 
 @bp.route('/workspace/<int:workspace_id>/stop', methods=['POST'])
 @login_required
+@require_workspace_ownership
+@limiter.limit("5 per minute")
 def stop_workspace(workspace_id):
     """Stop workspace code-server service."""
     workspace = Workspace.query.get_or_404(workspace_id)
-
-    # Check ownership or admin
-    if workspace.owner_id != current_user.id and not current_user.is_admin():
-        return jsonify({'error': 'Permission denied'}), 403
 
     try:
         # Stop systemd service
@@ -116,13 +111,11 @@ def stop_workspace(workspace_id):
 
 @bp.route('/workspace/<int:workspace_id>/start', methods=['POST'])
 @login_required
+@require_workspace_ownership
+@limiter.limit("5 per minute")
 def start_workspace(workspace_id):
     """Start workspace code-server service."""
     workspace = Workspace.query.get_or_404(workspace_id)
-
-    # Check ownership or admin
-    if workspace.owner_id != current_user.id and not current_user.is_admin():
-        return jsonify({'error': 'Permission denied'}), 403
 
     try:
         # Start systemd service
@@ -147,13 +140,10 @@ def start_workspace(workspace_id):
 
 @bp.route('/workspace/<int:workspace_id>/logs', methods=['GET'])
 @login_required
+@require_workspace_ownership
 def workspace_logs(workspace_id):
     """Get recent logs from workspace service."""
     workspace = Workspace.query.get_or_404(workspace_id)
-
-    # Check access
-    if workspace.company_id != current_user.company_id:
-        return jsonify({'error': 'Permission denied'}), 403
 
     try:
         # Get last 100 lines of systemd service logs

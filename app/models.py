@@ -60,6 +60,10 @@ class User(UserMixin, db.Model):
     updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
     last_login = db.Column(db.DateTime)
 
+    # Account security
+    failed_login_attempts = db.Column(db.Integer, nullable=False, default=0)
+    account_locked_until = db.Column(db.DateTime)
+
     # Relationships
     workspaces = db.relationship('Workspace', backref='owner', lazy='dynamic', cascade='all, delete-orphan')
 
@@ -77,6 +81,26 @@ class User(UserMixin, db.Model):
     def is_admin(self):
         """Check if user has admin role."""
         return self.role == 'admin'
+
+    def is_account_locked(self):
+        """Check if account is currently locked due to failed login attempts."""
+        if self.account_locked_until is None:
+            return False
+        return datetime.utcnow() < self.account_locked_until
+
+    def record_failed_login(self):
+        """Record a failed login attempt and lock account if threshold exceeded."""
+        self.failed_login_attempts += 1
+
+        # Lock account for 30 minutes after 5 failed attempts
+        if self.failed_login_attempts >= 5:
+            from datetime import timedelta
+            self.account_locked_until = datetime.utcnow() + timedelta(minutes=30)
+
+    def reset_failed_logins(self):
+        """Reset failed login attempts and unlock account."""
+        self.failed_login_attempts = 0
+        self.account_locked_until = None
 
     def to_dict(self):
         return {
@@ -136,3 +160,29 @@ class Workspace(db.Model):
     def get_url(self):
         """Get full workspace URL."""
         return f"https://{self.subdomain}.youarecoder.com"
+
+
+class LoginAttempt(db.Model):
+    """Login attempt tracking for security auditing."""
+    __tablename__ = 'login_attempts'
+
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(120), nullable=False, index=True)
+    ip_address = db.Column(db.String(45), nullable=False)  # IPv6 max length
+    user_agent = db.Column(db.String(255))
+    success = db.Column(db.Boolean, nullable=False)
+    failure_reason = db.Column(db.String(100))  # invalid_password, account_locked, inactive_account
+    timestamp = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, index=True)
+
+    def __repr__(self):
+        return f'<LoginAttempt {self.email} {"success" if self.success else "failed"} at {self.timestamp}>'
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'email': self.email,
+            'ip_address': self.ip_address,
+            'success': self.success,
+            'failure_reason': self.failure_reason,
+            'timestamp': self.timestamp.isoformat()
+        }
