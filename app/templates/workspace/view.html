@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+
+{% block title %}{{ workspace.name }} - YouAreCoder{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header with back button -->
+    <div class="mb-6">
+        <a href="{{ url_for('main.dashboard') }}" class="inline-flex items-center text-sm text-indigo-600 hover:text-indigo-500">
+            <svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Back to Dashboard
+        </a>
+    </div>
+
+    <!-- Workspace details card -->
+    <div class="bg-white shadow sm:rounded-lg">
+        <div class="px-4 py-5 sm:px-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold leading-7 text-gray-900">{{ workspace.name }}</h1>
+                    <p class="mt-1 max-w-2xl text-sm text-gray-500">Workspace details and management</p>
+                </div>
+                <div>
+                    <span class="inline-flex items-center rounded-md
+                        {% if workspace.status == 'active' %}bg-green-50 text-green-700 ring-green-600/20
+                        {% elif workspace.status == 'stopped' %}bg-gray-50 text-gray-600 ring-gray-500/10
+                        {% elif workspace.status == 'error' %}bg-red-50 text-red-700 ring-red-600/10
+                        {% else %}bg-yellow-50 text-yellow-800 ring-yellow-600/20{% endif %}
+                        px-2 py-1 text-xs font-medium ring-1 ring-inset">
+                        {{ workspace.status.upper() }}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Workspace information -->
+        <div class="border-t border-gray-200 px-4 py-5 sm:px-6">
+            <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
+                <div class="sm:col-span-1">
+                    <dt class="text-sm font-medium text-gray-500">Subdomain</dt>
+                    <dd class="mt-1 text-sm text-gray-900">{{ workspace.subdomain }}</dd>
+                </div>
+                <div class="sm:col-span-1">
+                    <dt class="text-sm font-medium text-gray-500">Port</dt>
+                    <dd class="mt-1 text-sm text-gray-900">{{ workspace.port }}</dd>
+                </div>
+                <div class="sm:col-span-1">
+                    <dt class="text-sm font-medium text-gray-500">Linux User</dt>
+                    <dd class="mt-1 text-sm text-gray-900 font-mono">{{ workspace.linux_username }}</dd>
+                </div>
+                <div class="sm:col-span-1">
+                    <dt class="text-sm font-medium text-gray-500">Disk Quota</dt>
+                    <dd class="mt-1 text-sm text-gray-900">{{ workspace.disk_quota_gb }} GB</dd>
+                </div>
+                <div class="sm:col-span-1">
+                    <dt class="text-sm font-medium text-gray-500">Created</dt>
+                    <dd class="mt-1 text-sm text-gray-900">{{ workspace.created_at.strftime('%Y-%m-%d %H:%M') }}</dd>
+                </div>
+                <div class="sm:col-span-1">
+                    <dt class="text-sm font-medium text-gray-500">Last Updated</dt>
+                    <dd class="mt-1 text-sm text-gray-900">{{ workspace.updated_at.strftime('%Y-%m-%d %H:%M') }}</dd>
+                </div>
+                <div class="sm:col-span-2">
+                    <dt class="text-sm font-medium text-gray-500">Workspace URL</dt>
+                    <dd class="mt-1 text-sm text-indigo-600 hover:text-indigo-500">
+                        <a href="{{ workspace.get_url() }}" target="_blank" class="flex items-center">
+                            {{ workspace.get_url() }}
+                            <svg class="ml-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                            </svg>
+                        </a>
+                    </dd>
+                </div>
+            </dl>
+        </div>
+
+        <!-- Action buttons -->
+        <div class="border-t border-gray-200 px-4 py-5 sm:px-6">
+            <div class="flex items-center justify-between space-x-3">
+                <div class="flex space-x-3">
+                    {% if workspace.status == 'stopped' %}
+                    <button type="button"
+                            hx-post="{{ url_for('api.start_workspace', workspace_id=workspace.id) }}"
+                            hx-swap="none"
+                            class="inline-flex items-center rounded-md bg-green-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-500">
+                        <svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Start
+                    </button>
+                    {% elif workspace.status == 'active' %}
+                    <button type="button"
+                            hx-post="{{ url_for('api.stop_workspace', workspace_id=workspace.id) }}"
+                            hx-swap="none"
+                            class="inline-flex items-center rounded-md bg-yellow-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-yellow-500">
+                        <svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
+                        </svg>
+                        Stop
+                    </button>
+                    {% endif %}
+
+                    <button type="button"
+                            hx-post="{{ url_for('api.restart_workspace', workspace_id=workspace.id) }}"
+                            hx-swap="none"
+                            class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
+                        <svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        Restart
+                    </button>
+
+                    <button type="button"
+                            hx-get="{{ url_for('api.workspace_logs', workspace_id=workspace.id) }}"
+                            hx-target="#logs-container"
+                            hx-swap="innerHTML"
+                            class="inline-flex items-center rounded-md bg-gray-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-gray-500">
+                        <svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        View Logs
+                    </button>
+                </div>
+
+                <div>
+                    {% if workspace.status == 'active' %}
+                    <a href="{{ workspace.get_url() }}" target="_blank"
+                       class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
+                        Open Workspace
+                        <svg class="ml-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Logs container -->
+        <div id="logs-container" class="border-t border-gray-200 px-4 py-5 sm:px-6 bg-gray-50">
+            <p class="text-sm text-gray-500 text-center">Click "View Logs" to display workspace logs</p>
+        </div>
+
+        <!-- Danger zone -->
+        <div class="border-t border-gray-200 bg-red-50 px-4 py-5 sm:px-6">
+            <h3 class="text-sm font-medium text-red-900">Danger Zone</h3>
+            <div class="mt-2 sm:flex sm:items-center sm:justify-between">
+                <div class="max-w-xl text-sm text-red-700">
+                    <p>Permanently delete this workspace. This action cannot be undone.</p>
+                </div>
+                <form method="POST" action="{{ url_for('workspace.delete', workspace_id=workspace.id) }}"
+                      onsubmit="return confirm('Are you sure you want to delete this workspace? This action cannot be undone.');"
+                      class="mt-5 sm:ml-6 sm:mt-0 sm:flex sm:flex-shrink-0 sm:items-center">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit"
+                            class="inline-flex items-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500">
+                        Delete Workspace
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

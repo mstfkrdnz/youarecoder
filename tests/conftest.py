@@ -21,6 +21,42 @@ def app():
         'SECRET_KEY': 'test-secret-key',
     })
 
+    # Register test routes for decorator testing BEFORE any requests
+    with app.app_context():
+        from flask_login import login_required
+        from app.utils.decorators import require_role, require_company_admin
+
+        @app.route('/test-admin-only')
+        @login_required
+        @require_role('admin')
+        def test_admin_only():
+            return 'admin access'
+
+        @app.route('/test-multi-role')
+        @login_required
+        @require_role('admin', 'member')
+        def test_multi_role():
+            return 'multi role access'
+
+        @app.route('/test-company-admin')
+        @login_required
+        @require_company_admin
+        def test_company_admin():
+            return 'company admin access'
+
+        @app.route('/test-company-admin-forbidden')
+        @login_required
+        @require_company_admin
+        def test_company_admin_forbidden():
+            return 'company admin forbidden test'
+
+        @app.route('/test-decorator-stack')
+        @login_required
+        @require_role('admin')
+        @require_company_admin
+        def test_decorator_stack():
+            return 'stacked decorators'
+
     return app
 
 
