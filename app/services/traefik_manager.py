@@ -125,9 +125,7 @@ class TraefikManager:
                 'entryPoints': ['websecure'],
                 'service': router_name,
                 'middlewares': ['secureHeaders', 'rateLimitWorkspace'],
-                'tls': {
-                    'certResolver': 'letsencrypt'
-                }
+                'tls': {}  # Use default certificate from tls.yml
             }
 
             # Add service
