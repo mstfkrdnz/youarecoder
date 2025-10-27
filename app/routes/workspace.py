@@ -1,10 +1,11 @@
 """
 Workspace routes (create, delete, manage).
 """
-from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
+from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, current_app
 from flask_login import login_required, current_user
 from app import db
 from app.models import Workspace
+from app.services.workspace_provisioner import WorkspaceProvisioner, WorkspaceProvisionerError
 
 bp = Blueprint('workspace', __name__, url_prefix='/workspace')
 
@@ -12,7 +13,7 @@ bp = Blueprint('workspace', __name__, url_prefix='/workspace')
 @bp.route('/create', methods=['GET', 'POST'])
 @login_required
 def create():
-    """Create new workspace route."""
+    """Create new workspace route with full provisioning."""
     if request.method == 'POST':
         name = request.form.get('name')
 
@@ -21,21 +22,46 @@ def create():
             flash('Workspace limit reached for your plan', 'error')
             return redirect(url_for('main.dashboard'))
 
-        # Create workspace (provisioning will be implemented later)
-        workspace = Workspace(
-            name=name,
-            subdomain=f"{name}.{current_user.company.subdomain}",
-            linux_username=f"{current_user.company.subdomain}_{name}",
-            port=8001,  # Will be assigned dynamically later
-            code_server_password='temp_password',  # Will be generated later
-            company_id=current_user.company.id,
-            owner_id=current_user.id,
-            status='pending'
-        )
-        db.session.add(workspace)
-        db.session.commit()
+        # Initialize provisioner
+        provisioner = WorkspaceProvisioner()
 
-        flash(f'Workspace "{name}" created successfully!', 'success')
+        try:
+            # Allocate port
+            port = provisioner.allocate_port()
+
+            # Generate secure password for code-server
+            code_server_password = provisioner.generate_password()
+
+            # Create workspace record
+            workspace = Workspace(
+                name=name,
+                subdomain=f"{name}.{current_user.company.subdomain}",
+                linux_username=f"{current_user.company.subdomain}_{name}",
+                port=port,
+                code_server_password=code_server_password,
+                company_id=current_user.company.id,
+                owner_id=current_user.id,
+                status='pending',
+                disk_quota_gb=current_user.company.plan == 'starter' and 10 or
+                             (current_user.company.plan == 'team' and 50 or 250)
+            )
+            db.session.add(workspace)
+            db.session.commit()
+
+            # Provision workspace (Linux user, code-server, systemd service)
+            result = provisioner.provision_workspace(workspace)
+
+            if result['success']:
+                flash(f'Workspace "{name}" created and provisioned successfully!', 'success')
+                current_app.logger.info(f"Workspace created: {workspace.id} on port {port}")
+            else:
+                flash(f'Workspace created but provisioning incomplete', 'warning')
+
+        except WorkspaceProvisionerError as e:
+            current_app.logger.error(f"Workspace provisioning error: {str(e)}")
+            flash(f'Error creating workspace: {str(e)}', 'error')
+            return redirect(url_for('main.dashboard'))
+
         return redirect(url_for('main.dashboard'))
 
     return render_template('workspace/create.html')
@@ -44,7 +70,7 @@ def create():
 @bp.route('/<int:workspace_id>/delete', methods=['POST'])
 @login_required
 def delete(workspace_id):
-    """Delete workspace route."""
+    """Delete workspace route with full deprovisioning."""
     workspace = Workspace.query.get_or_404(workspace_id)
 
     # Check ownership
@@ -52,10 +78,23 @@ def delete(workspace_id):
         flash('Permission denied', 'error')
         return redirect(url_for('main.dashboard'))
 
-    db.session.delete(workspace)
-    db.session.commit()
+    # Initialize provisioner
+    provisioner = WorkspaceProvisioner()
 
-    flash(f'Workspace "{workspace.name}" deleted', 'info')
+    try:
+        # Deprovision workspace (stop service, remove user, cleanup)
+        result = provisioner.deprovision_workspace(workspace)
+
+        if result['success']:
+            flash(f'Workspace "{workspace.name}" deleted successfully', 'success')
+            current_app.logger.info(f"Workspace deprovisioned: {workspace_id}")
+        else:
+            flash(f'Workspace deletion incomplete', 'warning')
+
+    except WorkspaceProvisionerError as e:
+        current_app.logger.error(f"Workspace deprovisioning error: {str(e)}")
+        flash(f'Error deleting workspace: {str(e)}', 'error')
+
     return redirect(url_for('main.dashboard'))
 
 

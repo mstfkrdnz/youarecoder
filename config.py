@@ -71,7 +71,7 @@ class TestConfig(Config):
     """Test environment configuration."""
     TESTING = True
     DEBUG = True
-    SQLALCHEMY_DATABASE_URI = 'postgresql://youarecoder_user:YaC_DB_2025_Secure!@localhost:5432/youarecoder_test'
+    SQLALCHEMY_DATABASE_URI = 'postgresql://youarecoder_user:YouAreCoderDB2025@localhost:5432/youarecoder_test'
     WTF_CSRF_ENABLED = False
     RATELIMIT_ENABLED = False
     SESSION_COOKIE_SECURE = False

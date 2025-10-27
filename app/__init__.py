@@ -46,10 +46,11 @@ def create_app(config_name='default'):
     login_manager.session_protection = 'strong'
 
     # Register blueprints
-    from app.routes import auth, main, workspace
+    from app.routes import auth, main, workspace, api
     app.register_blueprint(auth.bp)
     app.register_blueprint(main.bp)
     app.register_blueprint(workspace.bp)
+    app.register_blueprint(api.bp)
 
     # User loader for Flask-Login
     from app.models import User
