@@ -5,18 +5,27 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request,
 from flask_login import login_required, current_user
 from app import db
 from app.models import Workspace
+from app.forms import WorkspaceForm
 from app.services.workspace_provisioner import WorkspaceProvisioner, WorkspaceProvisionerError
 
 bp = Blueprint('workspace', __name__, url_prefix='/workspace')
+
+
+@bp.route('/')
+@login_required
+def list():
+    """List all workspaces for current company."""
+    workspaces = Workspace.query.filter_by(company_id=current_user.company_id).all()
+    return render_template('workspace/list.html', workspaces=workspaces)
 
 
 @bp.route('/create', methods=['GET', 'POST'])
 @login_required
 def create():
     """Create new workspace route with full provisioning."""
-    if request.method == 'POST':
-        name = request.form.get('name')
+    form = WorkspaceForm()
 
+    if form.validate_on_submit():
         # Check if company can create more workspaces
         if not current_user.company.can_create_workspace():
             flash('Workspace limit reached for your plan', 'error')
@@ -34,9 +43,9 @@ def create():
 
             # Create workspace record
             workspace = Workspace(
-                name=name,
-                subdomain=f"{name}.{current_user.company.subdomain}",
-                linux_username=f"{current_user.company.subdomain}_{name}",
+                name=form.name.data,
+                subdomain=f"{form.name.data}.{current_user.company.subdomain}",
+                linux_username=f"{current_user.company.subdomain}_{form.name.data}",
                 port=port,
                 code_server_password=code_server_password,
                 company_id=current_user.company.id,
@@ -52,7 +61,7 @@ def create():
             result = provisioner.provision_workspace(workspace)
 
             if result['success']:
-                flash(f'Workspace "{name}" created and provisioned successfully!', 'success')
+                flash(f'Workspace "{form.name.data}" created and provisioned successfully!', 'success')
                 current_app.logger.info(f"Workspace created: {workspace.id} on port {port}")
             else:
                 flash(f'Workspace created but provisioning incomplete', 'warning')
@@ -64,7 +73,7 @@ def create():
 
         return redirect(url_for('main.dashboard'))
 
-    return render_template('workspace/create.html')
+    return render_template('workspace/create.html', form=form)
 
 
 @bp.route('/<int:workspace_id>/delete', methods=['POST'])
@@ -110,3 +119,16 @@ def view(workspace_id):
         return redirect(url_for('main.dashboard'))
 
     return render_template('workspace/view.html', workspace=workspace)
+
+
+@bp.route('/<int:workspace_id>/manage')
+@login_required
+def manage(workspace_id):
+    """Manage workspace modal - returns HTML fragment for HTMX."""
+    workspace = Workspace.query.get_or_404(workspace_id)
+
+    # Check access
+    if workspace.company_id != current_user.company_id:
+        return jsonify({'error': 'Permission denied'}), 403
+
+    return render_template('workspace/manage_modal.html', workspace=workspace)
