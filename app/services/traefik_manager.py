@@ -149,7 +149,9 @@ class TraefikManager:
             }
 
         except Exception as e:
+            import traceback
             current_app.logger.error(f"Error adding Traefik route: {str(e)}")
+            current_app.logger.error(f"Full traceback: {traceback.format_exc()}")
             return {
                 'success': False,
                 'error': str(e)
