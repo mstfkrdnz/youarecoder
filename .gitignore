@@ -49,6 +49,7 @@ htmlcov/
 
 # Environment variables
 .env
+.env.*
 .env.local
 .env.production
 
@@ -69,3 +70,7 @@ config/local_settings.py
 config/secrets.py
 config/paytr_credentials.json
 config/database_credentials.json
+
+# Test files with credentials
+test_*.py
+*_test.py
