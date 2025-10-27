@@ -100,7 +100,7 @@ class WorkspaceProvisioner:
         try:
             # Create user with home directory
             subprocess.run([
-                'useradd',
+                '/usr/sbin/useradd',
                 '--create-home',
                 '--shell', '/bin/bash',
                 username
@@ -108,7 +108,7 @@ class WorkspaceProvisioner:
 
             # Set password
             subprocess.run([
-                'chpasswd'
+                '/usr/sbin/chpasswd'
             ], input=f"{username}:{password}\n", check=True, capture_output=True, text=True)
 
             current_app.logger.info(f"Linux user created: {username}")
@@ -134,7 +134,7 @@ class WorkspaceProvisioner:
 
             # Create config directory
             subprocess.run([
-                'mkdir', '-p', config_dir
+                '/bin/mkdir', '-p', config_dir
             ], check=True, capture_output=True, text=True)
 
             # Create code-server configuration
@@ -151,12 +151,12 @@ cert: false
 
             # Change ownership of config directory to user
             subprocess.run([
-                'chown', '-R', f"{username}:{username}", config_dir
+                '/bin/chown', '-R', f"{username}:{username}", config_dir
             ], check=True, capture_output=True, text=True)
 
             # Set proper permissions
             subprocess.run([
-                'chmod', '600', config_path
+                '/bin/chmod', '600', config_path
             ], check=True, capture_output=True, text=True)
 
             current_app.logger.info(f"code-server configured for {username} on port {port}")
@@ -199,17 +199,17 @@ WantedBy=multi-user.target
 
             # Reload systemd
             subprocess.run([
-                'systemctl', 'daemon-reload'
+                '/bin/systemctl', 'daemon-reload'
             ], check=True, capture_output=True, text=True)
 
             # Enable service
             subprocess.run([
-                'systemctl', 'enable', f'code-server@{username}.service'
+                '/bin/systemctl', 'enable', f'code-server@{username}.service'
             ], check=True, capture_output=True, text=True)
 
             # Start service
             subprocess.run([
-                'systemctl', 'start', f'code-server@{username}.service'
+                '/bin/systemctl', 'start', f'code-server@{username}.service'
             ], check=True, capture_output=True, text=True)
 
             current_app.logger.info(f"Systemd service created and started for {username}")
@@ -330,16 +330,16 @@ WantedBy=multi-user.target
 
             if 'systemd_service_created' in steps_completed:
                 subprocess.run([
-                    'systemctl', 'stop', f'code-server@{workspace.linux_username}.service'
+                    '/bin/systemctl', 'stop', f'code-server@{workspace.linux_username}.service'
                 ], capture_output=True, text=True)
                 subprocess.run([
-                    'systemctl', 'disable', f'code-server@{workspace.linux_username}.service'
+                    '/bin/systemctl', 'disable', f'code-server@{workspace.linux_username}.service'
                 ], capture_output=True, text=True)
                 os.remove(f"/etc/systemd/system/code-server@{workspace.linux_username}.service")
 
             if 'linux_user_created' in steps_completed:
                 subprocess.run([
-                    'userdel', '-r', workspace.linux_username
+                    '/usr/sbin/userdel', '-r', workspace.linux_username
                 ], capture_output=True, text=True)
 
             current_app.logger.info(f"Cleanup completed for workspace: {workspace.id}")
@@ -366,12 +366,12 @@ WantedBy=multi-user.target
         try:
             # Stop and remove systemd service
             subprocess.run([
-                'systemctl', 'stop', f'code-server@{workspace.linux_username}.service'
+                '/bin/systemctl', 'stop', f'code-server@{workspace.linux_username}.service'
             ], check=True, capture_output=True, text=True)
             result['steps_completed'].append('service_stopped')
 
             subprocess.run([
-                'systemctl', 'disable', f'code-server@{workspace.linux_username}.service'
+                '/bin/systemctl', 'disable', f'code-server@{workspace.linux_username}.service'
             ], check=True, capture_output=True, text=True)
             result['steps_completed'].append('service_disabled')
 
@@ -380,7 +380,7 @@ WantedBy=multi-user.target
 
             # Remove Linux user and home directory
             subprocess.run([
-                'userdel', '-r', workspace.linux_username
+                '/usr/sbin/userdel', '-r', workspace.linux_username
             ], check=True, capture_output=True, text=True)
             result['steps_completed'].append('user_removed')
 
