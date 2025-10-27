@@ -13,10 +13,6 @@ http:
         - secureHeaders
       tls:
         certResolver: letsencrypt
-        domains:
-          - main: "youarecoder.com"
-            sans:
-              - "*.youarecoder.com"
 
     # Root domain router
     flask-app-root:
