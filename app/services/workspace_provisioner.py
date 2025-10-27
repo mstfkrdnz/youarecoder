@@ -9,6 +9,7 @@ from typing import Dict, Tuple, Optional
 from flask import current_app
 from app import db
 from app.models import Workspace
+from app.services.traefik_manager import TraefikManager
 
 
 class WorkspaceProvisionerError(Exception):
@@ -48,6 +49,7 @@ class WorkspaceProvisioner:
         self.port_range_start = current_app.config['WORKSPACE_PORT_RANGE_START']
         self.port_range_end = current_app.config['WORKSPACE_PORT_RANGE_END']
         self.base_dir = current_app.config['WORKSPACE_BASE_DIR']
+        self.traefik_manager = TraefikManager()
 
     def allocate_port(self) -> int:
         """
@@ -275,6 +277,17 @@ WantedBy=multi-user.target
             self.set_disk_quota(workspace.linux_username, workspace.disk_quota_gb)
             result['steps_completed'].append('disk_quota_set')
 
+            # Step 5: Configure Traefik routing
+            traefik_result = self.traefik_manager.add_workspace_route(
+                workspace.subdomain,
+                workspace.port
+            )
+            if traefik_result['success']:
+                result['steps_completed'].append('traefik_route_added')
+                result['workspace_url'] = traefik_result['url']
+            else:
+                raise WorkspaceProvisionerError(f"Traefik configuration failed: {traefik_result.get('error')}")
+
             # Update workspace status to active
             workspace.status = 'active'
             db.session.commit()
@@ -312,6 +325,9 @@ WantedBy=multi-user.target
 
         try:
             # Cleanup in reverse order
+            if 'traefik_route_added' in steps_completed:
+                self.traefik_manager.remove_workspace_route(workspace.subdomain)
+
             if 'systemd_service_created' in steps_completed:
                 subprocess.run([
                     'systemctl', 'stop', f'code-server@{workspace.linux_username}.service'
@@ -367,6 +383,13 @@ WantedBy=multi-user.target
                 'userdel', '-r', workspace.linux_username
             ], check=True, capture_output=True, text=True)
             result['steps_completed'].append('user_removed')
+
+            # Remove Traefik routing
+            traefik_result = self.traefik_manager.remove_workspace_route(workspace.subdomain)
+            if traefik_result['success']:
+                result['steps_completed'].append('traefik_route_removed')
+            else:
+                current_app.logger.warning(f"Traefik route removal warning: {traefik_result.get('error')}")
 
             # Remove from database
             db.session.delete(workspace)

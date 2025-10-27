@@ -1,0 +1,50 @@
+# Dynamic Configuration for Main Flask Application
+# Routes for *.youarecoder.com (company management)
+
+http:
+  routers:
+    # Main Flask app router
+    flask-app:
+      rule: "HostRegexp(`{subdomain:[a-z0-9-]+}.youarecoder.com`)"
+      entryPoints:
+        - websecure
+      service: flask-app
+      middlewares:
+        - secureHeaders
+      tls:
+        certResolver: letsencrypt
+        domains:
+          - main: "youarecoder.com"
+            sans:
+              - "*.youarecoder.com"
+
+    # Root domain router
+    flask-app-root:
+      rule: "Host(`youarecoder.com`)"
+      entryPoints:
+        - websecure
+      service: flask-app
+      middlewares:
+        - secureHeaders
+      tls:
+        certResolver: letsencrypt
+
+  services:
+    # Flask application service
+    flask-app:
+      loadBalancer:
+        servers:
+          - url: "http://127.0.0.1:5000"
+
+  middlewares:
+    # Security headers (referenced from workspaces.yml)
+    secureHeaders:
+      headers:
+        sslRedirect: true
+        browserXssFilter: true
+        contentTypeNosniff: true
+        forceSTSHeader: true
+        stsIncludeSubdomains: true
+        stsPreload: true
+        stsSeconds: 31536000
+        customFrameOptionsValue: "SAMEORIGIN"

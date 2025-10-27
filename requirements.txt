@@ -29,3 +29,6 @@ pytest-cov==5.0.0
 
 # Development
 python-dateutil==2.9.0.post0
+
+# Configuration management
+PyYAML==6.0.1
