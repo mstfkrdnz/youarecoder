@@ -263,12 +263,10 @@
 
                 generateSubdomain() {
                     if (this.companyName) {
-                        // Generate subdomain from company name
+                        // Generate subdomain from company name (no hyphens, joined words)
                         this.subdomain = this.companyName
                             .toLowerCase()
-                            .replace(/[^a-z0-9\s-]/g, '')
-                            .replace(/\s+/g, '-')
-                            .replace(/-+/g, '-')
+                            .replace(/[^a-z0-9]/g, '')  // Remove all special chars and spaces
                             .substring(0, 50);
                     }
                 },
