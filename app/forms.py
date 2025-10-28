@@ -54,18 +54,13 @@ class RegistrationForm(FlaskForm):
     subdomain = StringField('Subdomain', validators=[
         DataRequired(),
         Length(min=3, max=50),
-        Regexp(r'^[a-z0-9-]+$', message="Only lowercase letters, numbers, and hyphens allowed")
+        Regexp(r'^[a-z0-9]+$', message="Only lowercase letters and numbers allowed")
     ])
 
     # User details
     full_name = StringField('Full Name', validators=[
         DataRequired(),
         Length(min=2, max=100)
-    ])
-    username = StringField('Username', validators=[
-        DataRequired(),
-        Length(min=3, max=50),
-        Regexp(r'^[a-z0-9_]+$', message="Only lowercase letters, numbers, and underscores allowed")
     ])
     email = StringField('Email', validators=[DataRequired(), Email()])
     password = PasswordField('Password', validators=[

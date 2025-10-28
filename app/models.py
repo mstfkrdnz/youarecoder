@@ -73,7 +73,6 @@ class User(UserMixin, db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), unique=True, nullable=False, index=True)
-    username = db.Column(db.String(50), unique=True, nullable=False, index=True)
     password_hash = db.Column(db.String(255), nullable=False)
     full_name = db.Column(db.String(100), nullable=False)
     role = db.Column(db.String(20), nullable=False, default='member')  # admin, member
@@ -102,7 +101,7 @@ class User(UserMixin, db.Model):
     workspaces = db.relationship('Workspace', backref='owner', lazy='dynamic', cascade='all, delete-orphan')
 
     def __repr__(self):
-        return f'<User {self.username} ({self.email})>'
+        return f'<User {self.email}>'
 
     def set_password(self, password):
         """Hash and set user password."""
@@ -140,7 +139,6 @@ class User(UserMixin, db.Model):
         return {
             'id': self.id,
             'email': self.email,
-            'username': self.username,
             'full_name': self.full_name,
             'role': self.role,
             'is_active': self.is_active,

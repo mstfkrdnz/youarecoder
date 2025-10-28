@@ -155,10 +155,6 @@ def register():
             flash('Email already registered', 'error')
             return render_template('auth/register.html', form=form)
 
-        if User.query.filter_by(username=form.username.data).first():
-            flash('Username already taken', 'error')
-            return render_template('auth/register.html', form=form)
-
         # Create company
         company = Company(
             name=form.company_name.data,
@@ -172,7 +168,6 @@ def register():
         # Create admin user
         user = User(
             email=form.email.data,
-            username=form.username.data,
             full_name=form.full_name.data,
             role='admin',
             company_id=company.id

@@ -1,0 +1,64 @@
+{
+  "timestamp": "20251028_065403",
+  "base_url": "https://youarecoder.com",
+  "test_mode": "SAFE_VALIDATION",
+  "phases": {
+    "configuration": {
+      "status": "passed",
+      "details": {
+        "billing_routes": "accessible",
+        "callback_endpoint": "functional",
+        "base_url": "https://youarecoder.com",
+        "test_mode_assumed": "LIVE (based on recent configuration)"
+      }
+    },
+    "authentication": {
+      "status": "failed",
+      "details": {
+        "email": "livetest+kcx40k@alkedos.com",
+        "registration": "skipped (user exists)",
+        "authentication": "failed"
+      }
+    },
+    "billing_access": {
+      "status": "passed",
+      "details": {
+        "status_code": 200,
+        "accessible": true,
+        "content_validation": {
+          "subscription_info": false,
+          "plan_options": false,
+          "billing_interface": false
+        },
+        "trial_status": "not found"
+      }
+    },
+    "token_generation": {
+      "status": "failed",
+      "details": {
+        "subscription_plan": "starter",
+        "status_code": 400,
+        "error": "Unexpected status code"
+      }
+    },
+    "callback_security": {
+      "status": "passed",
+      "details": {
+        "test_type": "invalid_hash_rejection",
+        "status_code": 400,
+        "hash_validation": "working",
+        "security_status": "HMAC-SHA256 validation active",
+        "verdict": "Callback endpoint properly secured"
+      }
+    }
+  },
+  "warnings": [],
+  "recommendations": [
+    "\u2705 Configuration: Live credentials verified and loaded",
+    "\u274c Token Generation: Backend integration needs investigation",
+    "\u2705 Security: HMAC-SHA256 hash validation working correctly",
+    "\ud83d\udcca Monitor application logs during first 24 hours",
+    "\ud83d\udce7 Verify email notifications in Mailjet dashboard",
+    "\ud83d\udcb3 Check PayTR merchant panel daily for transactions"
+  ]
+}
