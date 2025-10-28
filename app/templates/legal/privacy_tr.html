@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+
+{% block title %}Gizlilik Politikası - YouAreCoder{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl p-8 md:p-12">
+        <!-- Header -->
+        <div class="text-center mb-10 pb-8 border-b-2 border-indigo-200">
+            <h1 class="text-4xl font-extrabold text-gray-900 mb-4">
+                🔒 Gizlilik Politikası
+            </h1>
+            <p class="text-lg text-gray-600">
+                YouAreCoder - Bulut Geliştirme Ortamları
+            </p>
+            <p class="text-sm text-gray-500 mt-2">
+                Son Güncelleme: 28 Ekim 2025 | Versiyon 1.0
+            </p>
+        </div>
+
+        <!-- Coming Soon Notice -->
+        <div class="bg-blue-50 border-l-4 border-blue-500 p-6 mb-8 rounded-r-lg">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <svg class="h-6 w-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-lg font-semibold text-blue-900">Gizlilik Politikası Güncelleniyor</h3>
+                    <p class="text-blue-800 mt-2">
+                        Kişisel verilerinizi nasıl topladığımız, kullandığımız ve koruduğumuz hakkında kapsamlı bilgi vermek için Gizlilik Politikamızı güncelliyoruz. Bu sayfa yakında hazır olacak.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Key Privacy Commitments -->
+        <section class="mb-10">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">Gizlilik Taahhütlerimiz</h2>
+
+            <div class="space-y-4">
+                <div class="flex items-start">
+                    <div class="flex-shrink-0">
+                        <div class="flex items-center justify-center h-10 w-10 rounded-full bg-green-100 text-green-600">
+                            ✓
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <h3 class="text-lg font-semibold text-gray-900">Veri Koruma</h3>
+                        <p class="text-gray-600 mt-1">
+                            Kişisel verileriniz şifrelenerek güvenli bir şekilde saklanır. GDPR ve KVKK mevzuatına uyum sağlarız.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="flex items-start">
+                    <div class="flex-shrink-0">
+                        <div class="flex items-center justify-center h-10 w-10 rounded-full bg-green-100 text-green-600">
+                            ✓
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <h3 class="text-lg font-semibold text-gray-900">Veri Satışı Yok</h3>
+                        <p class="text-gray-600 mt-1">
+                            Kişisel bilgilerinizi asla üçüncü taraflara satmayız.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="flex items-start">
+                    <div class="flex-shrink-0">
+                        <div class="flex items-center justify-center h-10 w-10 rounded-full bg-green-100 text-green-600">
+                            ✓
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <h3 class="text-lg font-semibold text-gray-900">Kullanıcı Hakları</h3>
+                        <p class="text-gray-600 mt-1">
+                            Kişisel verilerinize erişme, değiştirme veya silme hakkına her zaman sahipsiniz.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="flex items-start">
+                    <div class="flex-shrink-0">
+                        <div class="flex items-center justify-center h-10 w-10 rounded-full bg-green-100 text-green-600">
+                            ✓
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <h3 class="text-lg font-semibold text-gray-900">Şeffaflık</h3>
+                        <p class="text-gray-600 mt-1">
+                            Hangi verileri topladığımız ve neden topladığımız konusunda şeffafız.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Contact Information -->
+        <section class="bg-gray-50 rounded-xl p-6 mb-8">
+            <h2 class="text-xl font-bold text-gray-900 mb-4">Gizlilik Sorularınız mı Var?</h2>
+            <p class="text-gray-600 mb-4">
+                Gizlilik uygulamalarımız hakkında sorularınız varsa, lütfen bizimle iletişime geçin:
+            </p>
+            <div class="space-y-2 text-gray-700">
+                <p><strong>E-posta:</strong> <a href="mailto:privacy@youarecoder.com" class="text-indigo-600 hover:text-indigo-700">privacy@youarecoder.com</a></p>
+                <p><strong>Destek:</strong> <a href="mailto:support@youarecoder.com" class="text-indigo-600 hover:text-indigo-700">support@youarecoder.com</a></p>
+            </div>
+        </section>
+
+        <!-- Interim Privacy Summary -->
+        <section class="border-t-2 border-gray-200 pt-8">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">Geçici Gizlilik Bilgileri</h2>
+
+            <div class="prose prose-indigo max-w-none text-gray-700 space-y-4">
+                <h3 class="text-xl font-semibold text-gray-900">Topladığımız Veriler</h3>
+                <ul class="list-disc pl-6 space-y-2">
+                    <li>Hesap bilgileri (e-posta, şirket adı)</li>
+                    <li>Fatura bilgileri (PayTR üzerinden güvenli şekilde işlenir)</li>
+                    <li>Kullanım verileri (workspace oluşturma, giriş zamanları)</li>
+                    <li>Teknik veriler (IP adresi, tarayıcı bilgileri)</li>
+                </ul>
+
+                <h3 class="text-xl font-semibold text-gray-900 mt-6">Verilerinizi Nasıl Kullanırız</h3>
+                <ul class="list-disc pl-6 space-y-2">
+                    <li>Hizmetimizi sağlamak ve sürdürmek için</li>
+                    <li>Ödemeleri işlemek ve abonelikleri yönetmek için</li>
+                    <li>Önemli hizmet güncellemelerini iletmek için</li>
+                    <li>Platformumuzu ve kullanıcı deneyimini geliştirmek için</li>
+                    <li>Yasal yükümlülüklere uymak için</li>
+                </ul>
+
+                <h3 class="text-xl font-semibold text-gray-900 mt-6">Veri Güvenliği</h3>
+                <p>
+                    Verilerinizi korumak için şifreleme, güvenli bağlantılar (HTTPS) ve düzenli güvenlik denetimleri
+                    dahil olmak üzere endüstri standardı güvenlik önlemleri uygularız.
+                </p>
+
+                <h3 class="text-xl font-semibold text-gray-900 mt-6">Haklarınız (GDPR/KVKK)</h3>
+                <ul class="list-disc pl-6 space-y-2">
+                    <li>Kişisel verilerinize erişim hakkı</li>
+                    <li>Hatalı verilerin düzeltilmesi hakkı</li>
+                    <li>Verilerin silinmesi hakkı ("unutulma hakkı")</li>
+                    <li>Veri taşınabilirliği hakkı</li>
+                    <li>İşlemeye itiraz etme hakkı</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Back to Home -->
+        <div class="mt-10 text-center">
+            <a href="{{ url_for('main.index') }}"
+               class="inline-flex items-center px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors duration-200">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                </svg>
+                Ana Sayfaya Dön
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
