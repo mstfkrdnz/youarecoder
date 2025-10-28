@@ -123,6 +123,20 @@ def logout():
     return redirect(url_for('main.index'))
 
 
+@bp.route('/debug-ip')
+def debug_ip():
+    """Debug endpoint to check IP detection (TEMPORARY - remove after testing)."""
+    real_ip = get_real_ip()
+    headers = dict(request.headers)
+    return f"""
+    <h1>IP Detection Debug</h1>
+    <p><strong>Real IP (get_real_ip):</strong> {real_ip}</p>
+    <p><strong>request.remote_addr:</strong> {request.remote_addr}</p>
+    <h2>All Headers:</h2>
+    <pre>{chr(10).join(f'{k}: {v}' for k, v in headers.items())}</pre>
+    """
+
+
 @bp.route('/register', methods=['GET', 'POST'])
 @limiter.limit("5 per hour")  # Strict limit for registrations
 def register():
