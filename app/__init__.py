@@ -69,7 +69,8 @@ def create_app(config_name=None):
                     'https://cdn.tailwindcss.com',
                     'https://unpkg.com',
                     'https://www.paytr.com',  # PayTR payment scripts
-                    "'unsafe-inline'"  # Required for Alpine.js
+                    "'unsafe-inline'",  # Required for inline scripts
+                    "'unsafe-eval'"  # Required for Alpine.js
                 ],
                 'style-src': [
                     "'self'",
