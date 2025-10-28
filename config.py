@@ -147,6 +147,7 @@ class DevelopmentConfig(Config):
     TESTING = False
     SQLALCHEMY_ECHO = True
     SESSION_COOKIE_SECURE = False  # Allow HTTP in development
+    RATELIMIT_ENABLED = False  # Disable rate limiting in development
 
     # Email settings for development
     MAIL_SUPPRESS_SEND = True  # Don't send real emails, print to console
