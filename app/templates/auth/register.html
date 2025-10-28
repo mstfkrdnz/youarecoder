@@ -264,8 +264,8 @@
     <script>
         function registrationForm() {
             return {
-                companyName: '',
-                subdomain: '',
+                companyName: '{{ form.company_name.data or '' }}',
+                subdomain: '{{ form.subdomain.data or '' }}',
                 password: '',
                 passwordConfirm: '',
                 passwordMismatch: false,
