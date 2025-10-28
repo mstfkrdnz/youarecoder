@@ -391,7 +391,9 @@
 
         // Update all price displays
         document.querySelectorAll('.price-display').forEach(priceEl => {
-            const price = priceEl.dataset[`price${currency.toLowerCase()}`];
+            // Convert currency to proper dataset key: USD -> priceUsd, EUR -> priceEur
+            const datasetKey = `price${currency.charAt(0).toUpperCase()}${currency.slice(1).toLowerCase()}`;
+            const price = priceEl.dataset[datasetKey];
             const symbol = currencySymbols[currency];
             priceEl.textContent = `${symbol}${price}`;
         });
