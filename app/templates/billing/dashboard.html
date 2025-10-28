@@ -1,90 +1,396 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ title }} - YouAreCoder</title>
-</head>
-<body>
-    <div class="container">
-        <h1>Billing & Subscription</h1>
+{% extends "base.html" %}
 
+{% block title %}Billing & Subscription - YouAreCoder{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <div class="text-center mb-12">
+            <h1 class="text-4xl font-extrabold text-gray-900 sm:text-5xl">
+                💳 Billing & Subscription
+            </h1>
+            <p class="mt-4 text-xl text-gray-600">
+                Manage your subscription and payment details
+            </p>
+        </div>
+
+        <!-- Current Subscription Status -->
         {% if subscription %}
-        <div class="subscription-info">
-            <h2>Current Subscription</h2>
-            <p>Plan: {{ subscription.plan|title }}</p>
-            <p>Status: {{ subscription.status|title }}</p>
-            {% if subscription.status == 'trial' %}
-            <p>Trial ends: {{ subscription.trial_ends_at.strftime('%Y-%m-%d') }}</p>
-            {% else %}
-            <p>Next billing date: {{ subscription.current_period_end.strftime('%Y-%m-%d') }}</p>
-            {% endif %}
+        <div class="mb-12 max-w-3xl mx-auto">
+            <div class="bg-white rounded-2xl shadow-xl border-2 border-blue-200 overflow-hidden">
+                <div class="bg-gradient-to-r from-blue-500 to-purple-600 px-6 py-4">
+                    <h2 class="text-2xl font-bold text-white flex items-center">
+                        <svg class="w-8 h-8 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        Current Subscription
+                    </h2>
+                </div>
+                <div class="px-6 py-6 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-600 font-medium">Plan:</span>
+                        <span class="text-2xl font-bold text-blue-600">{{ subscription.plan|title }}</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-600 font-medium">Status:</span>
+                        {% if subscription.status == 'trial' %}
+                        <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold bg-yellow-100 text-yellow-800">
+                            <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path>
+                            </svg>
+                            Trial Period
+                        </span>
+                        {% elif subscription.status == 'active' %}
+                        <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold bg-green-100 text-green-800">
+                            <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                            </svg>
+                            Active
+                        </span>
+                        {% elif subscription.status == 'cancelled' %}
+                        <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold bg-red-100 text-red-800">
+                            <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+                            </svg>
+                            Cancelled
+                        </span>
+                        {% else %}
+                        <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold bg-gray-100 text-gray-800">
+                            {{ subscription.status|title }}
+                        </span>
+                        {% endif %}
+                    </div>
+                    {% if subscription.status == 'trial' %}
+                    <div class="flex items-center justify-between pt-4 border-t border-gray-200">
+                        <span class="text-gray-600 font-medium">Trial Ends:</span>
+                        <span class="text-lg font-bold text-orange-600">{{ subscription.trial_ends_at.strftime('%B %d, %Y') }}</span>
+                    </div>
+                    {% else %}
+                    <div class="flex items-center justify-between pt-4 border-t border-gray-200">
+                        <span class="text-gray-600 font-medium">Next Billing Date:</span>
+                        <span class="text-lg font-bold text-blue-600">{{ subscription.current_period_end.strftime('%B %d, %Y') }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
         </div>
         {% else %}
-        <div class="no-subscription">
-            <h2>No Active Subscription</h2>
-            <p>Choose a plan to get started!</p>
-        </div>
-        {% endif %}
-
-        <div class="plans">
-            <h2>Available Plans</h2>
-            {% for plan_key, plan_info in plans.items() %}
-            <div class="plan">
-                <h3>{{ plan_info.name }}</h3>
-                <p>${{ plan_info.price_usd }}/month</p>
-                <p>{{ plan_info.workspaces }} workspaces</p>
-                <button onclick="subscribeToPlan('{{ plan_key }}')">Select Plan</button>
+        <div class="mb-12 max-w-3xl mx-auto">
+            <div class="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-2xl shadow-lg border-2 border-yellow-200 px-8 py-10 text-center">
+                <div class="inline-flex items-center justify-center w-20 h-20 bg-yellow-100 rounded-full mb-6">
+                    <svg class="w-10 h-10 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <h2 class="text-3xl font-bold text-gray-900 mb-3">No Active Subscription</h2>
+                <p class="text-lg text-gray-700 mb-6">Choose a plan below to unlock the full power of YouAreCoder!</p>
+                <div class="inline-flex items-center px-6 py-3 bg-yellow-100 rounded-lg">
+                    <svg class="w-6 h-6 text-yellow-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd"></path>
+                    </svg>
+                    <span class="text-yellow-800 font-semibold">All plans include 14-day free trial!</span>
+                </div>
             </div>
-            {% endfor %}
-        </div>
-
-        {% if payments %}
-        <div class="payment-history">
-            <h2>Payment History</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Amount</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for payment in payments %}
-                    <tr>
-                        <td>{{ payment.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
-                        <td>{{ payment.amount_display() }}</td>
-                        <td>{{ payment.status|title }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
         </div>
         {% endif %}
-    </div>
 
-    <script>
-        function subscribeToPlan(plan) {
-            fetch(`/billing/subscribe/${plan}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    window.location.href = data.iframe_url;
-                } else {
-                    alert('Error: ' + data.error);
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('An error occurred. Please try again.');
-            });
+        <!-- Available Plans -->
+        <div class="mb-16">
+            <div class="text-center mb-10">
+                <h2 class="text-3xl font-extrabold text-gray-900 sm:text-4xl mb-4">
+                    🚀 Available Plans
+                </h2>
+                <p class="text-lg text-gray-600">
+                    Choose the perfect plan for your development needs
+                </p>
+            </div>
+
+            <!-- DEBUG: plans = {{ plans }} -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-7xl mx-auto">
+                {% for plan_key, plan_info in plans.items() %}
+                <div class="relative bg-white rounded-2xl shadow-xl border-2 {% if plan_info.popular %}border-purple-500 transform scale-105{% else %}border-gray-200 hover:border-blue-300{% endif %} transition-all duration-300 hover:shadow-2xl overflow-hidden">
+                    {% if plan_info.popular %}
+                    <div class="absolute top-0 right-0 bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-2 rounded-bl-xl font-bold text-sm">
+                        ⭐ MOST POPULAR
+                    </div>
+                    {% endif %}
+
+                    <div class="p-8">
+                        <!-- Plan Name -->
+                        <h3 class="text-2xl font-bold text-gray-900 mb-2">{{ plan_info.name }}</h3>
+
+                        <!-- Pricing -->
+                        <div class="mb-6">
+                            <div class="flex items-baseline">
+                                <span class="text-5xl font-extrabold text-gray-900">${{ plan_info.price_usd }}</span>
+                                <span class="text-xl text-gray-600 ml-2">/month</span>
+                            </div>
+                            <div class="text-sm text-gray-500 mt-1">
+                                ₺{{ "{:,.0f}".format(plan_info.price_try) }}/month
+                            </div>
+                        </div>
+
+                        <!-- Workspaces & Storage -->
+                        <div class="space-y-3 mb-6">
+                            <div class="flex items-center text-gray-700">
+                                <svg class="w-5 h-5 text-green-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                </svg>
+                                <span class="font-semibold">{% if plan_info.workspaces == -1 %}Unlimited{% else %}{{ plan_info.workspaces }}{% endif %} Workspaces</span>
+                            </div>
+                            <div class="flex items-center text-gray-700">
+                                <svg class="w-5 h-5 text-green-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                </svg>
+                                <span class="font-semibold">{{ plan_info.storage_gb }} GB Storage</span>
+                            </div>
+                        </div>
+
+                        <!-- Features List -->
+                        <div class="border-t border-gray-200 pt-6 mb-8">
+                            <ul class="space-y-3">
+                                {% for feature in plan_info.features %}
+                                <li class="flex items-start">
+                                    <svg class="w-5 h-5 text-blue-500 mr-3 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                    </svg>
+                                    <span class="text-gray-700">{{ feature }}</span>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+
+                        <!-- Subscribe Button -->
+                        <button
+                            onclick="subscribeToPlan('{{ plan_key }}', event)"
+                            class="w-full {% if plan_info.popular %}bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700{% else %}bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800{% endif %} text-white font-bold py-4 px-6 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl"
+                        >
+                            Select {{ plan_info.name }} Plan
+                        </button>
+
+                        {% if not subscription or subscription.status == 'trial' %}
+                        <p class="text-center text-sm text-gray-500 mt-3">
+                            ✨ 14-day free trial included
+                        </p>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Payment History -->
+        {% if payments %}
+        <div class="mb-12 max-w-6xl mx-auto">
+            <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+                <div class="bg-gradient-to-r from-green-500 to-teal-600 px-6 py-4">
+                    <h2 class="text-2xl font-bold text-white flex items-center">
+                        <svg class="w-8 h-8 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                        </svg>
+                        Payment History
+                    </h2>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-50 border-b border-gray-200">
+                            <tr>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Date</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Amount</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            {% for payment in payments %}
+                            <tr class="hover:bg-gray-50 transition-colors">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    {{ payment.created_at.strftime('%B %d, %Y at %H:%M') }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
+                                    {{ payment.amount_display() }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    {% if payment.status == 'success' %}
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
+                                        <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                        </svg>
+                                        Success
+                                    </span>
+                                    {% elif payment.status == 'failed' %}
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800">
+                                        <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+                                        </svg>
+                                        Failed
+                                    </span>
+                                    {% elif payment.status == 'pending' %}
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800">
+                                        <svg class="w-4 h-4 mr-1 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                                        </svg>
+                                        Pending
+                                    </span>
+                                    {% else %}
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-800">
+                                        {{ payment.status|title }}
+                                    </span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Invoices -->
+        {% if invoices %}
+        <div class="mb-12 max-w-6xl mx-auto">
+            <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+                <div class="bg-gradient-to-r from-indigo-500 to-purple-600 px-6 py-4">
+                    <h2 class="text-2xl font-bold text-white flex items-center">
+                        <svg class="w-8 h-8 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        Invoices
+                    </h2>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-50 border-b border-gray-200">
+                            <tr>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Invoice #</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Date</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Amount</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            {% for invoice in invoices %}
+                            <tr class="hover:bg-gray-50 transition-colors">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-blue-600">
+                                    {{ invoice.invoice_number }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    {{ invoice.created_at.strftime('%B %d, %Y') }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
+                                    {{ invoice.amount_display }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    {% if invoice.status == 'paid' %}
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
+                                        ✓ Paid
+                                    </span>
+                                    {% elif invoice.status == 'pending' %}
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800">
+                                        ⏳ Pending
+                                    </span>
+                                    {% else %}
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-800">
+                                        {{ invoice.status|title }}
+                                    </span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+
+<!-- PayTR Payment Modal -->
+<div id="paytrModal" class="hidden fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+        <div class="bg-gradient-to-r from-blue-600 to-purple-600 px-6 py-4 flex items-center justify-between">
+            <h3 class="text-2xl font-bold text-white">Complete Payment</h3>
+            <button onclick="closePaytrModal()" class="text-white hover:text-gray-200 transition-colors">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        <div id="paytrIframeContainer" class="p-6 overflow-y-auto max-h-[calc(90vh-80px)]">
+            <!-- PayTR iframe will be inserted here -->
+        </div>
+    </div>
+</div>
+
+<script>
+    function subscribeToPlan(plan, event) {
+        // Show loading state
+        const button = event.target;
+        button.disabled = true;
+        button.innerHTML = '<svg class="animate-spin h-5 w-5 mx-auto" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
+
+        fetch(`/billing/subscribe/${plan}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token() }}'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.iframe_token) {
+                openPaytrModal(data.iframe_token);
+            } else {
+                alert('Error: ' + (data.error || 'Failed to initialize payment'));
+                button.disabled = false;
+                button.innerHTML = `Select ${plan.charAt(0).toUpperCase() + plan.slice(1)} Plan`;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred. Please try again.');
+            button.disabled = false;
+            button.innerHTML = `Select ${plan.charAt(0).toUpperCase() + plan.slice(1)} Plan`;
+        });
+    }
+
+    function openPaytrModal(iframeToken) {
+        const modal = document.getElementById('paytrModal');
+        const container = document.getElementById('paytrIframeContainer');
+
+        // Create iframe HTML
+        container.innerHTML = `
+            <iframe src="https://www.paytr.com/odeme/guvenli/${iframeToken}"
+                    id="paytriframe"
+                    frameborder="0"
+                    scrolling="yes"
+                    style="width: 100%; height: 600px;">
+            </iframe>
+        `;
+
+        modal.classList.remove('hidden');
+    }
+
+    function closePaytrModal() {
+        const modal = document.getElementById('paytrModal');
+        const container = document.getElementById('paytrIframeContainer');
+
+        modal.classList.add('hidden');
+        container.innerHTML = '';
+
+        // Reload page to show updated subscription status
+        window.location.reload();
+    }
+
+    // Close modal on escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closePaytrModal();
         }
-    </script>
-</body>
-</html>
+    });
+</script>
+
+{% endblock %}

@@ -13,6 +13,7 @@ from flask import Blueprint, render_template, request, jsonify, redirect, url_fo
 from flask_login import login_required, current_user
 
 from app.services.paytr_service import PayTRService
+from app.models import Payment, Invoice
 
 logger = logging.getLogger(__name__)
 
@@ -64,7 +65,7 @@ def subscribe(plan):
             plan=plan,
             user_ip=user_ip,
             user_email=current_user.email,
-            currency='USD'  # Default to USD, can be made configurable
+            currency='TRY'  # PayTR only accepts TRY (Turkish Lira)
         )
 
         if result['success']:
@@ -208,8 +209,8 @@ def billing_dashboard():
     try:
         company = current_user.company
         subscription = company.subscription
-        payments = company.payments.order_by('created_at desc').limit(10).all()
-        invoices = company.invoices.order_by('created_at desc').limit(10).all()
+        payments = company.payments.order_by(Payment.created_at.desc()).limit(10).all()
+        invoices = company.invoices.order_by(Invoice.created_at.desc()).limit(10).all()
 
         # Get plan details from config
         from flask import current_app

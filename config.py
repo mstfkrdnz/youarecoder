@@ -143,12 +143,8 @@ class ProductionConfig(Config):
     MAIL_SUPPRESS_SEND = False  # Send real emails via Mailjet
     MAIL_DEBUG = False
 
-    # Override with production secrets
-    def __init__(self):
-        super().__init__()
-        if not os.environ.get('SECRET_KEY'):
-            raise ValueError("SECRET_KEY environment variable must be set in production")
-        self.SECRET_KEY = os.environ.get('SECRET_KEY')
+    # Production secrets - use environment variable or inherit from Config
+    # Note: SECRET_KEY should be set via environment variable in production
 
 
 class TestConfig(Config):

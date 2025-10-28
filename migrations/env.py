@@ -12,7 +12,7 @@ sys.path.insert(0, os.path.realpath(os.path.join(os.path.dirname(__file__), '..'
 
 # Import Flask app and database
 from app import create_app, db
-from app.models import Company, User, Workspace
+from app.models import Company, User, Workspace, LoginAttempt, Subscription, Payment, Invoice
 
 # this is the Alembic Config object
 config = context.config

@@ -63,7 +63,7 @@ class PayTRService:
         user_ip: str,
         user_email: str,
         payment_type: str = 'card',
-        currency: str = 'USD'
+        currency: str = 'TRY'
     ) -> Dict[str, any]:
         """
         Generate PayTR iFrame token for payment processing.
@@ -122,8 +122,9 @@ class PayTRService:
             # Convert to cents/kuruş (9.99 -> 999)
             payment_amount = int(amount_decimal * 100)
 
-            # Generate unique merchant order ID (timestamp-based)
-            merchant_oid = f"YAC-{int(time.time())}-{company.id}"
+            # Generate unique merchant order ID (alphanumeric only, no special chars)
+            # Format: YAC + timestamp + company_id (e.g., YAC17300000001)
+            merchant_oid = f"YAC{int(time.time())}{company.id}"
 
             # Create payment record in database
             payment = Payment(
@@ -132,6 +133,7 @@ class PayTRService:
                 paytr_merchant_oid=merchant_oid,
                 amount=payment_amount,
                 currency=currency,
+                plan=plan,  # Store plan info for callback processing
                 status='pending',
                 payment_type='initial',
                 test_mode=(self.test_mode == '1'),
@@ -155,10 +157,11 @@ class PayTRService:
             no_installment = '0'
             max_installment = '0'
 
-            # Success and failure URLs
+            # Success, failure, and callback URLs
             base_url = current_app.config.get('BASE_URL', 'https://youarecoder.com')
             merchant_ok_url = f"{base_url}/billing/payment/success"
             merchant_fail_url = f"{base_url}/billing/payment/fail"
+            merchant_oid_url = f"{base_url}/billing/callback"  # PayTR notification callback
 
             # Generate PayTR token using HMAC-SHA256
             # Hash formula: merchant_id + user_ip + merchant_oid + email + payment_amount +
@@ -194,6 +197,7 @@ class PayTRService:
                 'user_phone': '0000000000',
                 'merchant_ok_url': merchant_ok_url,
                 'merchant_fail_url': merchant_fail_url,
+                'merchant_oid_url': merchant_oid_url,  # Callback/notification URL (required)
                 'timeout_limit': self.timeout_limit,
                 'currency': currency,
                 'test_mode': self.test_mode,
@@ -220,6 +224,7 @@ class PayTRService:
                 return {
                     'success': True,
                     'token': token,
+                    'iframe_token': token,  # Frontend expects iframe_token
                     'iframe_url': iframe_url,
                     'payment_id': payment.id,
                     'merchant_oid': merchant_oid
@@ -396,24 +401,51 @@ class PayTRService:
                 subscription = company.subscription
 
                 if not subscription:
-                    # Create new subscription
+                    # Create new subscription with plan from payment record
                     subscription = Subscription(
                         company_id=company.id,
-                        plan=company.plan,
+                        plan=payment.plan,  # Use plan from payment record
                         status='active',
                         current_period_start=datetime.utcnow(),
                         current_period_end=datetime.utcnow() + timedelta(days=30)
                     )
                     db.session.add(subscription)
+
+                    # Update company plan and workspace limits
+                    company.plan = payment.plan  # Update company plan
+                    plan_config = current_app.config.get('PLANS', {}).get(payment.plan, {})
+                    if plan_config:
+                        company.max_workspaces = plan_config.get('max_workspaces', 1)
+                        logger.info(f"Updated company {company.id} to {payment.plan} plan with max_workspaces={company.max_workspaces}")
                 else:
                     # Update existing subscription
                     if subscription.status == 'trial':
                         # First payment after trial
                         subscription.status = 'active'
+                        subscription.plan = payment.plan  # Update to paid plan
                         subscription.current_period_start = datetime.utcnow()
                         subscription.current_period_end = datetime.utcnow() + timedelta(days=30)
+
+                        # Update company plan and workspace limits
+                        company.plan = payment.plan  # Update company plan
+                        plan_config = current_app.config.get('PLANS', {}).get(payment.plan, {})
+                        if plan_config:
+                            company.max_workspaces = plan_config.get('max_workspaces', 1)
+                            logger.info(f"Updated company {company.id} to {payment.plan} plan with max_workspaces={company.max_workspaces}")
                     else:
-                        # Renewal payment
+                        # Renewal payment - check if plan changed (upgrade/downgrade)
+                        if subscription.plan != payment.plan:
+                            logger.info(f"Plan change detected: {subscription.plan} -> {payment.plan}")
+                            subscription.plan = payment.plan
+
+                            # Update company plan and workspace limits for new plan
+                            company.plan = payment.plan  # Update company plan
+                            plan_config = current_app.config.get('PLANS', {}).get(payment.plan, {})
+                            if plan_config:
+                                company.max_workspaces = plan_config.get('max_workspaces', 1)
+                                logger.info(f"Updated company {company.id} to {payment.plan} plan with max_workspaces={company.max_workspaces}")
+
+                        # Extend subscription period
                         subscription.current_period_start = subscription.current_period_end
                         subscription.current_period_end = subscription.current_period_end + timedelta(days=30)
 

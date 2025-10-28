@@ -33,7 +33,7 @@
                     </div>
                 </div>
 
-                <form method="POST" action="{{ url_for('workspace.create') }}" class="mt-5">
+                <form method="POST" action="{{ url_for('workspace.create') }}" hx-boost="false" class="mt-5">
                     {{ form.hidden_tag() }}
 
                     <div class="space-y-4">

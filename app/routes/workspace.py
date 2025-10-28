@@ -1,7 +1,7 @@
 """
 Workspace routes (create, delete, manage).
 """
-from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, current_app
+from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, current_app, make_response
 from flask_login import login_required, current_user
 from app import db
 from app.models import Workspace
@@ -12,14 +12,12 @@ from app.utils.decorators import require_workspace_ownership
 
 bp = Blueprint('workspace', __name__, url_prefix='/workspace')
 
-
 @bp.route('/')
 @login_required
 def list():
     """List all workspaces for current company."""
     workspaces = Workspace.query.filter_by(company_id=current_user.company_id).all()
     return render_template('workspace/list.html', workspaces=workspaces)
-
 
 @bp.route('/create', methods=['GET', 'POST'])
 @login_required
@@ -44,10 +42,12 @@ def create():
             code_server_password = provisioner.generate_password()
 
             # Create workspace record
+            # Sanitize workspace name for Linux username (replace hyphens with underscores)
+            sanitized_name = form.name.data.replace('-', '_')
             workspace = Workspace(
                 name=form.name.data,
                 subdomain=f"{current_user.company.subdomain}-{form.name.data}",
-                linux_username=f"{current_user.company.subdomain}_{form.name.data}",
+                linux_username=f"{current_user.company.subdomain}_{sanitized_name}",
                 port=port,
                 code_server_password=code_server_password,
                 company_id=current_user.company.id,
@@ -78,13 +78,13 @@ def create():
         except WorkspaceProvisionerError as e:
             current_app.logger.error(f"Workspace provisioning error: {str(e)}")
             flash(f'Error creating workspace: {str(e)}', 'error')
-            return redirect(url_for('main.dashboard'))
+            
+            return redirect(url_for("main.dashboard"))
 
-        return redirect(url_for('main.dashboard'))
+        return redirect(url_for("main.dashboard"))
 
-    # GET request - return modal for HTMX
-    return render_template('workspace/create_modal.html', form=form)
-
+    # GET request - return full page template
+    return render_template('workspace/create.html', form=form)
 
 @bp.route('/<int:workspace_id>/delete', methods=['POST'])
 @login_required
@@ -112,7 +112,6 @@ def delete(workspace_id):
 
     return redirect(url_for('main.dashboard'))
 
-
 @bp.route('/<int:workspace_id>')
 @login_required
 @require_workspace_ownership
@@ -120,7 +119,6 @@ def view(workspace_id):
     """View workspace details route."""
     workspace = Workspace.query.get_or_404(workspace_id)
     return render_template('workspace/view.html', workspace=workspace)
-
 
 @bp.route('/<int:workspace_id>/manage')
 @login_required
