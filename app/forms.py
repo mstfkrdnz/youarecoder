@@ -78,6 +78,12 @@ class RegistrationForm(FlaskForm):
         EqualTo('password', message="Passwords must match")
     ])
 
+    # Legal acceptance
+    accept_terms = BooleanField('I accept the Terms of Service',
+                               validators=[DataRequired(message="You must accept the Terms of Service")])
+    accept_privacy = BooleanField('I accept the Privacy Policy',
+                                 validators=[DataRequired(message="You must accept the Privacy Policy")])
+
     submit = SubmitField('Create Account')
 
 

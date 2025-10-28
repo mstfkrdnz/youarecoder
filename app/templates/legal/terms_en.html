@@ -1,0 +1,491 @@
+{% extends "base.html" %}
+
+{% block title %}Terms of Service - YouAreCoder{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl p-8 md:p-12">
+        <!-- Header -->
+        <div class="text-center mb-10 pb-8 border-b-2 border-indigo-200">
+            <h1 class="text-4xl font-extrabold text-gray-900 mb-4">
+                📜 Terms of Service
+            </h1>
+            <p class="text-lg text-gray-600">
+                <strong>Effective Date:</strong> October 28, 2025 | <strong>Version:</strong> 1.0
+            </p>
+            <p class="mt-2 text-sm text-gray-500">
+                <a href="{{ url_for('legal.terms_tr') }}" class="text-indigo-600 hover:text-indigo-700 font-semibold">
+                    🌐 Türkçe versiyona geç
+                </a>
+            </p>
+        </div>
+
+        <!-- Introduction -->
+        <div class="mb-10 bg-blue-50 border-l-4 border-blue-500 p-6 rounded-r-lg">
+            <h2 class="text-2xl font-bold text-gray-900 mb-3">Introduction</h2>
+            <p class="text-gray-700 leading-relaxed">
+                By using the YouAreCoder platform (<strong>youarecoder.com</strong>), you agree to be bound by these Terms of Service.
+                Please read this document carefully before using our services. If you do not agree to these terms,
+                you should not use our services.
+            </p>
+            <p class="mt-3 text-sm text-gray-600">
+                <strong>Service Provider:</strong> Alkedos Teknoloji A.Ş. | <strong>Registry No:</strong> [Trade Registry Number]
+            </p>
+        </div>
+
+        <!-- Section 1 -->
+        <section class="mb-10">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4 flex items-center">
+                <span class="inline-flex items-center justify-center w-10 h-10 bg-indigo-100 text-indigo-600 rounded-full mr-3 font-bold">1</span>
+                Service Definition
+            </h2>
+            <div class="ml-13 text-gray-700 space-y-3">
+                <p class="leading-relaxed">
+                    YouAreCoder is a SaaS (Software as a Service) platform that provides users with
+                    <strong>cloud-based software development environments (workspaces)</strong>. Our service includes:
+                </p>
+                <ul class="list-disc list-inside space-y-2 pl-4">
+                    <li><strong>Code-Server IDE:</strong> Browser-based VS Code development environment</li>
+                    <li><strong>Cloud Workspaces:</strong> Remotely accessible, private development spaces</li>
+                    <li><strong>SSL Certificates:</strong> Secure HTTPS access (Let's Encrypt)</li>
+                    <li><strong>Automatic Backup:</strong> Security for your workspace data</li>
+                    <li><strong>24/7 Access:</strong> Global internet access</li>
+                </ul>
+                <p class="leading-relaxed mt-4">
+                    <strong>Service Location:</strong> Our servers are located in Turkey (IP: 37.27.21.167).
+                    However, our service is globally accessible.
+                </p>
+            </div>
+        </section>
+
+        <!-- Section 2 -->
+        <section class="mb-10 bg-gray-50 p-6 rounded-lg">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4 flex items-center">
+                <span class="inline-flex items-center justify-center w-10 h-10 bg-indigo-100 text-indigo-600 rounded-full mr-3 font-bold">2</span>
+                Account and Registration
+            </h2>
+            <div class="ml-13 text-gray-700 space-y-3">
+                <p class="leading-relaxed">
+                    <strong>2.1. Registration Requirements:</strong>
+                </p>
+                <ul class="list-disc list-inside space-y-2 pl-4">
+                    <li>Must be 18 years or older, or have legal guardian approval</li>
+                    <li>Must provide accurate and current information (company name, email, subdomain)</li>
+                    <li>Email verification is mandatory</li>
+                    <li>Strong password policy required (minimum 8 characters, upper/lowercase, numbers, special characters)</li>
+                </ul>
+
+                <p class="leading-relaxed mt-4">
+                    <strong>2.2. Account Responsibility:</strong>
+                </p>
+                <ul class="list-disc list-inside space-y-2 pl-4">
+                    <li>You are responsible for account security</li>
+                    <li>Do not share your password with anyone</li>
+                    <li>Report suspicious activity immediately (support@youarecoder.com)</li>
+                    <li>You are responsible for all activities on your account</li>
+                </ul>
+
+                <p class="leading-relaxed mt-4">
+                    <strong>2.3. Multiple Account Policy:</strong>
+                </p>
+                <p class="pl-4">
+                    One company/user can only create one account. If multiple accounts are detected, all accounts may be suspended.
+                </p>
+            </div>
+        </section>
+
+        <!-- Section 3 -->
+        <section class="mb-10">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4 flex items-center">
+                <span class="inline-flex items-center justify-center w-10 h-10 bg-indigo-100 text-indigo-600 rounded-full mr-3 font-bold">3</span>
+                Payment and Billing
+            </h2>
+            <div class="ml-13 text-gray-700 space-y-3">
+                <p class="leading-relaxed">
+                    <strong>3.1. Subscription Plans:</strong>
+                </p>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 my-4">
+                    <div class="border-2 border-blue-200 rounded-lg p-4 bg-blue-50">
+                        <h3 class="font-bold text-lg text-blue-900">Starter Plan</h3>
+                        <p class="text-2xl font-extrabold text-blue-600">$29<span class="text-sm">/mo</span></p>
+                        <p class="text-sm text-gray-600">₺870/mo</p>
+                        <ul class="mt-3 text-sm space-y-1">
+                            <li>✓ 5 Workspaces</li>
+                            <li>✓ 10GB Storage</li>
+                        </ul>
+                    </div>
+                    <div class="border-2 border-purple-300 rounded-lg p-4 bg-purple-50 transform scale-105 shadow-lg">
+                        <div class="text-xs font-bold text-purple-600 mb-1">⭐ MOST POPULAR</div>
+                        <h3 class="font-bold text-lg text-purple-900">Team Plan</h3>
+                        <p class="text-2xl font-extrabold text-purple-600">$99<span class="text-sm">/mo</span></p>
+                        <p class="text-sm text-gray-600">₺2,970/mo</p>
+                        <ul class="mt-3 text-sm space-y-1">
+                            <li>✓ 20 Workspaces</li>
+                            <li>✓ 50GB Storage</li>
+                        </ul>
+                    </div>
+                    <div class="border-2 border-indigo-200 rounded-lg p-4 bg-indigo-50">
+                        <h3 class="font-bold text-lg text-indigo-900">Enterprise Plan</h3>
+                        <p class="text-2xl font-extrabold text-indigo-600">$299<span class="text-sm">/mo</span></p>
+                        <p class="text-sm text-gray-600">₺8,970/mo</p>
+                        <ul class="mt-3 text-sm space-y-1">
+                            <li>✓ Unlimited Workspaces</li>
+                            <li>✓ 250GB Storage</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <p class="leading-relaxed mt-4">
+                    <strong>3.2. Trial Period:</strong>
+                </p>
+                <ul class="list-disc list-inside space-y-2 pl-4">
+                    <li>All new accounts start with a <strong>14-day free trial</strong></li>
+                    <li>No credit card required during trial</li>
+                    <li>Account automatically suspended if no payment after trial</li>
+                    <li>Access to all plan features during trial</li>
+                </ul>
+
+                <p class="leading-relaxed mt-4">
+                    <strong>3.3. Automatic Renewal:</strong>
+                </p>
+                <ul class="list-disc list-inside space-y-2 pl-4">
+                    <li>Subscriptions <strong>automatically renew monthly</strong></li>
+                    <li>Email notification sent 7 days before renewal</li>
+                    <li>Secure payment infrastructure via PayTR</li>
+                    <li>Supported currencies: TRY, USD, EUR</li>
+                </ul>
+
+                <p class="leading-relaxed mt-4">
+                    <strong>3.4. Invoicing:</strong>
+                </p>
+                <ul class="list-disc list-inside space-y-2 pl-4">
+                    <li>Automatic e-invoice sent after each payment</li>
+                    <li>Invoices accessible from Billing panel</li>
+                    <li>Compliant with Turkish Ministry of Finance regulations</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Section 4 -->
+        <section class="mb-10 bg-gray-50 p-6 rounded-lg">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4 flex items-center">
+                <span class="inline-flex items-center justify-center w-10 h-10 bg-indigo-100 text-indigo-600 rounded-full mr-3 font-bold">4</span>
+                Usage Conditions
+            </h2>
+            <div class="ml-13 text-gray-700 space-y-3">
+                <p class="leading-relaxed">
+                    <strong>4.1. Permitted Use:</strong>
+                </p>
+                <ul class="list-disc list-inside space-y-2 pl-4">
+                    <li>Software development, testing, and deployment purposes</li>
+                    <li>Educational and learning project development</li>
+                    <li>Team collaboration and code sharing</li>
+                    <li>Legal and ethical applications</li>
+                </ul>
+
+                <p class="leading-relaxed mt-4">
+                    <strong>4.2. Prohibited Activities:</strong>
+                </p>
+                <ul class="list-disc list-inside space-y-2 pl-4 text-red-700 font-semibold">
+                    <li>❌ Malware development (viruses, trojans)</li>
+                    <li>❌ Phishing or social engineering attacks</li>
+                    <li>❌ DDoS attacks or network abuse</li>
+                    <li>❌ Copyright infringement (pirated software, unlicensed content)</li>
+                    <li>❌ Crypto mining (CPU/RAM abuse)</li>
+                    <li>❌ Spam sending or automated bot operations</li>
+                    <li>❌ Hosting illegal content</li>
+                </ul>
+
+                <p class="leading-relaxed mt-4">
+                    <strong>4.3. Resource Usage:</strong>
+                </p>
+                <ul class="list-disc list-inside space-y-2 pl-4">
+                    <li>Each workspace is subject to resource limits based on your plan</li>
+                    <li>Warning sent if excessive resource usage (CPU, RAM, Disk) detected</li>
+                    <li>Workspace may be suspended for continuous abuse</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Section 5 -->
+        <section class="mb-10">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4 flex items-center">
+                <span class="inline-flex items-center justify-center w-10 h-10 bg-indigo-100 text-indigo-600 rounded-full mr-3 font-bold">5</span>
+                Cancellation and Refund Policy
+            </h2>
+            <div class="ml-13 text-gray-700 space-y-3">
+                <p class="leading-relaxed">
+                    <strong>5.1. Cancellation:</strong>
+                </p>
+                <ul class="list-disc list-inside space-y-2 pl-4">
+                    <li>You can cancel your subscription at any time</li>
+                    <li>Click "Cancel Subscription" button in Billing panel</li>
+                    <li>Service continues until the end of current period after cancellation</li>
+                    <li>No charges for the next period</li>
+                </ul>
+
+                <p class="leading-relaxed mt-4">
+                    <strong>5.2. Refund Policy:</strong>
+                </p>
+                <div class="bg-green-50 border-l-4 border-green-500 p-4 my-3 rounded-r-lg">
+                    <p class="font-semibold text-green-900">✅ 14-Day Guarantee:</p>
+                    <p class="text-green-800 mt-2">
+                        If you're not satisfied within 14 days after your first subscription payment,
+                        <strong>100% money-back guarantee</strong>. Email support@youarecoder.com for refund request.
+                    </p>
+                </div>
+                <ul class="list-disc list-inside space-y-2 pl-4">
+                    <li><strong>Pro-rated Refund:</strong> If canceled mid-subscription, pro-rated refund for unused days</li>
+                    <li><strong>Refund Process:</strong> Refund request processed within 3-5 business days</li>
+                    <li><strong>Refund Method:</strong> Refunded to original payment card/account</li>
+                </ul>
+
+                <p class="leading-relaxed mt-4">
+                    <strong>5.3. Non-Refundable Situations:</strong>
+                </p>
+                <ul class="list-disc list-inside space-y-2 pl-4 text-gray-600">
+                    <li>Account closed due to Terms of Service violation</li>
+                    <li>Abuse detected</li>
+                    <li>Refund request after 14-day period (except pro-rated refund)</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Section 6 -->
+        <section class="mb-10 bg-gray-50 p-6 rounded-lg">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4 flex items-center">
+                <span class="inline-flex items-center justify-center w-10 h-10 bg-indigo-100 text-indigo-600 rounded-full mr-3 font-bold">6</span>
+                Service Level Agreement (SLA)
+            </h2>
+            <div class="ml-13 text-gray-700 space-y-3">
+                <p class="leading-relaxed">
+                    <strong>6.1. Uptime:</strong>
+                </p>
+                <ul class="list-disc list-inside space-y-2 pl-4">
+                    <li><strong>Target:</strong> 99.5% monthly uptime</li>
+                    <li><strong>Scheduled Maintenance:</strong> Pre-announced, typically during night hours</li>
+                    <li><strong>Emergency Maintenance:</strong> Immediate intervention for critical security updates</li>
+                </ul>
+
+                <p class="leading-relaxed mt-4">
+                    <strong>6.2. Support:</strong>
+                </p>
+                <ul class="list-disc list-inside space-y-2 pl-4">
+                    <li><strong>Starter Plan:</strong> Email support (48-hour response)</li>
+                    <li><strong>Team Plan:</strong> Priority email support (24-hour response)</li>
+                    <li><strong>Enterprise Plan:</strong> Dedicated support + SLA guarantee (4-hour response)</li>
+                </ul>
+
+                <p class="leading-relaxed mt-4">
+                    <strong>6.3. Data Backup:</strong>
+                </p>
+                <ul class="list-disc list-inside space-y-2 pl-4">
+                    <li>Daily automatic backup (last 7 days retained)</li>
+                    <li>Restore within 24 hours in case of data loss</li>
+                    <li>Users should also take their own backups (best practice)</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Section 7 -->
+        <section class="mb-10">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4 flex items-center">
+                <span class="inline-flex items-center justify-center w-10 h-10 bg-indigo-100 text-indigo-600 rounded-full mr-3 font-bold">7</span>
+                Liability Limitations
+            </h2>
+            <div class="ml-13 text-gray-700 space-y-3">
+                <p class="leading-relaxed">
+                    <strong>7.1. Service Provided "As Is":</strong>
+                </p>
+                <p class="pl-4 text-gray-600">
+                    YouAreCoder provides the service as-is. We make no warranties.
+                    We do not guarantee that the service will be uninterrupted or error-free.
+                </p>
+
+                <p class="leading-relaxed mt-4">
+                    <strong>7.2. Liability Limit:</strong>
+                </p>
+                <ul class="list-disc list-inside space-y-2 pl-4">
+                    <li>Maximum liability: Limited to total amount paid in last 12 months</li>
+                    <li>Not liable for indirect, incidental, or consequential damages</li>
+                    <li>Not liable for data loss, business loss, or revenue loss</li>
+                </ul>
+
+                <p class="leading-relaxed mt-4">
+                    <strong>7.3. User Responsibility:</strong>
+                </p>
+                <ul class="list-disc list-inside space-y-2 pl-4">
+                    <li>You are responsible for content in your workspace</li>
+                    <li>License compliance for third-party software is your responsibility</li>
+                    <li>Damages from security vulnerabilities are user responsibility</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Section 8 -->
+        <section class="mb-10 bg-gray-50 p-6 rounded-lg">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4 flex items-center">
+                <span class="inline-flex items-center justify-center w-10 h-10 bg-indigo-100 text-indigo-600 rounded-full mr-3 font-bold">8</span>
+                Privacy and Data Protection
+            </h2>
+            <div class="ml-13 text-gray-700 space-y-3">
+                <p class="leading-relaxed">
+                    Protection of your personal data is our priority. For details, see our
+                    <a href="{{ url_for('legal.privacy_en') }}" class="text-indigo-600 hover:text-indigo-700 font-semibold underline">
+                        Privacy Policy
+                    </a>.
+                </p>
+
+                <p class="leading-relaxed mt-4">
+                    <strong>8.1. Data Processing:</strong>
+                </p>
+                <ul class="list-disc list-inside space-y-2 pl-4">
+                    <li>KVKK (Personal Data Protection Law) compliant operations</li>
+                    <li>GDPR (General Data Protection Regulation) compliant principles</li>
+                    <li>Data stored on servers in Turkey</li>
+                </ul>
+
+                <p class="leading-relaxed mt-4">
+                    <strong>8.2. User Rights:</strong>
+                </p>
+                <ul class="list-disc list-inside space-y-2 pl-4">
+                    <li><strong>Right to Access:</strong> You can request access to your data</li>
+                    <li><strong>Right to Rectification:</strong> You can request correction of incorrect data</li>
+                    <li><strong>Right to Erasure:</strong> Account deletion removes all your data (within 30 days)</li>
+                    <li><strong>Data Portability:</strong> You can export your data in JSON format</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Section 9 -->
+        <section class="mb-10">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4 flex items-center">
+                <span class="inline-flex items-center justify-center w-10 h-10 bg-indigo-100 text-indigo-600 rounded-full mr-3 font-bold">9</span>
+                Intellectual Property Rights
+            </h2>
+            <div class="ml-13 text-gray-700 space-y-3">
+                <p class="leading-relaxed">
+                    <strong>9.1. YouAreCoder Ownership:</strong>
+                </p>
+                <ul class="list-disc list-inside space-y-2 pl-4">
+                    <li>Platform, logo, design, source code: Owned by Alkedos Teknoloji A.Ş.</li>
+                    <li>"YouAreCoder" trademark is registered</li>
+                    <li>All intellectual property rights on the platform are reserved</li>
+                </ul>
+
+                <p class="leading-relaxed mt-4">
+                    <strong>9.2. User Content Ownership:</strong>
+                </p>
+                <ul class="list-disc list-inside space-y-2 pl-4">
+                    <li><strong>Your code belongs to you.</strong> All content in your workspace belongs to you</li>
+                    <li>YouAreCoder claims no rights over your content</li>
+                    <li>However, you grant us necessary license to provide service (backup, migration, etc.)</li>
+                </ul>
+
+                <p class="leading-relaxed mt-4">
+                    <strong>9.3. Third-Party Software:</strong>
+                </p>
+                <ul class="list-disc list-inside space-y-2 pl-4">
+                    <li>Code-Server: Used under MIT License</li>
+                    <li>Users are responsible for their own licenses</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Section 10 -->
+        <section class="mb-10 bg-gray-50 p-6 rounded-lg">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4 flex items-center">
+                <span class="inline-flex items-center justify-center w-10 h-10 bg-indigo-100 text-indigo-600 rounded-full mr-3 font-bold">10</span>
+                Changes and Notifications
+            </h2>
+            <div class="ml-13 text-gray-700 space-y-3">
+                <p class="leading-relaxed">
+                    <strong>10.1. Terms of Service Changes:</strong>
+                </p>
+                <ul class="list-disc list-inside space-y-2 pl-4">
+                    <li>We may change these terms at any time</li>
+                    <li>Major changes notified 30 days in advance via email</li>
+                    <li>Continued use after changes constitutes acceptance</li>
+                    <li>If you don't agree, you can cancel your subscription</li>
+                </ul>
+
+                <p class="leading-relaxed mt-4">
+                    <strong>10.2. Notification Methods:</strong>
+                </p>
+                <ul class="list-disc list-inside space-y-2 pl-4">
+                    <li>Email: Sent to your registered email address</li>
+                    <li>Platform Announcements: Displayed on dashboard</li>
+                    <li>Blog/Changelog: youarecoder.com/blog</li>
+                </ul>
+
+                <p class="leading-relaxed mt-4">
+                    <strong>10.3. Price Changes:</strong>
+                </p>
+                <ul class="list-disc list-inside space-y-2 pl-4">
+                    <li>Price increases announced 60 days in advance</li>
+                    <li>Transition period granted for existing customers</li>
+                    <li>If you don't agree, you can cancel and get refund for remaining period</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Section 11 -->
+        <section class="mb-10">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4 flex items-center">
+                <span class="inline-flex items-center justify-center w-10 h-10 bg-indigo-100 text-indigo-600 rounded-full mr-3 font-bold">11</span>
+                Dispute Resolution
+            </h2>
+            <div class="ml-13 text-gray-700 space-y-3">
+                <p class="leading-relaxed">
+                    <strong>11.1. Complaint Process:</strong>
+                </p>
+                <ol class="list-decimal list-inside space-y-2 pl-4">
+                    <li>First contact support@youarecoder.com</li>
+                    <li>Your complaint reviewed within 5 business days</li>
+                    <li>Resolution proposal provided</li>
+                    <li>If dispute continues, upper management reviews</li>
+                </ol>
+
+                <p class="leading-relaxed mt-4">
+                    <strong>11.2. Legal Process:</strong>
+                </p>
+                <ul class="list-disc list-inside space-y-2 pl-4">
+                    <li><strong>Jurisdiction:</strong> Istanbul (Turkey) courts have jurisdiction</li>
+                    <li><strong>Applicable Law:</strong> Republic of Turkey laws apply</li>
+                    <li><strong>Language:</strong> Contract languages are Turkish and English. In case of conflict, Turkish text prevails</li>
+                </ul>
+
+                <p class="leading-relaxed mt-4">
+                    <strong>11.3. Consumer Rights:</strong>
+                </p>
+                <p class="pl-4 bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
+                    As a consumer, your rights are protected under the Consumer Protection Law.
+                    Your right to apply to Consumer Courts and Consumer Arbitration Committees is reserved.
+                </p>
+            </div>
+        </section>
+
+        <!-- Contact -->
+        <section class="mb-10 bg-gradient-to-r from-indigo-500 to-purple-600 text-white p-6 rounded-lg">
+            <h2 class="text-2xl font-bold mb-4">📞 Contact</h2>
+            <div class="space-y-2">
+                <p><strong>Company:</strong> Alkedos Teknoloji A.Ş.</p>
+                <p><strong>Email:</strong> <a href="mailto:support@youarecoder.com" class="underline hover:text-indigo-200">support@youarecoder.com</a></p>
+                <p><strong>Address:</strong> [Company Address - To Be Added]</p>
+                <p><strong>Phone:</strong> [Phone Number - To Be Added]</p>
+                <p><strong>Website:</strong> <a href="https://youarecoder.com" class="underline hover:text-indigo-200">youarecoder.com</a></p>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <div class="text-center text-sm text-gray-500 border-t-2 border-gray-200 pt-6">
+            <p>© 2025 Alkedos Teknoloji A.Ş. All rights reserved.</p>
+            <p class="mt-2">
+                <a href="{{ url_for('legal.privacy_en') }}" class="text-indigo-600 hover:text-indigo-700">Privacy Policy</a>
+                |
+                <a href="{{ url_for('main.index') }}" class="text-indigo-600 hover:text-indigo-700">Home</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

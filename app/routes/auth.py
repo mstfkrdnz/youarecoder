@@ -109,12 +109,20 @@ def register():
     form = RegistrationForm()
     if form.validate_on_submit():
         # Validation
+        if Company.query.filter_by(name=form.company_name.data).first():
+            flash('Company name already registered', 'error')
+            return render_template('auth/register.html', form=form)
+
         if Company.query.filter_by(subdomain=form.subdomain.data).first():
             flash('Subdomain already taken', 'error')
             return render_template('auth/register.html', form=form)
 
         if User.query.filter_by(email=form.email.data).first():
             flash('Email already registered', 'error')
+            return render_template('auth/register.html', form=form)
+
+        if User.query.filter_by(username=form.username.data).first():
+            flash('Username already taken', 'error')
             return render_template('auth/register.html', form=form)
 
         # Create company
@@ -136,6 +144,18 @@ def register():
             company_id=company.id
         )
         user.set_password(form.password.data)
+
+        # Save legal acceptance
+        user.terms_accepted = True
+        user.terms_accepted_at = datetime.utcnow()
+        user.terms_accepted_ip = request.remote_addr
+        user.terms_version = "1.0"
+
+        user.privacy_accepted = True
+        user.privacy_accepted_at = datetime.utcnow()
+        user.privacy_accepted_ip = request.remote_addr
+        user.privacy_version = "1.0"
+
         db.session.add(user)
         db.session.commit()
 

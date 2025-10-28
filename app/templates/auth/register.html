@@ -53,7 +53,7 @@
                 {% endif %}
             {% endwith %}
 
-            <form class="space-y-6" method="POST" action="{{ url_for('auth.register') }}" x-data="registrationForm()">
+            <form class="space-y-6" method="POST" action="{{ url_for('auth.register') }}" x-data="registrationForm()" novalidate>
                 {{ form.hidden_tag() }}
 
                 <!-- Company Information -->
@@ -154,6 +154,41 @@
                         </div>
                         {% if form.password_confirm.errors %}
                             <p class="mt-2 text-sm text-red-600">{{ form.password_confirm.errors[0] }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Legal Acceptance -->
+                <div class="border-t border-gray-200 pt-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Legal Agreements</h3>
+
+                    <div class="space-y-3">
+                        <div class="flex items-start">
+                            <div class="flex items-center h-5">
+                                {{ form.accept_terms(class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500") }}
+                            </div>
+                            <div class="ml-3 text-sm">
+                                <label for="accept_terms" class="font-medium text-gray-700">
+                                    I accept the <a href="{{ url_for('legal.terms_en') }}" target="_blank" class="text-indigo-600 hover:text-indigo-500 underline">Terms of Service</a>
+                                </label>
+                            </div>
+                        </div>
+                        {% if form.accept_terms.errors %}
+                            <p class="ml-7 text-sm text-red-600">{{ form.accept_terms.errors[0] }}</p>
+                        {% endif %}
+
+                        <div class="flex items-start">
+                            <div class="flex items-center h-5">
+                                {{ form.accept_privacy(class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500") }}
+                            </div>
+                            <div class="ml-3 text-sm">
+                                <label for="accept_privacy" class="font-medium text-gray-700">
+                                    I accept the <a href="{{ url_for('legal.privacy_en') }}" target="_blank" class="text-indigo-600 hover:text-indigo-500 underline">Privacy Policy</a>
+                                </label>
+                            </div>
+                        </div>
+                        {% if form.accept_privacy.errors %}
+                            <p class="ml-7 text-sm text-red-600">{{ form.accept_privacy.errors[0] }}</p>
                         {% endif %}
                     </div>
                 </div>

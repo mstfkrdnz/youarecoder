@@ -68,6 +68,7 @@ def create_app(config_name=None):
                     "'self'",
                     'https://cdn.tailwindcss.com',
                     'https://unpkg.com',
+                    'https://www.paytr.com',  # PayTR payment scripts
                     "'unsafe-inline'"  # Required for Alpine.js
                 ],
                 'style-src': [
@@ -77,7 +78,8 @@ def create_app(config_name=None):
                 ],
                 'img-src': ["'self'", 'data:', 'https:'],
                 'font-src': ["'self'", 'https:', 'data:'],
-                'connect-src': ["'self'"],
+                'connect-src': ["'self'", 'https://www.paytr.com'],  # PayTR API
+                'frame-src': ["'self'", 'https://www.paytr.com'],  # PayTR iframe
                 'frame-ancestors': ["'none'"],  # Prevent clickjacking
             },
             # Disable CSP nonce for Tailwind CDN compatibility
@@ -97,12 +99,13 @@ def create_app(config_name=None):
     login_manager.session_protection = 'strong'
 
     # Register blueprints
-    from app.routes import auth, main, workspace, api, billing
+    from app.routes import auth, main, workspace, api, billing, legal
     app.register_blueprint(auth.bp)
     app.register_blueprint(main.bp)
     app.register_blueprint(workspace.bp)
     app.register_blueprint(api.bp)
     app.register_blueprint(billing.bp)
+    app.register_blueprint(legal.bp)
 
     # Exempt billing callback from CSRF protection
     billing.init_billing_csrf_exempt(csrf)

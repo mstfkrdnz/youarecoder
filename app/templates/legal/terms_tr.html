@@ -1,0 +1,492 @@
+{% extends "base.html" %}
+
+{% block title %}Hizmet Şartları - YouAreCoder{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl p-8 md:p-12">
+        <!-- Header -->
+        <div class="text-center mb-10 pb-8 border-b-2 border-indigo-200">
+            <h1 class="text-4xl font-extrabold text-gray-900 mb-4">
+                📜 Hizmet Şartları
+            </h1>
+            <p class="text-lg text-gray-600">
+                <strong>Yürürlük Tarihi:</strong> 28 Ekim 2025 | <strong>Versiyon:</strong> 1.0
+            </p>
+            <p class="mt-2 text-sm text-gray-500">
+                <a href="{{ url_for('legal.terms_en') }}" class="text-indigo-600 hover:text-indigo-700 font-semibold">
+                    🌐 Switch to English version
+                </a>
+            </p>
+        </div>
+
+        <!-- Introduction -->
+        <div class="mb-10 bg-blue-50 border-l-4 border-blue-500 p-6 rounded-r-lg">
+            <h2 class="text-2xl font-bold text-gray-900 mb-3">Giriş</h2>
+            <p class="text-gray-700 leading-relaxed">
+                YouAreCoder platformunu (<strong>youarecoder.com</strong>) kullanarak, bu Hizmet Şartlarını kabul etmiş sayılırsınız.
+                Lütfen platformumuzu kullanmadan önce bu belgeyi dikkatlice okuyunuz. Eğer bu şartları kabul etmiyorsanız,
+                hizmetlerimizi kullanmamalısınız.
+            </p>
+            <p class="mt-3 text-sm text-gray-600">
+                <strong>Hizmet Sağlayıcı:</strong> Alkedos Teknoloji A.Ş. | <strong>Mersis No:</strong> [Ticaret Sicil No]
+            </p>
+        </div>
+
+        <!-- Section 1 -->
+        <section class="mb-10">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4 flex items-center">
+                <span class="inline-flex items-center justify-center w-10 h-10 bg-indigo-100 text-indigo-600 rounded-full mr-3 font-bold">1</span>
+                Hizmet Tanımı
+            </h2>
+            <div class="ml-13 text-gray-700 space-y-3">
+                <p class="leading-relaxed">
+                    YouAreCoder, kullanıcılarına <strong>bulut tabanlı yazılım geliştirme ortamları (workspaces)</strong> sunan bir
+                    SaaS (Software as a Service) platformudur. Hizmetimiz şunları içerir:
+                </p>
+                <ul class="list-disc list-inside space-y-2 pl-4">
+                    <li><strong>Code-Server IDE:</strong> Tarayıcı tabanlı VS Code geliştirme ortamı</li>
+                    <li><strong>Cloud Workspaces:</strong> Uzaktan erişilebilir, özel geliştirme alanları</li>
+                    <li><strong>SSL Sertifikası:</strong> Güvenli HTTPS erişimi (Let's Encrypt)</li>
+                    <li><strong>Otomatik Backup:</strong> Workspace verilerinizin güvenliği</li>
+                    <li><strong>7/24 Erişim:</strong> Dünya genelinden internet bağlantısı ile erişim</li>
+                </ul>
+                <p class="leading-relaxed mt-4">
+                    <strong>Hizmet Lokasyonu:</strong> Sunucularımız Türkiye'de (IP: 37.27.21.167) bulunmaktadır.
+                    Ancak hizmetimize dünya genelinden erişilebilir.
+                </p>
+            </div>
+        </section>
+
+        <!-- Section 2 -->
+        <section class="mb-10 bg-gray-50 p-6 rounded-lg">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4 flex items-center">
+                <span class="inline-flex items-center justify-center w-10 h-10 bg-indigo-100 text-indigo-600 rounded-full mr-3 font-bold">2</span>
+                Hesap ve Kayıt
+            </h2>
+            <div class="ml-13 text-gray-700 space-y-3">
+                <p class="leading-relaxed">
+                    <strong>2.1. Kayıt Gereksinimleri:</strong>
+                </p>
+                <ul class="list-disc list-inside space-y-2 pl-4">
+                    <li>18 yaşından büyük veya yasal temsilci onayı ile kayıt olabilirsiniz</li>
+                    <li>Doğru ve güncel bilgiler sağlamalısınız (şirket adı, email, subdomain)</li>
+                    <li>Email doğrulaması zorunludur</li>
+                    <li>Güçlü parola politikası gereklidir (minimum 8 karakter, büyük/küçük harf, rakam, özel karakter)</li>
+                </ul>
+
+                <p class="leading-relaxed mt-4">
+                    <strong>2.2. Hesap Sorumluluğu:</strong>
+                </p>
+                <ul class="list-disc list-inside space-y-2 pl-4">
+                    <li>Hesap güvenliğinden siz sorumlusunuz</li>
+                    <li>Parolanızı kimseyle paylaşmamalısınız</li>
+                    <li>Şüpheli aktivite durumunda derhal bildirmelisiniz (support@youarecoder.com)</li>
+                    <li>Hesabınızda gerçekleşen tüm aktivitelerden sorumlusunuz</li>
+                </ul>
+
+                <p class="leading-relaxed mt-4">
+                    <strong>2.3. Çoklu Hesap Politikası:</strong>
+                </p>
+                <p class="pl-4">
+                    Bir şirket/kullanıcı yalnızca bir hesap oluşturabilir. Birden fazla hesap tespit edilirse, tüm hesaplar askıya alınabilir.
+                </p>
+            </div>
+        </section>
+
+        <!-- Section 3 -->
+        <section class="mb-10">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4 flex items-center">
+                <span class="inline-flex items-center justify-center w-10 h-10 bg-indigo-100 text-indigo-600 rounded-full mr-3 font-bold">3</span>
+                Ödeme ve Faturalandırma
+            </h2>
+            <div class="ml-13 text-gray-700 space-y-3">
+                <p class="leading-relaxed">
+                    <strong>3.1. Abonelik Planları:</strong>
+                </p>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 my-4">
+                    <div class="border-2 border-blue-200 rounded-lg p-4 bg-blue-50">
+                        <h3 class="font-bold text-lg text-blue-900">Starter Plan</h3>
+                        <p class="text-2xl font-extrabold text-blue-600">$29<span class="text-sm">/ay</span></p>
+                        <p class="text-sm text-gray-600">₺870/ay</p>
+                        <ul class="mt-3 text-sm space-y-1">
+                            <li>✓ 5 Workspace</li>
+                            <li>✓ 10GB Storage</li>
+                        </ul>
+                    </div>
+                    <div class="border-2 border-purple-300 rounded-lg p-4 bg-purple-50 transform scale-105 shadow-lg">
+                        <div class="text-xs font-bold text-purple-600 mb-1">⭐ EN POPÜLERsay</div>
+                        <h3 class="font-bold text-lg text-purple-900">Team Plan</h3>
+                        <p class="text-2xl font-extrabold text-purple-600">$99<span class="text-sm">/ay</span></p>
+                        <p class="text-sm text-gray-600">₺2,970/ay</p>
+                        <ul class="mt-3 text-sm space-y-1">
+                            <li>✓ 20 Workspace</li>
+                            <li>✓ 50GB Storage</li>
+                        </ul>
+                    </div>
+                    <div class="border-2 border-indigo-200 rounded-lg p-4 bg-indigo-50">
+                        <h3 class="font-bold text-lg text-indigo-900">Enterprise Plan</h3>
+                        <p class="text-2xl font-extrabold text-indigo-600">$299<span class="text-sm">/ay</span></p>
+                        <p class="text-sm text-gray-600">₺8,970/ay</p>
+                        <ul class="mt-3 text-sm space-y-1">
+                            <li>✓ Sınırsız Workspace</li>
+                            <li>✓ 250GB Storage</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <p class="leading-relaxed mt-4">
+                    <strong>3.2. Deneme Süresi:</strong>
+                </p>
+                <ul class="list-disc list-inside space-y-2 pl-4">
+                    <li>Tüm yeni hesaplar <strong>14 gün ücretsiz deneme</strong> ile başlar</li>
+                    <li>Deneme sırasında kredi kartı bilgisi gerekmez</li>
+                    <li>Deneme sonunda ödeme yapılmazsa, hesap otomatik olarak askıya alınır</li>
+                    <li>Deneme süresince tüm plan özelliklerine erişim sağlanır</li>
+                </ul>
+
+                <p class="leading-relaxed mt-4">
+                    <strong>3.3. Otomatik Yenileme:</strong>
+                </p>
+                <ul class="list-disc list-inside space-y-2 pl-4">
+                    <li>Abonelikler <strong>aylık otomatik olarak yenilenir</strong></li>
+                    <li>Yenilenmeden 7 gün önce email bildirimi gönderilir</li>
+                    <li>PayTR aracılığıyla güvenli ödeme altyapısı</li>
+                    <li>Desteklenen para birimleri: TRY, USD, EUR</li>
+                </ul>
+
+                <p class="leading-relaxed mt-4">
+                    <strong>3.4. Fatura:</strong>
+                </p>
+                <ul class="list-disc list-inside space-y-2 pl-4">
+                    <li>Her ödeme sonrası otomatik e-fatura gönderilir</li>
+                    <li>Faturalara Billing panelinden erişilebilir</li>
+                    <li>T.C. Maliye Bakanlığı mevzuatına uygun faturalama</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Section 4 -->
+        <section class="mb-10 bg-gray-50 p-6 rounded-lg">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4 flex items-center">
+                <span class="inline-flex items-center justify-center w-10 h-10 bg-indigo-100 text-indigo-600 rounded-full mr-3 font-bold">4</span>
+                Kullanım Koşulları
+            </h2>
+            <div class="ml-13 text-gray-700 space-y-3">
+                <p class="leading-relaxed">
+                    <strong>4.1. İzin Verilen Kullanım:</strong>
+                </p>
+                <ul class="list-disc list-inside space-y-2 pl-4">
+                    <li>Yazılım geliştirme, test ve deployment amaçlı kullanım</li>
+                    <li>Eğitim ve öğrenim amaçlı proje geliştirme</li>
+                    <li>Takım işbirliği ve kod paylaşımı</li>
+                    <li>Yasal ve etik uygulamalar</li>
+                </ul>
+
+                <p class="leading-relaxed mt-4">
+                    <strong>4.2. Yasaklanan Faaliyetler:</strong>
+                </p>
+                <ul class="list-disc list-inside space-y-2 pl-4 text-red-700 font-semibold">
+                    <li>❌ Kötü amaçlı yazılım (malware, virus) geliştirme</li>
+                    <li>❌ Phishing veya sosyal mühendislik saldırıları</li>
+                    <li>❌ DDoS saldırıları veya ağ istismarı</li>
+                    <li>❌ Telif hakkı ihlali (korsan yazılım, lisanssız içerik)</li>
+                    <li>❌ Kripto mining (CPU/RAM abuse)</li>
+                    <li>❌ Spam gönderimi veya otomatik bot işlemleri</li>
+                    <li>❌ Yasadışı içerik barındırma</li>
+                </ul>
+
+                <p class="leading-relaxed mt-4">
+                    <strong>4.3. Kaynak Kullanımı:</strong>
+                </p>
+                <ul class="list-disc list-inside space-y-2 pl-4">
+                    <li>Her workspace planınıza göre belirli kaynak limitlerine tabidir</li>
+                    <li>Aşırı kaynak kullanımı (CPU, RAM, Disk) tespit edilirse uyarı gönderilir</li>
+                    <li>Sürekli kötüye kullanım durumunda workspace askıya alınabilir</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Section 5 -->
+        <section class="mb-10">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4 flex items-center">
+                <span class="inline-flex items-center justify-center w-10 h-10 bg-indigo-100 text-indigo-600 rounded-full mr-3 font-bold">5</span>
+                İptal ve İade Politikası
+            </h2>
+            <div class="ml-13 text-gray-700 space-y-3">
+                <p class="leading-relaxed">
+                    <strong>5.1. İptal:</strong>
+                </p>
+                <ul class="list-disc list-inside space-y-2 pl-4">
+                    <li>Aboneliğinizi istediğiniz zaman iptal edebilirsiniz</li>
+                    <li>Billing panelinden "Cancel Subscription" butonuna tıklayın</li>
+                    <li>İptal sonrası mevcut dönem sonuna kadar hizmet devam eder</li>
+                    <li>Bir sonraki dönem için ücret alınmaz</li>
+                </ul>
+
+                <p class="leading-relaxed mt-4">
+                    <strong>5.2. İade Politikası:</strong>
+                </p>
+                <div class="bg-green-50 border-l-4 border-green-500 p-4 my-3 rounded-r-lg">
+                    <p class="font-semibold text-green-900">✅ 14 Günlük Garanti:</p>
+                    <p class="text-green-800 mt-2">
+                        İlk abonelik ödemesinden sonraki 14 gün içinde memnun kalmazsanız,
+                        <strong>%100 para iadesi</strong> yapılır. İade talebi için support@youarecoder.com adresine email gönderin.
+                    </p>
+                </div>
+                <ul class="list-disc list-inside space-y-2 pl-4">
+                    <li><strong>Orantılı İade:</strong> Abonelik döneminin ortasında iptal ederseniz, kullanılmayan günler için orantılı iade yapılır</li>
+                    <li><strong>İade Süreci:</strong> İade talebi 3-5 iş günü içinde işleme alınır</li>
+                    <li><strong>İade Yöntemi:</strong> Ödeme yapılan kart/hesaba iade edilir</li>
+                </ul>
+
+                <p class="leading-relaxed mt-4">
+                    <strong>5.3. İade Yapılamayacak Durumlar:</strong>
+                </p>
+                <ul class="list-disc list-inside space-y-2 pl-4 text-gray-600">
+                    <li>Hizmet Şartları ihlali nedeniyle hesap kapatılmışsa</li>
+                    <li>Kötüye kullanım tespit edilmişse</li>
+                    <li>İade talebi 14 günlük süre geçtikten sonra yapılırsa (orantılı iade hariç)</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Section 6 -->
+        <section class="mb-10 bg-gray-50 p-6 rounded-lg">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4 flex items-center">
+                <span class="inline-flex items-center justify-center w-10 h-10 bg-indigo-100 text-indigo-600 rounded-full mr-3 font-bold">6</span>
+                Hizmet Seviyesi (SLA)
+            </h2>
+            <div class="ml-13 text-gray-700 space-y-3">
+                <p class="leading-relaxed">
+                    <strong>6.1. Çalışma Süresi (Uptime):</strong>
+                </p>
+                <ul class="list-disc list-inside space-y-2 pl-4">
+                    <li><strong>Hedef:</strong> %99.5 aylık uptime</li>
+                    <li><strong>Planlı Bakım:</strong> Önceden duyurulur, genellikle gece saatlerinde</li>
+                    <li><strong>Acil Bakım:</strong> Kritik güvenlik güncellemeleri için anlık müdahale</li>
+                </ul>
+
+                <p class="leading-relaxed mt-4">
+                    <strong>6.2. Destek:</strong>
+                </p>
+                <ul class="list-disc list-inside space-y-2 pl-4">
+                    <li><strong>Starter Plan:</strong> Email destek (48 saat yanıt süresi)</li>
+                    <li><strong>Team Plan:</strong> Öncelikli email destek (24 saat yanıt süresi)</li>
+                    <li><strong>Enterprise Plan:</strong> Özel destek + SLA garantisi (4 saat yanıt süresi)</li>
+                </ul>
+
+                <p class="leading-relaxed mt-4">
+                    <strong>6.3. Veri Yedekleme:</strong>
+                </p>
+                <ul class="list-disc list-inside space-y-2 pl-4">
+                    <li>Günlük otomatik backup (son 7 gün saklanır)</li>
+                    <li>Veri kaybı durumunda 24 saat içinde restore</li>
+                    <li>Kullanıcılar kendi backuplarını da almalıdır (best practice)</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Section 7 -->
+        <section class="mb-10">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4 flex items-center">
+                <span class="inline-flex items-center justify-center w-10 h-10 bg-indigo-100 text-indigo-600 rounded-full mr-3 font-bold">7</span>
+                Sorumluluk Sınırlamaları
+            </h2>
+            <div class="ml-13 text-gray-700 space-y-3">
+                <p class="leading-relaxed">
+                    <strong>7.1. Hizmet "Olduğu Gibi" Sunulmaktadır:</strong>
+                </p>
+                <p class="pl-4 text-gray-600">
+                    YouAreCoder hizmetini mevcut haliyle sunar. Herhangi bir garanti vermemekteyiz.
+                    Hizmetin kesintisiz veya hatasız olacağına dair taahhütte bulunmamaktayız.
+                </p>
+
+                <p class="leading-relaxed mt-4">
+                    <strong>7.2. Sorumluluk Limiti:</strong>
+                </p>
+                <ul class="list-disc list-inside space-y-2 pl-4">
+                    <li>Maksimum sorumluluk: Son 12 ayda ödediğiniz toplam tutar ile sınırlıdır</li>
+                    <li>Dolaylı, arızi veya sonuç zararlardan sorumlu değiliz</li>
+                    <li>Veri kaybı, iş kaybı veya gelir kaybından sorumlu değiliz</li>
+                </ul>
+
+                <p class="leading-relaxed mt-4">
+                    <strong>7.3. Kullanıcı Sorumluluğu:</strong>
+                </p>
+                <ul class="list-disc list-inside space-y-2 pl-4">
+                    <li>Workspace'inizdeki içerikten siz sorumlusunuz</li>
+                    <li>Üçüncü parti yazılımların lisans uyumluluğu sizin sorumluluğunuzdadır</li>
+                    <li>Güvenlik açıklarından kaynaklanan zararlar kullanıcı sorumluluğundadır</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Section 8 -->
+        <section class="mb-10 bg-gray-50 p-6 rounded-lg">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4 flex items-center">
+                <span class="inline-flex items-center justify-center w-10 h-10 bg-indigo-100 text-indigo-600 rounded-full mr-3 font-bold">8</span>
+                Gizlilik ve Veri Koruma
+            </h2>
+            <div class="ml-13 text-gray-700 space-y-3">
+                <p class="leading-relaxed">
+                    Kişisel verilerinizin korunması bizim için önceliklidir. Detaylı bilgi için
+                    <a href="{{ url_for('legal.privacy_tr') }}" class="text-indigo-600 hover:text-indigo-700 font-semibold underline">
+                        Gizlilik Politikamızı
+                    </a>
+                    inceleyiniz.
+                </p>
+
+                <p class="leading-relaxed mt-4">
+                    <strong>8.1. Veri İşleme:</strong>
+                </p>
+                <ul class="list-disc list-inside space-y-2 pl-4">
+                    <li>KVKK (Kişisel Verilerin Korunması Kanunu) uyumlu işlemler</li>
+                    <li>GDPR (General Data Protection Regulation) prensiplerine uygun</li>
+                    <li>Veriler Türkiye'de sunucularda saklanır</li>
+                </ul>
+
+                <p class="leading-relaxed mt-4">
+                    <strong>8.2. Kullanıcı Hakları:</strong>
+                </p>
+                <ul class="list-disc list-inside space-y-2 pl-4">
+                    <li><strong>Erişim Hakkı:</strong> Verilerinize erişim talep edebilirsiniz</li>
+                    <li><strong>Düzeltme Hakkı:</strong> Hatalı verilerin düzeltilmesini isteyebilirsiniz</li>
+                    <li><strong>Silme Hakkı:</strong> Hesap silme ile tüm verileriniz silinir (30 gün içinde)</li>
+                    <li><strong>Veri Taşınabilirliği:</strong> Verilerinizi JSON formatında export edebilirsiniz</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Section 9 -->
+        <section class="mb-10">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4 flex items-center">
+                <span class="inline-flex items-center justify-center w-10 h-10 bg-indigo-100 text-indigo-600 rounded-full mr-3 font-bold">9</span>
+                Fikri Mülkiyet Hakları
+            </h2>
+            <div class="ml-13 text-gray-700 space-y-3">
+                <p class="leading-relaxed">
+                    <strong>9.1. YouAreCoder Mülkiyeti:</strong>
+                </p>
+                <ul class="list-disc list-inside space-y-2 pl-4">
+                    <li>Platform, logo, tasarım, kaynak kod: Alkedos Teknoloji A.Ş. mülkiyetindedir</li>
+                    <li>"YouAreCoder" ticari markası tescillidir</li>
+                    <li>Platform üzerindeki tüm fikri mülkiyet hakları saklıdır</li>
+                </ul>
+
+                <p class="leading-relaxed mt-4">
+                    <strong>9.2. Kullanıcı İçeriği Mülkiyeti:</strong>
+                </p>
+                <ul class="list-disc list-inside space-y-2 pl-4">
+                    <li><strong>Sizin kodunuz, size aittir.</strong> Workspace'inizdeki tüm içerik size aittir</li>
+                    <li>YouAreCoder içeriğiniz üzerinde hiçbir hak iddia etmez</li>
+                    <li>Ancak hizmet sunmak için gerekli lisansı bize vermiş olursunuz (backup, migration vs.)</li>
+                </ul>
+
+                <p class="leading-relaxed mt-4">
+                    <strong>9.3. Üçüncü Parti Yazılımlar:</strong>
+                </p>
+                <ul class="list-disc list-inside space-y-2 pl-4">
+                    <li>Code-Server: MIT Lisansı ile kullanılmaktadır</li>
+                    <li>Kullanıcılar kendi lisanslarından sorumludur</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Section 10 -->
+        <section class="mb-10 bg-gray-50 p-6 rounded-lg">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4 flex items-center">
+                <span class="inline-flex items-center justify-center w-10 h-10 bg-indigo-100 text-indigo-600 rounded-full mr-3 font-bold">10</span>
+                Değişiklikler ve Bildirimler
+            </h2>
+            <div class="ml-13 text-gray-700 space-y-3">
+                <p class="leading-relaxed">
+                    <strong>10.1. Hizmet Şartları Değişiklikleri:</strong>
+                </p>
+                <ul class="list-disc list-inside space-y-2 pl-4">
+                    <li>Bu şartları istediğimiz zaman değiştirebiliriz</li>
+                    <li>Önemli değişiklikler 30 gün önceden email ile bildirilir</li>
+                    <li>Değişiklik sonrası hizmet kullanımı kabul anlamına gelir</li>
+                    <li>Kabul etmiyorsanız, aboneliğinizi iptal edebilirsiniz</li>
+                </ul>
+
+                <p class="leading-relaxed mt-4">
+                    <strong>10.2. Bildirim Yöntemleri:</strong>
+                </p>
+                <ul class="list-disc list-inside space-y-2 pl-4">
+                    <li>Email: Kayıtlı email adresinize gönderilir</li>
+                    <li>Platform Duyuruları: Dashboard üzerinde görüntülenir</li>
+                    <li>Blog/Changelog: youarecoder.com/blog</li>
+                </ul>
+
+                <p class="leading-relaxed mt-4">
+                    <strong>10.3. Fiyat Değişiklikleri:</strong>
+                </p>
+                <ul class="list-disc list-inside space-y-2 pl-4">
+                    <li>Fiyat artışları 60 gün önceden duyurulur</li>
+                    <li>Mevcut müşteriler için geçiş dönemi tanınır</li>
+                    <li>Kabul etmiyorsanız iptal edebilir ve kalan süre için iade alabilirsiniz</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Section 11 -->
+        <section class="mb-10">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4 flex items-center">
+                <span class="inline-flex items-center justify-center w-10 h-10 bg-indigo-100 text-indigo-600 rounded-full mr-3 font-bold">11</span>
+                Uyuşmazlık Çözümü
+            </h2>
+            <div class="ml-13 text-gray-700 space-y-3">
+                <p class="leading-relaxed">
+                    <strong>11.1. Şikayet Süreci:</strong>
+                </p>
+                <ol class="list-decimal list-inside space-y-2 pl-4">
+                    <li>Önce support@youarecoder.com ile iletişime geçin</li>
+                    <li>Şikayetiniz 5 iş günü içinde değerlendirilir</li>
+                    <li>Çözüm önerisi sunulur</li>
+                    <li>Anlaşmazlık devam ederse üst yönetim incelemesi yapılır</li>
+                </ol>
+
+                <p class="leading-relaxed mt-4">
+                    <strong>11.2. Yasal Süreç:</strong>
+                </p>
+                <ul class="list-disc list-inside space-y-2 pl-4">
+                    <li><strong>Yetkili Mahkeme:</strong> İstanbul (Türkiye) mahkemeleri yetkilidir</li>
+                    <li><strong>Uygulanacak Hukuk:</strong> Türkiye Cumhuriyeti yasaları geçerlidir</li>
+                    <li><strong>Dil:</strong> Sözleşme dili Türkçe ve İngilizcedir. Çelişki durumunda Türkçe metin geçerlidir</li>
+                </ul>
+
+                <p class="leading-relaxed mt-4">
+                    <strong>11.3. Tüketici Hakları:</strong>
+                </p>
+                <p class="pl-4 bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
+                    Tüketici olarak haklarınız Tüketicinin Korunması Hakkında Kanun kapsamındadır.
+                    Tüketici Mahkemelerine ve Tüketici Hakem Heyetlerine başvuru hakkınız saklıdır.
+                </p>
+            </div>
+        </section>
+
+        <!-- Contact -->
+        <section class="mb-10 bg-gradient-to-r from-indigo-500 to-purple-600 text-white p-6 rounded-lg">
+            <h2 class="text-2xl font-bold mb-4">📞 İletişim</h2>
+            <div class="space-y-2">
+                <p><strong>Şirket:</strong> Alkedos Teknoloji A.Ş.</p>
+                <p><strong>Email:</strong> <a href="mailto:support@youarecoder.com" class="underline hover:text-indigo-200">support@youarecoder.com</a></p>
+                <p><strong>Adres:</strong> [Şirket Adresi - Eklenecek]</p>
+                <p><strong>Telefon:</strong> [Telefon Numarası - Eklenecek]</p>
+                <p><strong>Website:</strong> <a href="https://youarecoder.com" class="underline hover:text-indigo-200">youarecoder.com</a></p>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <div class="text-center text-sm text-gray-500 border-t-2 border-gray-200 pt-6">
+            <p>© 2025 Alkedos Teknoloji A.Ş. Tüm hakları saklıdır.</p>
+            <p class="mt-2">
+                <a href="{{ url_for('legal.privacy_tr') }}" class="text-indigo-600 hover:text-indigo-700">Gizlilik Politikası</a>
+                |
+                <a href="{{ url_for('main.index') }}" class="text-indigo-600 hover:text-indigo-700">Ana Sayfa</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
