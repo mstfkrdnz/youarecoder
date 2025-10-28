@@ -375,9 +375,9 @@
                     © 2025 YouAreCoder. Professional cloud development workspaces.
                 </p>
                 <div class="mt-4 flex items-center justify-center gap-x-6 text-sm text-gray-400">
-                    <a href="#" class="hover:text-white">Privacy Policy</a>
-                    <a href="#" class="hover:text-white">Terms of Service</a>
-                    <a href="#" class="hover:text-white">Contact</a>
+                    <a href="{{ url_for('legal.privacy_tr') }}" class="hover:text-white transition-colors">Privacy Policy</a>
+                    <a href="{{ url_for('legal.terms_tr') }}" class="hover:text-white transition-colors">Terms of Service</a>
+                    <a href="{{ url_for('legal.contact') }}" class="hover:text-white transition-colors">Contact</a>
                 </div>
             </div>
         </div>
