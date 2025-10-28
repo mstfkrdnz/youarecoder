@@ -1,0 +1,213 @@
+{% extends "base.html" %}
+
+{% block title %}Contact - YouAreCoder{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl p-8 md:p-12">
+        <!-- Header -->
+        <div class="text-center mb-10 pb-8 border-b-2 border-indigo-200">
+            <h1 class="text-4xl font-extrabold text-gray-900 mb-4">
+                📧 Contact Us
+            </h1>
+            <p class="text-lg text-gray-600">
+                YouAreCoder - Professional Cloud Development Workspaces
+            </p>
+            <p class="text-sm text-gray-500 mt-2">
+                Get in touch with us for questions, suggestions, or support requests
+            </p>
+        </div>
+
+        <!-- Contact Options -->
+        <section class="mb-10">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">Contact Channels</h2>
+
+            <div class="space-y-6">
+                <!-- Email Support -->
+                <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border-l-4 border-blue-500">
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0">
+                            <div class="flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 text-blue-600">
+                                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="ml-4">
+                            <h3 class="text-xl font-semibold text-gray-900">Email Support</h3>
+                            <p class="text-gray-600 mt-2">
+                                For general inquiries and support requests
+                            </p>
+                            <a href="mailto:support@youarecoder.com" class="inline-flex items-center mt-3 text-blue-600 hover:text-blue-700 font-semibold">
+                                support@youarecoder.com
+                                <svg class="ml-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Technical Support -->
+                <div class="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-6 border-l-4 border-purple-500">
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0">
+                            <div class="flex items-center justify-center h-12 w-12 rounded-full bg-purple-100 text-purple-600">
+                                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="ml-4">
+                            <h3 class="text-xl font-semibold text-gray-900">Technical Support</h3>
+                            <p class="text-gray-600 mt-2">
+                                For workspace, connection, or technical issues
+                            </p>
+                            <a href="mailto:tech@youarecoder.com" class="inline-flex items-center mt-3 text-purple-600 hover:text-purple-700 font-semibold">
+                                tech@youarecoder.com
+                                <svg class="ml-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sales Inquiries -->
+                <div class="bg-gradient-to-r from-green-50 to-teal-50 rounded-xl p-6 border-l-4 border-green-500">
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0">
+                            <div class="flex items-center justify-center h-12 w-12 rounded-full bg-green-100 text-green-600">
+                                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="ml-4">
+                            <h3 class="text-xl font-semibold text-gray-900">Sales & Pricing</h3>
+                            <p class="text-gray-600 mt-2">
+                                For enterprise solutions and custom pricing
+                            </p>
+                            <a href="mailto:sales@youarecoder.com" class="inline-flex items-center mt-3 text-green-600 hover:text-green-700 font-semibold">
+                                sales@youarecoder.com
+                                <svg class="ml-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Security Issues -->
+                <div class="bg-gradient-to-r from-red-50 to-orange-50 rounded-xl p-6 border-l-4 border-red-500">
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0">
+                            <div class="flex items-center justify-center h-12 w-12 rounded-full bg-red-100 text-red-600">
+                                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="ml-4">
+                            <h3 class="text-xl font-semibold text-gray-900">Security</h3>
+                            <p class="text-gray-600 mt-2">
+                                For security vulnerabilities and sensitive matters
+                            </p>
+                            <a href="mailto:security@youarecoder.com" class="inline-flex items-center mt-3 text-red-600 hover:text-red-700 font-semibold">
+                                security@youarecoder.com
+                                <svg class="ml-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                                </svg>
+                            </a>
+                            <p class="text-sm text-red-600 mt-2">
+                                ⚠️ Please report security vulnerabilities privately
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Response Time -->
+        <section class="mb-10">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">Response Times</h2>
+
+            <div class="bg-gray-50 rounded-xl p-6">
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="font-semibold text-gray-900 mb-2">🟢 General Requests</h3>
+                        <p class="text-gray-600">We respond within 24-48 hours</p>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-gray-900 mb-2">🔴 Urgent Technical Issues</h3>
+                        <p class="text-gray-600">We respond within 4-8 hours</p>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-gray-900 mb-2">🟡 Security Vulnerabilities</h3>
+                        <p class="text-gray-600">We respond within 2-4 hours</p>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-gray-900 mb-2">💼 Enterprise Sales</h3>
+                        <p class="text-gray-600">We respond within 1-2 business days</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Office Hours -->
+        <section class="mb-10">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">Office Hours</h2>
+
+            <div class="bg-blue-50 rounded-xl p-6 border-l-4 border-blue-500">
+                <div class="flex items-center">
+                    <svg class="h-6 w-6 text-blue-600 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div>
+                        <p class="font-semibold text-gray-900">Monday - Friday: 09:00 - 18:00 (UTC+3)</p>
+                        <p class="text-gray-600 text-sm mt-1">Saturday - Sunday: Email contact (response times may be longer)</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Additional Resources -->
+        <section class="mb-10">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">Additional Resources</h2>
+
+            <div class="grid md:grid-cols-3 gap-4">
+                <a href="{{ url_for('legal.privacy_en') }}" class="block p-4 bg-white border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:shadow-md transition-all">
+                    <div class="text-center">
+                        <div class="text-3xl mb-2">🔒</div>
+                        <h3 class="font-semibold text-gray-900">Privacy Policy</h3>
+                    </div>
+                </a>
+
+                <a href="{{ url_for('legal.terms_en') }}" class="block p-4 bg-white border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:shadow-md transition-all">
+                    <div class="text-center">
+                        <div class="text-3xl mb-2">📄</div>
+                        <h3 class="font-semibold text-gray-900">Terms of Service</h3>
+                    </div>
+                </a>
+
+                <a href="{{ url_for('main.index') }}" class="block p-4 bg-white border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:shadow-md transition-all">
+                    <div class="text-center">
+                        <div class="text-3xl mb-2">🏠</div>
+                        <h3 class="font-semibold text-gray-900">Home</h3>
+                    </div>
+                </a>
+            </div>
+        </section>
+
+        <!-- Back Button -->
+        <div class="text-center pt-6 border-t-2 border-gray-200">
+            <a href="{{ url_for('main.index') }}" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all shadow-md hover:shadow-lg">
+                <svg class="mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Back to Home
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
