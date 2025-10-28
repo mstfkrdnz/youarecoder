@@ -16,6 +16,7 @@ class Company(db.Model):
     plan = db.Column(db.String(20), nullable=False, default='starter')  # starter, team, enterprise
     status = db.Column(db.String(20), nullable=False, default='active')  # active, suspended, cancelled
     max_workspaces = db.Column(db.Integer, nullable=False, default=1)
+    preferred_currency = db.Column(db.String(3), nullable=False, default='TRY')  # TRY, USD, EUR
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 

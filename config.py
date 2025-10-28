@@ -68,12 +68,26 @@ class Config:
     # Trial Configuration
     TRIAL_DAYS = 14
 
-    # Subscription Plans
+    # Multi-Currency Support (PayTR USD/EUR Approved)
+    SUPPORTED_CURRENCIES = ['TRY', 'USD', 'EUR']
+    DEFAULT_CURRENCY = 'TRY'
+
+    # Currency symbols for display
+    CURRENCY_SYMBOLS = {
+        'TRY': '₺',
+        'USD': '$',
+        'EUR': '€'
+    }
+
+    # Subscription Plans with Multi-Currency Pricing
     PLANS = {
         'starter': {
             'name': 'Starter',
-            'price_usd': 29,      # $29/month
-            'price_try': 870,     # ₺870/month (approx 30:1 ratio)
+            'prices': {
+                'TRY': 870,      # ₺870/month
+                'USD': 29,       # $29/month
+                'EUR': 27        # €27/month
+            },
             'workspaces': 5,
             'storage_gb': 10,
             'features': [
@@ -87,8 +101,11 @@ class Config:
         },
         'team': {
             'name': 'Team',
-            'price_usd': 99,      # $99/month
-            'price_try': 2970,    # ₺2,970/month
+            'prices': {
+                'TRY': 2970,     # ₺2,970/month
+                'USD': 99,       # $99/month
+                'EUR': 92        # €92/month
+            },
             'workspaces': 20,
             'storage_gb': 50,
             'features': [
@@ -103,8 +120,11 @@ class Config:
         },
         'enterprise': {
             'name': 'Enterprise',
-            'price_usd': 299,     # $299/month
-            'price_try': 8970,    # ₺8,970/month
+            'prices': {
+                'TRY': 8970,     # ₺8,970/month
+                'USD': 299,      # $299/month
+                'EUR': 279       # €279/month
+            },
             'workspaces': -1,     # Unlimited
             'storage_gb': 250,
             'features': [

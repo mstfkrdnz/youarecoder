@@ -2,6 +2,28 @@
 
 {% block title %}Billing & Subscription - YouAreCoder{% endblock %}
 
+{% block styles %}
+<style>
+    /* Currency Selector Buttons */
+    .currency-btn {
+        color: #374151;
+        background-color: transparent;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .currency-btn:hover {
+        background-color: #f3f4f6;
+    }
+
+    .currency-btn.active {
+        background-color: #2563eb !important;
+        color: white !important;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-7xl mx-auto">
@@ -101,9 +123,25 @@
                 <h2 class="text-3xl font-extrabold text-gray-900 sm:text-4xl mb-4">
                     🚀 Available Plans
                 </h2>
-                <p class="text-lg text-gray-600">
+                <p class="text-lg text-gray-600 mb-4">
                     Choose the perfect plan for your development needs
                 </p>
+
+                <!-- Currency Selector -->
+                <div class="flex justify-center items-center gap-2 mb-4">
+                    <span class="text-sm text-gray-600 font-medium">Currency:</span>
+                    <div class="inline-flex rounded-lg border border-gray-300 bg-white p-1 shadow-sm">
+                        <button onclick="switchCurrency('TRY')" id="currency-TRY" class="currency-btn px-4 py-2 text-sm font-medium rounded-md transition-all active" data-currency="TRY">
+                            🇹🇷 TRY
+                        </button>
+                        <button onclick="switchCurrency('USD')" id="currency-USD" class="currency-btn px-4 py-2 text-sm font-medium rounded-md transition-all" data-currency="USD">
+                            🇺🇸 USD
+                        </button>
+                        <button onclick="switchCurrency('EUR')" id="currency-EUR" class="currency-btn px-4 py-2 text-sm font-medium rounded-md transition-all" data-currency="EUR">
+                            🇪🇺 EUR
+                        </button>
+                    </div>
+                </div>
             </div>
 
             <!-- DEBUG: plans = {{ plans }} -->
@@ -120,14 +158,16 @@
                         <!-- Plan Name -->
                         <h3 class="text-2xl font-bold text-gray-900 mb-2">{{ plan_info.name }}</h3>
 
-                        <!-- Pricing -->
+                        <!-- Pricing (Multi-Currency) -->
                         <div class="mb-6">
                             <div class="flex items-baseline">
-                                <span class="text-5xl font-extrabold text-gray-900">${{ plan_info.price_usd }}</span>
+                                <span class="price-display text-5xl font-extrabold text-gray-900"
+                                      data-price-try="{{ plan_info.prices.TRY }}"
+                                      data-price-usd="{{ plan_info.prices.USD }}"
+                                      data-price-eur="{{ plan_info.prices.EUR }}">
+                                    ₺{{ plan_info.prices.TRY }}
+                                </span>
                                 <span class="text-xl text-gray-600 ml-2">/month</span>
-                            </div>
-                            <div class="text-sm text-gray-500 mt-1">
-                                ₺{{ "{:,.0f}".format(plan_info.price_try) }}/month
                             </div>
                         </div>
 
@@ -326,6 +366,37 @@
 </div>
 
 <script>
+    // Global selected currency
+    let selectedCurrency = 'TRY';
+
+    // Currency symbols
+    const currencySymbols = {
+        'TRY': '₺',
+        'USD': '$',
+        'EUR': '€'
+    };
+
+    // Switch currency display
+    function switchCurrency(currency) {
+        selectedCurrency = currency;
+
+        // Update button states
+        document.querySelectorAll('.currency-btn').forEach(btn => {
+            btn.classList.remove('active', 'bg-blue-600', 'text-white');
+            btn.classList.add('text-gray-700', 'hover:bg-gray-100');
+        });
+        const activeBtn = document.getElementById(`currency-${currency}`);
+        activeBtn.classList.remove('text-gray-700', 'hover:bg-gray-100');
+        activeBtn.classList.add('active', 'bg-blue-600', 'text-white');
+
+        // Update all price displays
+        document.querySelectorAll('.price-display').forEach(priceEl => {
+            const price = priceEl.dataset[`price${currency.toLowerCase()}`];
+            const symbol = currencySymbols[currency];
+            priceEl.textContent = `${symbol}${price}`;
+        });
+    }
+
     function subscribeToPlan(plan, event) {
         // Show loading state
         const button = event.target;
@@ -337,7 +408,10 @@
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRFToken': '{{ csrf_token() }}'
-            }
+            },
+            body: JSON.stringify({
+                currency: selectedCurrency
+            })
         })
         .then(response => response.json())
         .then(data => {

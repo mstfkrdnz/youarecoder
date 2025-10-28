@@ -59,14 +59,25 @@ def subscribe(plan):
         # Get user's company
         company = current_user.company
 
-        # Generate PayTR iframe token
+        # Get currency from request (default to company preference or TRY)
+        currency = request.form.get('currency') or request.json.get('currency') if request.is_json else None
+        if not currency:
+            currency = company.preferred_currency or current_app.config.get('DEFAULT_CURRENCY', 'TRY')
+
+        # Validate currency
+        supported_currencies = current_app.config.get('SUPPORTED_CURRENCIES', ['TRY'])
+        if currency not in supported_currencies:
+            logger.warning(f"Invalid currency {currency} requested by user {current_user.id}")
+            return jsonify({'error': f'Invalid currency. Supported: {", ".join(supported_currencies)}'}), 400
+
+        # Generate PayTR iframe token with selected currency
         paytr_service = PayTRService()
         result = paytr_service.generate_iframe_token(
             company=company,
             plan=plan,
             user_ip=user_ip,
             user_email=current_user.email,
-            currency='TRY'  # PayTR only accepts TRY (Turkish Lira)
+            currency=currency  # Multi-currency support (TRY, USD, EUR)
         )
 
         if result['success']:

@@ -111,13 +111,30 @@ class PayTRService:
 
             plan_config = plans[plan]
 
-            # Calculate amount based on currency
-            if currency == 'USD':
-                amount_decimal = plan_config['price_usd']
-            elif currency == 'TRY':
-                amount_decimal = plan_config['price_try']
+            # Validate currency support
+            supported_currencies = current_app.config.get('SUPPORTED_CURRENCIES', ['TRY'])
+            if currency not in supported_currencies:
+                raise ValueError(f"Unsupported currency: {currency}. Supported: {', '.join(supported_currencies)}")
+
+            # Get price for selected currency from new structure
+            if 'prices' in plan_config:
+                # New multi-currency structure
+                if currency not in plan_config['prices']:
+                    raise ValueError(f"Price not configured for currency: {currency}")
+                amount_decimal = plan_config['prices'][currency]
             else:
-                raise ValueError(f"Unsupported currency: {currency}")
+                # Legacy structure (fallback)
+                if currency == 'USD':
+                    amount_decimal = plan_config.get('price_usd')
+                elif currency == 'TRY':
+                    amount_decimal = plan_config.get('price_try')
+                elif currency == 'EUR':
+                    amount_decimal = plan_config.get('price_eur')
+                else:
+                    raise ValueError(f"Unsupported currency: {currency}")
+
+                if amount_decimal is None:
+                    raise ValueError(f"Price not configured for currency: {currency}")
 
             # Convert to cents/kuruş (9.99 -> 999)
             payment_amount = int(amount_decimal * 100)
