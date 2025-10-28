@@ -12,6 +12,30 @@ from app.services.email_service import send_registration_email
 bp = Blueprint('auth', __name__, url_prefix='/auth')
 
 
+def get_real_ip():
+    """
+    Get real client IP address, handling reverse proxy (Traefik).
+
+    Checks X-Forwarded-For header first (set by Traefik), then falls back to
+    X-Real-IP, and finally request.remote_addr.
+
+    Returns:
+        str: Client IP address
+    """
+    # X-Forwarded-For can contain multiple IPs: "client, proxy1, proxy2"
+    # We want the first one (original client)
+    if request.headers.get('X-Forwarded-For'):
+        # Get first IP in the chain (original client)
+        return request.headers.get('X-Forwarded-For').split(',')[0].strip()
+
+    # Fallback to X-Real-IP (some reverse proxies use this)
+    if request.headers.get('X-Real-IP'):
+        return request.headers.get('X-Real-IP')
+
+    # Last resort: direct connection IP (will be 127.0.0.1 behind proxy)
+    return request.remote_addr
+
+
 @bp.route('/login', methods=['GET', 'POST'])
 @limiter.limit("10 per minute")  # Stricter limit for login attempts
 def login():
@@ -22,7 +46,7 @@ def login():
     form = LoginForm()
     if form.validate_on_submit():
         user = User.query.filter_by(email=form.email.data).first()
-        ip_address = request.remote_addr
+        ip_address = get_real_ip()
         user_agent = request.headers.get('User-Agent', '')
 
         # Check if account is locked
@@ -145,15 +169,16 @@ def register():
         )
         user.set_password(form.password.data)
 
-        # Save legal acceptance
+        # Save legal acceptance with real client IP
+        client_ip = get_real_ip()
         user.terms_accepted = True
         user.terms_accepted_at = datetime.utcnow()
-        user.terms_accepted_ip = request.remote_addr
+        user.terms_accepted_ip = client_ip
         user.terms_version = "1.0"
 
         user.privacy_accepted = True
         user.privacy_accepted_at = datetime.utcnow()
-        user.privacy_accepted_ip = request.remote_addr
+        user.privacy_accepted_ip = client_ip
         user.privacy_version = "1.0"
 
         db.session.add(user)
