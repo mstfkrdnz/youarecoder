@@ -424,3 +424,151 @@ class Invoice(db.Model):
         """Get formatted total for display."""
         symbol = '$' if self.currency == 'USD' else '₺'
         return f"{symbol}{self.total_amount / 100:.2f}"
+
+
+class AuditLog(db.Model):
+    """
+    Audit log for tracking all system activities.
+
+    Purpose: PayTR USD/EUR compliance - provide evidence for chargeback disputes.
+    Tracks: login, workspace access, payments, subscription changes, etc.
+    """
+    __tablename__ = 'audit_logs'
+
+    id = db.Column(db.BigInteger, primary_key=True)  # BigInteger for high volume
+    timestamp = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, index=True)
+
+    # User and company tracking
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), index=True)
+    company_id = db.Column(db.Integer, db.ForeignKey('companies.id'), index=True)
+
+    # Action details
+    action_type = db.Column(db.String(50), nullable=False, index=True)  # 'login', 'workspace_create', 'payment_success', etc.
+    resource_type = db.Column(db.String(50), index=True)  # 'workspace', 'subscription', 'payment', etc.
+    resource_id = db.Column(db.Integer)
+
+    # Request context
+    ip_address = db.Column(db.String(45))  # IPv6 support
+    user_agent = db.Column(db.Text)
+    request_method = db.Column(db.String(10))  # GET, POST, etc.
+    request_path = db.Column(db.String(500))
+
+    # Additional details (flexible JSON storage)
+    details = db.Column(db.JSON)
+
+    # Result tracking
+    success = db.Column(db.Boolean, default=True)
+    error_message = db.Column(db.Text)
+
+    # Relationships
+    user = db.relationship('User', backref='audit_logs')
+    company = db.relationship('Company', backref='audit_logs')
+
+    def __repr__(self):
+        return f'<AuditLog {self.action_type} user={self.user_id} at {self.timestamp}>'
+
+    def to_dict(self):
+        """Convert to dictionary for JSON export."""
+        return {
+            'id': self.id,
+            'timestamp': self.timestamp.isoformat(),
+            'user_id': self.user_id,
+            'company_id': self.company_id,
+            'action_type': self.action_type,
+            'resource_type': self.resource_type,
+            'resource_id': self.resource_id,
+            'ip_address': self.ip_address,
+            'user_agent': self.user_agent,
+            'request_method': self.request_method,
+            'request_path': self.request_path,
+            'details': self.details,
+            'success': self.success,
+            'error_message': self.error_message
+        }
+
+
+class WorkspaceSession(db.Model):
+    """
+    Track workspace usage sessions for billing and compliance.
+
+    Purpose: Monitor workspace access patterns, calculate usage hours,
+    provide evidence of service delivery for PayTR disputes.
+    """
+    __tablename__ = 'workspace_sessions'
+
+    id = db.Column(db.Integer, primary_key=True)
+    workspace_id = db.Column(db.Integer, db.ForeignKey('workspaces.id'), nullable=False, index=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+
+    # Session timing
+    started_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, index=True)
+    ended_at = db.Column(db.DateTime)
+    duration_seconds = db.Column(db.Integer)  # Calculated when session ends
+
+    # Activity tracking
+    last_activity_at = db.Column(db.DateTime, default=datetime.utcnow)
+    activity_count = db.Column(db.Integer, default=0)  # Number of requests during session
+
+    # Request context
+    ip_address = db.Column(db.String(45))
+    user_agent = db.Column(db.Text)
+
+    # Session metadata
+    session_id = db.Column(db.String(100), index=True)  # Browser session ID
+    access_method = db.Column(db.String(20))  # 'web', 'api', 'ssh'
+
+    # Relationships
+    workspace = db.relationship('Workspace', backref='sessions')
+    user = db.relationship('User', backref='workspace_sessions')
+
+    def __repr__(self):
+        duration = self.get_duration_minutes()
+        return f'<WorkspaceSession ws={self.workspace_id} duration={duration}min>'
+
+    def to_dict(self):
+        """Convert to dictionary for JSON export."""
+        return {
+            'id': self.id,
+            'workspace_id': self.workspace_id,
+            'user_id': self.user_id,
+            'started_at': self.started_at.isoformat(),
+            'ended_at': self.ended_at.isoformat() if self.ended_at else None,
+            'duration_seconds': self.duration_seconds,
+            'duration_minutes': self.get_duration_minutes(),
+            'last_activity_at': self.last_activity_at.isoformat(),
+            'activity_count': self.activity_count,
+            'ip_address': self.ip_address,
+            'user_agent': self.user_agent,
+            'session_id': self.session_id,
+            'access_method': self.access_method
+        }
+
+    def get_duration_minutes(self):
+        """Calculate session duration in minutes."""
+        if self.duration_seconds:
+            return round(self.duration_seconds / 60, 2)
+        elif self.ended_at:
+            duration = (self.ended_at - self.started_at).total_seconds()
+            return round(duration / 60, 2)
+        else:
+            # Ongoing session
+            duration = (datetime.utcnow() - self.started_at).total_seconds()
+            return round(duration / 60, 2)
+
+    def end_session(self):
+        """End the session and calculate final duration."""
+        if not self.ended_at:
+            self.ended_at = datetime.utcnow()
+            self.duration_seconds = int((self.ended_at - self.started_at).total_seconds())
+
+    def update_activity(self):
+        """Update last activity timestamp and increment counter."""
+        self.last_activity_at = datetime.utcnow()
+        self.activity_count += 1
+
+    def is_active(self, timeout_minutes=30):
+        """Check if session is still active (no activity for more than timeout)."""
+        if self.ended_at:
+            return False
+        idle_time = (datetime.utcnow() - self.last_activity_at).total_seconds() / 60
+        return idle_time < timeout_minutes

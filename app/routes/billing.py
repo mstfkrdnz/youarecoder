@@ -14,6 +14,7 @@ from flask_login import login_required, current_user
 
 from app.services.paytr_service import PayTRService
 from app.models import Payment, Invoice
+from app.services.audit_logger import AuditLogger
 
 logger = logging.getLogger(__name__)
 
@@ -71,9 +72,37 @@ def subscribe(plan):
         if result['success']:
             logger.info(f"Payment initiated for company {company.id}, "
                        f"plan {plan}, payment_id {result['payment_id']}")
+
+            # Audit log: payment initiated
+            AuditLogger.log(
+                action_type='payment_initiated',
+                resource_type='payment',
+                resource_id=result.get('payment_id'),
+                details={
+                    'plan': plan,
+                    'merchant_oid': result.get('merchant_oid'),
+                    'currency': 'TRY'
+                },
+                success=True
+            )
+
             return jsonify(result), 200
         else:
             logger.error(f"Payment initiation failed for company {company.id}: {result['reason']}")
+
+            # Audit log: payment initiation failed
+            AuditLogger.log(
+                action_type='payment_initiation_failed',
+                resource_type='payment',
+                resource_id=None,
+                details={
+                    'plan': plan,
+                    'reason': result['reason']
+                },
+                success=False,
+                error_message=result['reason']
+            )
+
             return jsonify({'error': result['reason']}), 500
 
     except ValueError as e:
@@ -124,9 +153,41 @@ def payment_callback():
 
         if success:
             logger.info(f"Payment callback processed successfully: {message}")
+
+            # Audit log: successful payment callback
+            AuditLogger.log(
+                action_type='payment_callback_success',
+                resource_type='payment',
+                resource_id=None,  # merchant_oid in details
+                details={
+                    'merchant_oid': post_data.get('merchant_oid'),
+                    'status': post_data.get('status'),
+                    'amount': post_data.get('total_amount'),
+                    'payment_type': post_data.get('payment_type'),
+                    'test_mode': post_data.get('test_mode')
+                },
+                success=True
+            )
+
             return message, 200
         else:
             logger.error(f"Payment callback processing failed: {message}")
+
+            # Audit log: failed payment callback
+            AuditLogger.log(
+                action_type='payment_callback_failure',
+                resource_type='payment',
+                resource_id=None,
+                details={
+                    'merchant_oid': post_data.get('merchant_oid'),
+                    'status': post_data.get('status'),
+                    'failed_reason_code': post_data.get('failed_reason_code'),
+                    'failed_reason_msg': post_data.get('failed_reason_msg'),
+                    'error_message': message
+                },
+                success=False,
+                error_message=message
+            )
 
             # Return appropriate HTTP status
             if 'Invalid hash' in message:

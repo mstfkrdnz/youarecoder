@@ -8,6 +8,7 @@ from app.models import Workspace
 from app.forms import WorkspaceForm
 from app.services.workspace_provisioner import WorkspaceProvisioner, WorkspaceProvisionerError
 from app.services.email_service import send_workspace_ready_email
+from app.services.audit_logger import AuditLogger, WorkspaceSessionTracker
 from app.utils.decorators import require_workspace_ownership
 
 bp = Blueprint('workspace', __name__, url_prefix='/workspace')
@@ -63,6 +64,9 @@ def create():
             result = provisioner.provision_workspace(workspace)
 
             if result['success']:
+                # Audit log: workspace created successfully
+                AuditLogger.log_workspace_create(workspace)
+
                 # Send workspace ready email
                 try:
                     send_workspace_ready_email(current_user, workspace)
@@ -97,6 +101,9 @@ def delete(workspace_id):
     provisioner = WorkspaceProvisioner()
 
     try:
+        # Audit log: workspace deletion (log before delete for workspace data)
+        AuditLogger.log_workspace_delete(workspace)
+
         # Deprovision workspace (stop service, remove user, cleanup)
         result = provisioner.deprovision_workspace(workspace)
 

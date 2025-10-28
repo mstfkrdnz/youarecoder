@@ -8,6 +8,7 @@ from app import db, limiter
 from app.models import User, Company, LoginAttempt
 from app.forms import LoginForm, RegistrationForm
 from app.services.email_service import send_registration_email
+from app.services.audit_logger import AuditLogger
 
 bp = Blueprint('auth', __name__, url_prefix='/auth')
 
@@ -83,6 +84,9 @@ def login():
             db.session.add(attempt)
             db.session.commit()
 
+            # Audit log: successful login
+            AuditLogger.log_login(user, success=True)
+
             next_page = request.args.get('next')
             return redirect(next_page) if next_page else redirect(url_for('main.dashboard'))
         else:
@@ -109,6 +113,9 @@ def login():
             db.session.add(attempt)
             db.session.commit()
 
+            # Audit log: failed login
+            AuditLogger.log_login(user, success=False, failure_reason=failure_reason)
+
             flash('Invalid email or password', 'error')
 
     return render_template('auth/login.html', form=form)
@@ -118,6 +125,9 @@ def login():
 @login_required
 def logout():
     """User logout route."""
+    # Audit log: logout (before logout_user() so we still have current_user)
+    AuditLogger.log_logout(current_user)
+
     logout_user()
     flash('You have been logged out', 'info')
     return redirect(url_for('main.index'))
