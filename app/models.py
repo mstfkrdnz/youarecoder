@@ -572,3 +572,56 @@ class WorkspaceSession(db.Model):
             return False
         idle_time = (datetime.utcnow() - self.last_activity_at).total_seconds() / 60
         return idle_time < timeout_minutes
+
+
+class EmailLog(db.Model):
+    """
+    Track all email communications for chargeback evidence.
+    Purpose: Provide proof of communication for PayTR disputes.
+    """
+    __tablename__ = 'email_logs'
+
+    id = db.Column(db.Integer, primary_key=True)
+    timestamp = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, index=True)
+
+    # User and company tracking
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), index=True)
+    company_id = db.Column(db.Integer, db.ForeignKey('companies.id'), index=True)
+
+    # Email details
+    email_type = db.Column(db.String(50), nullable=False, index=True)  # 'registration', 'payment_confirmation', etc.
+    recipient_email = db.Column(db.String(255), nullable=False)
+    subject = db.Column(db.Text)
+    content_hash = db.Column(db.String(64))  # SHA-256 hash for verification
+
+    # Delivery tracking
+    sent_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    delivery_status = db.Column(db.String(20), default='sent')  # 'sent', 'delivered', 'bounced', 'failed'
+    mailjet_message_id = db.Column(db.String(100))  # External provider tracking
+    opened_at = db.Column(db.DateTime)
+    clicked_at = db.Column(db.DateTime)
+
+    # Relationships
+    user = db.relationship('User', backref='email_logs')
+    company = db.relationship('Company', backref='email_logs')
+
+    def __repr__(self):
+        return f'<EmailLog {self.id}: {self.email_type} to {self.recipient_email}>'
+
+    def to_dict(self):
+        """Convert to dictionary for JSON serialization."""
+        return {
+            'id': self.id,
+            'timestamp': self.timestamp.isoformat() if self.timestamp else None,
+            'user_id': self.user_id,
+            'company_id': self.company_id,
+            'email_type': self.email_type,
+            'recipient_email': self.recipient_email,
+            'subject': self.subject,
+            'content_hash': self.content_hash,
+            'sent_at': self.sent_at.isoformat() if self.sent_at else None,
+            'delivery_status': self.delivery_status,
+            'mailjet_message_id': self.mailjet_message_id,
+            'opened_at': self.opened_at.isoformat() if self.opened_at else None,
+            'clicked_at': self.clicked_at.isoformat() if self.clicked_at else None
+        }

@@ -5,13 +5,15 @@ Endpoints:
 - GET /admin/users/<id>/export-logs - Export user activity logs for PayTR chargeback evidence
 """
 import logging
+import os
 from datetime import datetime
-from flask import Blueprint, jsonify, abort
+from flask import Blueprint, jsonify, abort, send_file
 from flask_login import login_required, current_user
 
 from app import db
 from app.models import User, Company, AuditLog, WorkspaceSession, Payment, Invoice
 from app.utils.decorators import require_company_admin
+from app.services.proof_package_generator import ChargebackProofGenerator
 
 logger = logging.getLogger(__name__)
 
@@ -198,3 +200,65 @@ def export_user_logs(user_id):
     except Exception as e:
         logger.error(f"Error exporting user logs: {str(e)}", exc_info=True)
         return jsonify({'error': 'Failed to export user logs'}), 500
+
+
+@bp.route('/chargeback/generate/<int:payment_id>')
+@login_required
+@require_company_admin
+def generate_chargeback_proof(payment_id):
+    """
+    Generate comprehensive chargeback evidence package.
+
+    This endpoint generates a professional PDF report + ZIP archive containing:
+    - Executive summary with key evidence
+    - Complete activity timeline with IP tracking
+    - Workspace usage sessions with duration
+    - Email communication trail
+    - Payment history
+    - Legal acceptance records
+    - Technical verification data
+
+    Args:
+        payment_id: Payment ID to generate proof for
+
+    Returns:
+        ZIP file download containing evidence package
+
+    Authentication:
+        Requires authenticated admin user
+
+    HTTP Codes:
+        200: Success - returns ZIP file
+        403: Not authorized (not admin)
+        404: Payment not found
+        500: Generation failed
+    """
+    try:
+        # Verify payment exists and belongs to admin's company
+        payment = Payment.query.get_or_404(payment_id)
+
+        if payment.company_id != current_user.company_id:
+            logger.warning(f"Admin {current_user.id} attempted to access payment {payment_id} from another company")
+            abort(403)
+
+        # Generate proof package
+        generator = ChargebackProofGenerator()
+        zip_path, package_id = generator.generate_proof_package(payment_id)
+
+        if not zip_path or not os.path.exists(zip_path):
+            logger.error(f"Proof package generation failed for payment {payment_id}")
+            return jsonify({'error': 'Failed to generate evidence package'}), 500
+
+        # Send file for download
+        logger.info(f"Admin {current_user.id} downloaded chargeback proof for payment {payment_id}")
+
+        return send_file(
+            zip_path,
+            mimetype='application/zip',
+            as_attachment=True,
+            download_name=f"chargeback_evidence_{payment.merchant_oid}.zip"
+        )
+
+    except Exception as e:
+        logger.error(f"Error generating chargeback proof: {str(e)}", exc_info=True)
+        return jsonify({'error': 'Failed to generate chargeback evidence'}), 500
