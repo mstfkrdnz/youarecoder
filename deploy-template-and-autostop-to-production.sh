@@ -7,7 +7,7 @@ set -e  # Exit on any error
 
 SERVER="root@37.27.21.167"
 PASSWORD="tR\$8vKz3&Pq9y#M2x7!hB5s"
-APP_DIR="/opt/youarecoder"
+APP_DIR="/root/youarecoder"
 
 echo "🚀 Template Provisioning & Auto-Stop Deployment"
 echo "=================================================="
@@ -16,7 +16,7 @@ echo ""
 # Step 1: Git operations on production
 echo "📦 Step 1: Pulling latest code from repository..."
 sshpass -p "$PASSWORD" ssh -o StrictHostKeyChecking=no "$SERVER" << 'ENDSSH'
-cd /opt/youarecoder
+cd /root/youarecoder
 
 # Stash any local changes
 git stash
@@ -31,7 +31,7 @@ ENDSSH
 echo ""
 echo "🔧 Step 2: Verifying Flask CLI commands..."
 sshpass -p "$PASSWORD" ssh -o StrictHostKeyChecking=no "$SERVER" << 'ENDSSH'
-cd /opt/youarecoder
+cd /root/youarecoder
 source venv/bin/activate
 
 # Test Flask CLI command availability
@@ -49,8 +49,8 @@ echo ""
 echo "⏰ Step 3: Setting up systemd timer for auto-stop scheduler..."
 sshpass -p "$PASSWORD" ssh -o StrictHostKeyChecking=no "$SERVER" << 'ENDSSH'
 # Copy systemd files
-cp /opt/youarecoder/systemd/youarecoder-auto-stop.service /etc/systemd/system/
-cp /opt/youarecoder/systemd/youarecoder-auto-stop.timer /etc/systemd/system/
+cp /root/youarecoder/systemd/youarecoder-auto-stop.service /etc/systemd/system/
+cp /root/youarecoder/systemd/youarecoder-auto-stop.timer /etc/systemd/system/
 
 # Reload systemd
 systemctl daemon-reload
@@ -86,7 +86,7 @@ ENDSSH
 echo ""
 echo "🔍 Step 5: Verifying deployment..."
 sshpass -p "$PASSWORD" ssh -o StrictHostKeyChecking=no "$SERVER" << 'ENDSSH'
-cd /opt/youarecoder
+cd /root/youarecoder
 source venv/bin/activate
 
 # Test auto-stop scheduler (dry run)

@@ -6,12 +6,12 @@ After=network.target youarecoder.service
 [Service]
 Type=oneshot
 User=root
-WorkingDirectory=/opt/youarecoder
+WorkingDirectory=/root/youarecoder
 Environment="FLASK_APP=app"
 Environment="FLASK_ENV=production"
 
 # Activate virtual environment and run Flask CLI command
-ExecStart=/opt/youarecoder/venv/bin/flask auto-stop-check
+ExecStart=/root/youarecoder/venv/bin/flask auto-stop-check
 
 # Logging
 StandardOutput=journal
