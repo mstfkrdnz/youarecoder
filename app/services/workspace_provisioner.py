@@ -235,6 +235,55 @@ WantedBy=multi-user.target
         current_app.logger.info(f"Disk quota set for {username}: {quota_gb}GB")
         pass
 
+    def resize_workspace_disk(self, workspace: Workspace, new_quota_gb: int) -> Dict[str, any]:
+        """
+        Resize workspace disk quota.
+
+        Args:
+            workspace: Workspace model instance
+            new_quota_gb: New disk quota in GB
+
+        Returns:
+            dict: Resize result with success status
+
+        Note:
+            This updates the database quota and logs the change.
+            Actual filesystem quota enforcement requires quotactl setup.
+        """
+        result = {
+            'success': False,
+            'workspace_id': workspace.id,
+            'old_quota_gb': workspace.disk_quota_gb,
+            'new_quota_gb': new_quota_gb
+        }
+
+        try:
+            old_quota = workspace.disk_quota_gb
+
+            # Update database
+            workspace.disk_quota_gb = new_quota_gb
+            db.session.commit()
+
+            # Set disk quota (currently just logs, no actual enforcement)
+            self.set_disk_quota(workspace.linux_username, new_quota_gb)
+
+            result['success'] = True
+            result['message'] = f'Workspace disk quota updated from {old_quota}GB to {new_quota_gb}GB'
+
+            current_app.logger.info(
+                f"Workspace {workspace.id} ({workspace.name}) disk quota resized: "
+                f"{old_quota}GB → {new_quota_gb}GB"
+            )
+
+            return result
+
+        except Exception as e:
+            db.session.rollback()
+            error_msg = f"Failed to resize workspace disk: {str(e)}"
+            current_app.logger.error(error_msg)
+            result['message'] = error_msg
+            raise WorkspaceProvisionerError(error_msg) from e
+
     def apply_workspace_template(self, workspace: Workspace, template: WorkspaceTemplate) -> Dict[str, any]:
         """
         Apply template configuration to workspace during provisioning.

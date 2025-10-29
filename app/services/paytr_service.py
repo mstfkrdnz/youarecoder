@@ -24,7 +24,8 @@ import requests
 
 from flask import current_app
 from app import db
-from app.models import Company, Subscription, Payment, Invoice
+from app.models import Company, Subscription, Payment, Invoice, Workspace
+from app.services.workspace_provisioner import WorkspaceProvisioner
 
 logger = logging.getLogger(__name__)
 
@@ -434,6 +435,9 @@ class PayTRService:
                     if plan_config:
                         company.max_workspaces = plan_config.get('max_workspaces', 1)
                         logger.info(f"Updated company {company.id} to {payment.plan} plan with max_workspaces={company.max_workspaces}")
+
+                        # Upgrade existing workspace storage to new plan limits
+                        self._upgrade_workspace_storage(company, payment.plan)
                 else:
                     # Update existing subscription
                     if subscription.status == 'trial':
@@ -449,6 +453,9 @@ class PayTRService:
                         if plan_config:
                             company.max_workspaces = plan_config.get('max_workspaces', 1)
                             logger.info(f"Updated company {company.id} to {payment.plan} plan with max_workspaces={company.max_workspaces}")
+
+                            # Upgrade existing workspace storage to new plan limits
+                            self._upgrade_workspace_storage(company, payment.plan)
                     else:
                         # Renewal payment - check if plan changed (upgrade/downgrade)
                         if subscription.plan != payment.plan:
@@ -461,6 +468,9 @@ class PayTRService:
                             if plan_config:
                                 company.max_workspaces = plan_config.get('max_workspaces', 1)
                                 logger.info(f"Updated company {company.id} to {payment.plan} plan with max_workspaces={company.max_workspaces}")
+
+                                # Upgrade existing workspace storage to new plan limits
+                                self._upgrade_workspace_storage(company, payment.plan)
 
                         # Extend subscription period
                         subscription.current_period_start = subscription.current_period_end
@@ -620,6 +630,54 @@ class PayTRService:
             logger.error(f"Error cancelling subscription: {str(e)}", exc_info=True)
             db.session.rollback()
             return False
+
+    def _upgrade_workspace_storage(self, company: Company, new_plan: str) -> None:
+        """
+        Upgrade all company workspaces to new plan storage quota.
+
+        Args:
+            company: Company model instance
+            new_plan: New plan tier (starter, team, enterprise)
+
+        Side Effects:
+            - Updates workspace disk_quota_gb in database
+            - Logs storage upgrade for each workspace
+        """
+        try:
+            # Get new plan storage quota
+            plan_config = current_app.config.get('PLANS', {}).get(new_plan, {})
+            new_storage_quota = plan_config.get('storage_per_workspace_gb', 10)
+
+            # Get all company workspaces
+            workspaces = Workspace.query.filter_by(company_id=company.id).all()
+
+            provisioner = WorkspaceProvisioner()
+            upgraded_count = 0
+
+            for workspace in workspaces:
+                # Only upgrade if new quota is higher
+                if workspace.disk_quota_gb < new_storage_quota:
+                    try:
+                        result = provisioner.resize_workspace_disk(workspace, new_storage_quota)
+                        if result.get('success'):
+                            upgraded_count += 1
+                            logger.info(
+                                f"Upgraded workspace {workspace.id} ({workspace.name}) "
+                                f"from {result['old_quota_gb']}GB to {new_storage_quota}GB"
+                            )
+                    except Exception as e:
+                        logger.error(
+                            f"Failed to upgrade workspace {workspace.id}: {str(e)}"
+                        )
+
+            if upgraded_count > 0:
+                logger.info(
+                    f"Plan upgrade storage: upgraded {upgraded_count} workspaces "
+                    f"for company {company.id} to {new_storage_quota}GB"
+                )
+
+        except Exception as e:
+            logger.error(f"Error in _upgrade_workspace_storage: {str(e)}", exc_info=True)
 
     def _generate_invoice_number(self) -> str:
         """
