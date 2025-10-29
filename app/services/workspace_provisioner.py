@@ -6,9 +6,10 @@ import subprocess
 import secrets
 import string
 from typing import Dict, Tuple, Optional
+import json
 from flask import current_app
 from app import db
-from app.models import Workspace
+from app.models import Workspace, WorkspaceTemplate
 from app.services.traefik_manager import TraefikManager
 
 
@@ -234,6 +235,242 @@ WantedBy=multi-user.target
         current_app.logger.info(f"Disk quota set for {username}: {quota_gb}GB")
         pass
 
+    def apply_workspace_template(self, workspace: Workspace, template: WorkspaceTemplate) -> Dict[str, any]:
+        """
+        Apply template configuration to workspace during provisioning.
+
+        Args:
+            workspace: Workspace model instance
+            template: WorkspaceTemplate to apply
+
+        Returns:
+            dict: Application result with applied components
+
+        Template config schema:
+        {
+            "packages": ["package1", "package2"],  # System packages to install
+            "extensions": ["ext1", "ext2"],        # VS Code extensions
+            "repositories": [{"url": "...", "branch": "main"}],  # Git repos to clone
+            "settings": {...},                      # VS Code settings.json
+            "environment": {"KEY": "value"},        # Environment variables
+            "post_create_script": "bash commands"   # Post-creation script
+        }
+        """
+        result = {
+            'success': False,
+            'template_id': template.id,
+            'template_name': template.name,
+            'applied_components': []
+        }
+
+        try:
+            config = template.config
+            home_dir = f"{self.base_dir}/{workspace.linux_username}"
+
+            # Apply system packages
+            if config.get('packages'):
+                self._install_packages(workspace.linux_username, config['packages'])
+                result['applied_components'].append('packages')
+
+            # Install VS Code extensions
+            if config.get('extensions'):
+                self._install_vscode_extensions(workspace.linux_username, config['extensions'])
+                result['applied_components'].append('extensions')
+
+            # Clone repositories
+            if config.get('repositories'):
+                self._clone_repositories(workspace.linux_username, config['repositories'], home_dir)
+                result['applied_components'].append('repositories')
+
+            # Apply VS Code settings
+            if config.get('settings'):
+                self._apply_vscode_settings(workspace.linux_username, config['settings'], home_dir)
+                result['applied_components'].append('settings')
+
+            # Set environment variables
+            if config.get('environment'):
+                self._set_environment_variables(workspace.linux_username, config['environment'], home_dir)
+                result['applied_components'].append('environment')
+
+            # Execute post-create script
+            if config.get('post_create_script'):
+                self._execute_post_create_script(workspace.linux_username, config['post_create_script'], home_dir)
+                result['applied_components'].append('post_create_script')
+
+            # Update template usage count
+            template.usage_count += 1
+            db.session.commit()
+
+            result['success'] = True
+            result['message'] = f"Template '{template.name}' applied successfully"
+
+            current_app.logger.info(f"Template {template.id} applied to workspace {workspace.id}")
+
+            return result
+
+        except Exception as e:
+            current_app.logger.error(f"Template application failed: {str(e)}")
+            result['error'] = str(e)
+            raise WorkspaceProvisionerError(f"Template application failed: {str(e)}")
+
+    def _install_packages(self, username: str, packages: list) -> None:
+        """Install system packages as user."""
+        if not packages:
+            return
+
+        current_app.logger.info(f"Installing packages for {username}: {', '.join(packages)}")
+
+        # Install packages based on common package managers
+        try:
+            # Try pip for Python packages
+            subprocess.run([
+                'su', '-', username, '-c',
+                f"pip3 install --user {' '.join(packages)}"
+            ], check=True, capture_output=True, text=True, timeout=300)
+
+            current_app.logger.info(f"Packages installed successfully for {username}")
+
+        except subprocess.CalledProcessError as e:
+            current_app.logger.warning(f"Package installation failed: {e.stderr}")
+            # Non-fatal error - continue provisioning
+
+    def _install_vscode_extensions(self, username: str, extensions: list) -> None:
+        """Install VS Code extensions."""
+        if not extensions:
+            return
+
+        current_app.logger.info(f"Installing VS Code extensions for {username}: {', '.join(extensions)}")
+
+        try:
+            for extension in extensions:
+                subprocess.run([
+                    'su', '-', username, '-c',
+                    f"/usr/bin/code-server --install-extension {extension}"
+                ], check=True, capture_output=True, text=True, timeout=120)
+
+            current_app.logger.info(f"Extensions installed successfully for {username}")
+
+        except subprocess.CalledProcessError as e:
+            current_app.logger.warning(f"Extension installation failed: {e.stderr}")
+            # Non-fatal error - continue provisioning
+
+    def _clone_repositories(self, username: str, repositories: list, home_dir: str) -> None:
+        """Clone Git repositories into workspace."""
+        if not repositories:
+            return
+
+        current_app.logger.info(f"Cloning repositories for {username}")
+
+        try:
+            for repo in repositories:
+                repo_url = repo.get('url')
+                branch = repo.get('branch', 'main')
+                target_dir = repo.get('target_dir', os.path.basename(repo_url).replace('.git', ''))
+
+                clone_path = f"{home_dir}/{target_dir}"
+
+                subprocess.run([
+                    'su', '-', username, '-c',
+                    f"git clone -b {branch} {repo_url} {clone_path}"
+                ], check=True, capture_output=True, text=True, timeout=120)
+
+            current_app.logger.info(f"Repositories cloned successfully for {username}")
+
+        except subprocess.CalledProcessError as e:
+            current_app.logger.warning(f"Repository cloning failed: {e.stderr}")
+            # Non-fatal error - continue provisioning
+
+    def _apply_vscode_settings(self, username: str, settings: dict, home_dir: str) -> None:
+        """Apply VS Code settings.json configuration."""
+        if not settings:
+            return
+
+        current_app.logger.info(f"Applying VS Code settings for {username}")
+
+        try:
+            settings_dir = f"{home_dir}/.local/share/code-server/User"
+            settings_file = f"{settings_dir}/settings.json"
+
+            # Create directory
+            subprocess.run([
+                'su', '-', username, '-c',
+                f"mkdir -p {settings_dir}"
+            ], check=True, capture_output=True, text=True)
+
+            # Write settings file
+            settings_json = json.dumps(settings, indent=2)
+            subprocess.run([
+                'su', '-', username, '-c',
+                f"echo '{settings_json}' > {settings_file}"
+            ], check=True, capture_output=True, text=True)
+
+            current_app.logger.info(f"VS Code settings applied for {username}")
+
+        except subprocess.CalledProcessError as e:
+            current_app.logger.warning(f"VS Code settings application failed: {e.stderr}")
+            # Non-fatal error - continue provisioning
+
+    def _set_environment_variables(self, username: str, environment: dict, home_dir: str) -> None:
+        """Set environment variables in user's bashrc."""
+        if not environment:
+            return
+
+        current_app.logger.info(f"Setting environment variables for {username}")
+
+        try:
+            bashrc_path = f"{home_dir}/.bashrc"
+
+            env_lines = ["", "# Environment variables from template"]
+            for key, value in environment.items():
+                env_lines.append(f"export {key}='{value}'")
+
+            env_content = '\n'.join(env_lines)
+
+            subprocess.run([
+                'su', '-', username, '-c',
+                f"echo '{env_content}' >> {bashrc_path}"
+            ], check=True, capture_output=True, text=True)
+
+            current_app.logger.info(f"Environment variables set for {username}")
+
+        except subprocess.CalledProcessError as e:
+            current_app.logger.warning(f"Environment variable setup failed: {e.stderr}")
+            # Non-fatal error - continue provisioning
+
+    def _execute_post_create_script(self, username: str, script: str, home_dir: str) -> None:
+        """Execute post-creation script."""
+        if not script:
+            return
+
+        current_app.logger.info(f"Executing post-create script for {username}")
+
+        try:
+            script_path = f"{home_dir}/.template_post_create.sh"
+
+            # Write script
+            subprocess.run([
+                'su', '-', username, '-c',
+                f"echo '{script}' > {script_path} && chmod +x {script_path}"
+            ], check=True, capture_output=True, text=True)
+
+            # Execute script
+            subprocess.run([
+                'su', '-', username, '-c',
+                f"bash {script_path}"
+            ], check=True, capture_output=True, text=True, timeout=300)
+
+            # Clean up script
+            subprocess.run([
+                'su', '-', username, '-c',
+                f"rm {script_path}"
+            ], check=True, capture_output=True, text=True)
+
+            current_app.logger.info(f"Post-create script executed for {username}")
+
+        except subprocess.CalledProcessError as e:
+            current_app.logger.warning(f"Post-create script execution failed: {e.stderr}")
+            # Non-fatal error - continue provisioning
+
     def provision_workspace(self, workspace: Workspace) -> Dict[str, any]:
         """
         Provision complete workspace with all components.
@@ -277,7 +514,16 @@ WantedBy=multi-user.target
             self.set_disk_quota(workspace.linux_username, workspace.disk_quota_gb)
             result['steps_completed'].append('disk_quota_set')
 
-            # Step 5: Configure Traefik routing
+            # Step 5: Apply workspace template (if specified)
+            if workspace.template_id:
+                template = WorkspaceTemplate.query.get(workspace.template_id)
+                if template and template.is_active:
+                    template_result = self.apply_workspace_template(workspace, template)
+                    result['steps_completed'].append('template_applied')
+                    result['template_applied'] = template_result
+                    current_app.logger.info(f"Template {template.name} applied to workspace {workspace.id}")
+
+            # Step 6: Configure Traefik routing
             traefik_result = self.traefik_manager.add_workspace_route(
                 workspace.subdomain,
                 workspace.port

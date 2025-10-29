@@ -119,4 +119,8 @@ def create_app(config_name=None):
     def load_user(user_id):
         return User.query.get(int(user_id))
 
+    # Register CLI commands
+    from app import cli
+    cli.init_app(app)
+
     return app

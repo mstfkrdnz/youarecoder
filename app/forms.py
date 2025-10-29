@@ -3,8 +3,8 @@ WTForms for authentication and workspace management.
 """
 import re
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, BooleanField, SubmitField
-from wtforms.validators import DataRequired, Email, Length, EqualTo, Regexp, ValidationError
+from wtforms import StringField, PasswordField, BooleanField, SubmitField, SelectField
+from wtforms.validators import DataRequired, Email, Length, EqualTo, Regexp, ValidationError, Optional
 
 
 def password_strength(form, field):
@@ -89,4 +89,8 @@ class WorkspaceForm(FlaskForm):
         Length(min=3, max=100),
         Regexp(r'^[a-z0-9-]+$', message="Only lowercase letters, numbers, and hyphens allowed")
     ])
+    template_id = SelectField('Template (Optional)',
+                              coerce=int,
+                              validators=[Optional()],
+                              choices=[])  # Choices will be populated in the view
     submit = SubmitField('Create Workspace')

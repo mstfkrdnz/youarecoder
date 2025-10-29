@@ -4,7 +4,7 @@ Workspace routes (create, delete, manage).
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, current_app, make_response
 from flask_login import login_required, current_user
 from app import db
-from app.models import Workspace
+from app.models import Workspace, WorkspaceTemplate
 from app.forms import WorkspaceForm
 from app.services.workspace_provisioner import WorkspaceProvisioner, WorkspaceProvisionerError
 from app.services.email_service import send_workspace_ready_email
@@ -25,6 +25,24 @@ def list():
 def create():
     """Create new workspace route with full provisioning."""
     form = WorkspaceForm()
+
+    # Populate template choices (official + company templates)
+    official_templates = WorkspaceTemplate.query.filter_by(
+        visibility='official',
+        is_active=True
+    ).all()
+
+    company_templates = WorkspaceTemplate.query.filter_by(
+        company_id=current_user.company_id,
+        visibility='company',
+        is_active=True
+    ).all()
+
+    # Build choices list: [(0, 'No Template')] + template options
+    form.template_id.choices = [(0, 'No Template (Blank Workspace)')]
+    form.template_id.choices += [(t.id, f"{t.name} ({t.category})") for t in official_templates]
+    if company_templates:
+        form.template_id.choices += [(t.id, f"{t.name} (Company)") for t in company_templates]
 
     if form.validate_on_submit():
         # Check user's personal workspace quota (Phase 2: Per-developer quota)
@@ -53,6 +71,10 @@ def create():
             # Create workspace record
             # Sanitize workspace name for Linux username (replace hyphens with underscores)
             sanitized_name = form.name.data.replace('-', '_')
+
+            # Get template_id (0 means no template)
+            template_id = form.template_id.data if form.template_id.data != 0 else None
+
             workspace = Workspace(
                 name=form.name.data,
                 subdomain=f"{current_user.company.subdomain}-{form.name.data}",
@@ -61,6 +83,7 @@ def create():
                 code_server_password=code_server_password,
                 company_id=current_user.company.id,
                 owner_id=current_user.id,
+                template_id=template_id,
                 status='pending',
                 disk_quota_gb=current_user.company.plan == 'starter' and 10 or
                              (current_user.company.plan == 'team' and 50 or 250)
