@@ -7,7 +7,6 @@ from datetime import datetime, timedelta
 from sqlalchemy import func
 from app import db
 from app.models import Workspace, WorkspaceMetrics
-from app.decorators import admin_required
 
 
 bp = Blueprint('metrics', __name__, url_prefix='/api/metrics')
@@ -189,7 +188,7 @@ def get_metrics_summary(workspace_id):
 
 
 @bp.route('/overview', methods=['GET'])
-@admin_required
+@login_required
 def get_metrics_overview():
     """
     Get metrics overview for all workspaces (admin only).
@@ -197,6 +196,9 @@ def get_metrics_overview():
     Returns:
         JSON with system-wide metrics summary
     """
+    # Check admin access
+    if not current_user.is_admin:
+        return jsonify({'error': 'Admin access required'}), 403
     # Get latest metrics for all workspaces
     subquery = db.session.query(
         WorkspaceMetrics.workspace_id,
