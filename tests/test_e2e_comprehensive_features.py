@@ -134,17 +134,37 @@ class TestHelpers:
         page.fill('[data-testid="register-password-confirm"]', company_data['password'])
         time.sleep(0.5)
 
+        # Accept terms and privacy (required checkboxes)
+        page.check('#accept_terms')
+        time.sleep(0.3)
+        page.check('#accept_privacy')
+        time.sleep(0.3)
+
         # Take screenshot before submit
         TestHelpers.take_screenshot(page, 'register_form_filled', test_id)
 
         # Submit form (using data-testid)
         page.click('[data-testid="register-submit-btn"]')
 
-        # Wait for navigation after registration
+        # Wait for navigation after registration (redirects to login page)
         page.wait_for_load_state('networkidle', timeout=60000)
+        time.sleep(2)
 
         # Take screenshot after registration
         TestHelpers.take_screenshot(page, 'register_completed', test_id)
+
+        # After successful registration, we're redirected to login page - must login
+        if '/auth/login' in page.url:
+            print(f'Registration successful, logging in as {company_data["email"]}')
+            page.wait_for_selector('[data-testid="login-email"]', state='visible', timeout=15000)
+            page.fill('[data-testid="login-email"]', company_data['email'])
+            time.sleep(0.3)
+            page.fill('[data-testid="login-password"]', company_data['password'])
+            time.sleep(0.3)
+            page.click('[data-testid="login-submit-btn"]')
+            page.wait_for_load_state('networkidle', timeout=60000)
+            time.sleep(2)
+            TestHelpers.take_screenshot(page, 'login_completed', test_id)
 
         return company_data
 
