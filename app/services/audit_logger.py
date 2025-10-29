@@ -121,7 +121,7 @@ class AuditLogger:
             resource_id=workspace.id,
             details={
                 'workspace_name': workspace.name,
-                'linux_user': workspace.linux_user,
+                'linux_username': workspace.linux_username,
                 'subdomain': workspace.subdomain
             }
         )
@@ -135,7 +135,7 @@ class AuditLogger:
             resource_id=workspace.id,
             details={
                 'workspace_name': workspace.name,
-                'linux_user': workspace.linux_user
+                'linux_username': workspace.linux_username
             }
         )
 
