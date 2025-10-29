@@ -55,6 +55,9 @@
                             <a href="{{ url_for('admin.team_management') }}" class="inline-flex items-center border-b-2 {% if request.endpoint == 'admin.team_management' %}border-indigo-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} px-1 pt-1 text-sm font-medium">
                                 Team
                             </a>
+                            <a href="{{ url_for('admin.templates_list') }}" class="inline-flex items-center border-b-2 {% if request.endpoint and 'template' in request.endpoint %}border-indigo-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} px-1 pt-1 text-sm font-medium">
+                                Templates
+                            </a>
                             {% endif %}
                             <a href="{{ url_for('billing.billing_dashboard') }}" class="inline-flex items-center border-b-2 {% if request.endpoint and 'billing' in request.endpoint %}border-indigo-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} px-1 pt-1 text-sm font-medium">
                                 Billing

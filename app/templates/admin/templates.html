@@ -1,0 +1,247 @@
+{% extends "base.html" %}
+
+{% block title %}Workspace Templates - YouAreCoder{% endblock %}
+
+{% block extra_head %}
+<style>
+    .template-card {
+        transition: all 0.3s ease;
+    }
+    .template-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+    }
+    .category-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="py-10">
+    <header class="mb-8">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div class="md:flex md:items-center md:justify-between">
+                <div class="min-w-0 flex-1">
+                    <h1 class="text-3xl font-bold leading-7 text-gray-900 sm:truncate sm:text-4xl sm:tracking-tight">
+                        Workspace Templates
+                    </h1>
+                    <p class="mt-2 text-sm text-gray-500">
+                        Pre-configured development environments for quick workspace setup
+                    </p>
+                </div>
+                <div class="mt-4 flex md:ml-4 md:mt-0">
+                    <a href="{{ url_for('admin.template_create') }}" class="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
+                        <svg class="-ml-0.5 h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z" />
+                        </svg>
+                        New Template
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+
+            <!-- Official Templates -->
+            {% if official_templates %}
+            <div class="mb-12">
+                <div class="mb-4 flex items-center">
+                    <svg class="h-6 w-6 text-indigo-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                    </svg>
+                    <h2 class="text-xl font-semibold text-gray-900">Official Templates</h2>
+                    <span class="ml-2 text-sm text-gray-500">({{ official_templates|length }} templates)</span>
+                </div>
+                <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                    {% for template in official_templates %}
+                    <div class="template-card bg-white rounded-lg shadow-md overflow-hidden border-2 border-indigo-100">
+                        <div class="p-6">
+                            <div class="flex items-start justify-between mb-4">
+                                <div class="flex-1">
+                                    <h3 class="text-lg font-semibold text-gray-900 mb-1">{{ template.name }}</h3>
+                                    <span class="category-badge bg-indigo-100 text-indigo-800">
+                                        {{ template.category or 'general' }}
+                                    </span>
+                                </div>
+                                <div class="flex items-center text-sm text-gray-500">
+                                    <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                    </svg>
+                                    {{ template.usage_count }}
+                                </div>
+                            </div>
+                            <p class="text-sm text-gray-600 mb-4 line-clamp-2">
+                                {{ template.description or 'No description provided' }}
+                            </p>
+                            <div class="flex flex-wrap gap-1 mb-4">
+                                {% if template.config.extensions %}
+                                <span class="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">
+                                    {{ template.config.extensions|length }} extensions
+                                </span>
+                                {% endif %}
+                                {% if template.config.packages %}
+                                <span class="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">
+                                    {{ template.config.packages|length }} packages
+                                </span>
+                                {% endif %}
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="viewTemplate({{ template.id }})" class="flex-1 inline-flex justify-center items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                    View Details
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Company Templates -->
+            <div class="mb-12">
+                <div class="mb-4 flex items-center">
+                    <svg class="h-6 w-6 text-green-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                    <h2 class="text-xl font-semibold text-gray-900">Company Templates</h2>
+                    <span class="ml-2 text-sm text-gray-500">({{ company_templates|length }} templates)</span>
+                </div>
+                {% if company_templates %}
+                <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                    {% for template in company_templates %}
+                    <div class="template-card bg-white rounded-lg shadow-md overflow-hidden border-2 border-green-100">
+                        <div class="p-6">
+                            <div class="flex items-start justify-between mb-4">
+                                <div class="flex-1">
+                                    <h3 class="text-lg font-semibold text-gray-900 mb-1">{{ template.name }}</h3>
+                                    <span class="category-badge bg-green-100 text-green-800">
+                                        {{ template.category or 'general' }}
+                                    </span>
+                                </div>
+                                <div class="flex items-center text-sm text-gray-500">
+                                    <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                    </svg>
+                                    {{ template.usage_count }}
+                                </div>
+                            </div>
+                            <p class="text-sm text-gray-600 mb-4 line-clamp-2">
+                                {{ template.description or 'No description provided' }}
+                            </p>
+                            <div class="flex flex-wrap gap-1 mb-4">
+                                {% if template.config.extensions %}
+                                <span class="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">
+                                    {{ template.config.extensions|length }} extensions
+                                </span>
+                                {% endif %}
+                                {% if template.config.packages %}
+                                <span class="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">
+                                    {{ template.config.packages|length }} packages
+                                </span>
+                                {% endif %}
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="viewTemplate({{ template.id }})" class="flex-1 inline-flex justify-center items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                    View
+                                </button>
+                                <a href="{{ url_for('admin.template_detail', template_id=template.id) }}" class="flex-1 inline-flex justify-center items-center px-3 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700">
+                                    Edit
+                                </a>
+                                <button onclick="deleteTemplate({{ template.id }})" class="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700">
+                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <h3 class="mt-2 text-sm font-medium text-gray-900">No company templates</h3>
+                    <p class="mt-1 text-sm text-gray-500">Get started by creating a new template.</p>
+                    <div class="mt-6">
+                        <a href="{{ url_for('admin.template_create') }}" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+                            <svg class="-ml-1 mr-2 h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                            </svg>
+                            New Template
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+        </div>
+    </main>
+</div>
+
+<!-- Template Details Modal -->
+<div id="template-modal" class="hidden fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-auto">
+        <div class="p-6">
+            <div class="flex items-start justify-between mb-4">
+                <h3 id="modal-title" class="text-lg font-semibold text-gray-900"></h3>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-500">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div id="modal-content"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+function viewTemplate(templateId) {
+    fetch(`/admin/templates/${templateId}`)
+        .then(response => response.text())
+        .then(html => {
+            // For now, just show basic info - will be enhanced with proper modal content
+            alert('Template details view will be implemented with form view');
+        });
+}
+
+function deleteTemplate(templateId) {
+    if (!confirm('Are you sure you want to delete this template?')) {
+        return;
+    }
+
+    fetch(`/admin/templates/${templateId}`, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert(data.error || 'Failed to delete template');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to delete template');
+    });
+}
+
+function closeModal() {
+    document.getElementById('template-modal').classList.add('hidden');
+}
+</script>
+{% endblock %}
