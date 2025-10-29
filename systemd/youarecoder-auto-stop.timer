@@ -1,0 +1,17 @@
+[Unit]
+Description=YouAreCoder Auto-Stop Scheduler Timer
+Documentation=https://youarecoder.com
+Requires=youarecoder-auto-stop.service
+
+[Timer]
+# Run every 15 minutes
+OnCalendar=*:0/15
+# Run 5 minutes after boot if system was down during scheduled time
+OnBootSec=5min
+# Run immediately if last execution was missed
+Persistent=true
+# Randomize start time by up to 2 minutes to avoid load spikes
+RandomizedDelaySec=120
+
+[Install]
+WantedBy=timers.target
