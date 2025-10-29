@@ -398,7 +398,10 @@ def add_team_member():
             company_id=current_user.company_id,
             is_active=True,
             terms_accepted=False,  # User must accept on first login
-            privacy_accepted=False
+            privacy_accepted=False,
+            workspace_quota=quota,
+            quota_assigned_at=datetime.utcnow(),
+            quota_assigned_by=current_user.id
         )
         new_user.set_password(temp_password)
 

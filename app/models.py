@@ -97,6 +97,11 @@ class User(UserMixin, db.Model):
     privacy_accepted_ip = db.Column(db.String(45))
     privacy_version = db.Column(db.String(20))
 
+    # Workspace quota management
+    workspace_quota = db.Column(db.Integer, nullable=False, default=1)
+    quota_assigned_at = db.Column(db.DateTime)
+    quota_assigned_by = db.Column(db.Integer, db.ForeignKey('users.id'))
+
     # Relationships
     workspaces = db.relationship('Workspace', backref='owner', lazy='dynamic', cascade='all, delete-orphan')
 
