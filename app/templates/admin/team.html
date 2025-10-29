@@ -86,7 +86,7 @@
                             {% set workspace_count = member.workspaces.count() %}
                             {% set member_quota = member.workspace_quota if hasattr(member, 'workspace_quota') and member.workspace_quota else company.max_workspaces %}
                             {% set usage_percent = (workspace_count / member_quota * 100) if member_quota > 0 else 0 %}
-                            <tr class="quota-row" id="user-row-{{ member.id }}">
+                            <tr class="quota-row" id="user-row-{{ member.id }}" data-testid="team-member-row-{{ member.id }}">
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="flex items-center">
                                         <div class="flex-shrink-0 h-10 w-10">
@@ -131,17 +131,19 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     {% if member.role != 'admin' %}
-                                    <form class="quota-form" data-user-id="{{ member.id }}" onsubmit="return updateQuota(event, {{ member.id }})">
+                                    <form class="quota-form" data-user-id="{{ member.id }}" data-testid="team-quota-form-{{ member.id }}" onsubmit="return updateQuota(event, {{ member.id }})">
                                         <div class="flex items-center space-x-2">
                                             <input type="number"
                                                    name="quota"
                                                    id="quota-input-{{ member.id }}"
+                                                   data-testid="team-quota-input-{{ member.id }}"
                                                    value="{{ member_quota }}"
                                                    min="{{ workspace_count }}"
                                                    max="100"
                                                    class="quota-input block w-20 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                                                    required>
                                             <button type="submit"
+                                                    data-testid="team-quota-update-btn-{{ member.id }}"
                                                     class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                                                 Update
                                             </button>
