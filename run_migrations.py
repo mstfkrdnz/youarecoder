@@ -45,7 +45,13 @@ def run_migrations():
         if not has_template_id:
             print("\n📦 Running migration 006: Add workspace templates...")
             try:
-                from migrations.versions import a006_add_workspace_templates as migration_006
+                import importlib.util
+                spec = importlib.util.spec_from_file_location(
+                    "migration_006",
+                    "migrations/versions/006_add_workspace_templates.py"
+                )
+                migration_006 = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(migration_006)
                 migration_006.upgrade()
                 print("✅ Migration 006 completed successfully")
             except Exception as e:
@@ -60,7 +66,13 @@ def run_migrations():
         if not has_is_running:
             print("\n📦 Running migration 007: Add workspace lifecycle...")
             try:
-                from migrations.versions import a007_add_workspace_lifecycle as migration_007
+                import importlib.util
+                spec = importlib.util.spec_from_file_location(
+                    "migration_007",
+                    "migrations/versions/007_add_workspace_lifecycle.py"
+                )
+                migration_007 = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(migration_007)
                 migration_007.upgrade()
                 print("✅ Migration 007 completed successfully")
             except Exception as e:
