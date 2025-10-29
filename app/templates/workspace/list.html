@@ -138,9 +138,15 @@
 window.addEventListener('workspace-status-changed', function(event) {
     const { workspaceId, isRunning } = event.detail;
 
+    console.log('🔔 Status change event received:', { workspaceId, isRunning });
+
     // Find the workspace card
     const card = document.querySelector(`[data-workspace-id="${workspaceId}"]`);
-    if (!card) return;
+    if (!card) {
+        console.error('❌ Card not found for workspace:', workspaceId);
+        return;
+    }
+    console.log('✅ Card found');
 
     // Update status badge
     const badge = card.querySelector('.status-badge');
@@ -162,12 +168,21 @@ window.addEventListener('workspace-status-changed', function(event) {
 
     // Update Open Workspace button
     const buttonContainer = card.querySelector('.workspace-actions');
+    console.log('Button container found:', !!buttonContainer);
+
     if (buttonContainer) {
         const openButton = buttonContainer.querySelector('.flex-1');
-        if (isRunning) {
-            // Replace with Open Workspace link
+        console.log('Open button found:', !!openButton);
+        console.log('Open button type:', openButton ? openButton.tagName : 'N/A');
+
+        if (openButton) {
             const workspaceUrl = openButton.getAttribute('data-workspace-url');
-            if (workspaceUrl) {
+            console.log('Workspace URL:', workspaceUrl);
+
+            if (isRunning) {
+                console.log('🟢 Updating to Running state (Open Workspace link)');
+                // Replace with Open Workspace link
+                if (workspaceUrl) {
                 openButton.outerHTML = `
                     <a href="${workspaceUrl}" target="_blank"
                        class="flex-1 rounded-md bg-indigo-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 flex items-center justify-center"
@@ -178,8 +193,10 @@ window.addEventListener('workspace-status-changed', function(event) {
                         Open Workspace
                     </a>
                 `;
+                console.log('✅ Button replaced with Open Workspace link');
             }
         } else {
+            console.log('🔴 Updating to Stopped state (disabled button)');
             // Replace with disabled Stopped button
             openButton.outerHTML = `
                 <button type="button" disabled
@@ -190,8 +207,14 @@ window.addEventListener('workspace-status-changed', function(event) {
                     Stopped
                 </button>
             `;
+            console.log('✅ Button replaced with disabled Stopped button');
         }
+    } else {
+        console.error('❌ Button with .flex-1 class not found in container');
     }
+} else {
+    console.error('❌ Button container with .workspace-actions not found');
+}
 });
 </script>
 {% endblock %}
