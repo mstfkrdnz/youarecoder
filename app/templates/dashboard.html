@@ -3,7 +3,7 @@
 {% block title %}Dashboard - YouAreCoder{% endblock %}
 
 {% block content %}
-<div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+<div class="mx-auto max-w-7xl px-2 sm:px-4 lg:px-8">
     <!-- Page header -->
     <div class="md:flex md:items-center md:justify-between">
         <div class="min-w-0 flex-1">
@@ -21,41 +21,41 @@
 
     <!-- Stats Grid -->
     <div class="mt-8">
-        <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <div class="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
             <!-- Total Workspaces -->
-            <div class="overflow-hidden rounded-lg bg-white px-4 py-5 shadow hover:shadow-lg transition-shadow">
-                <div class="flex items-center">
+            <div class="overflow-hidden rounded-lg bg-white px-2 sm:px-4 py-3 sm:py-5 shadow hover:shadow-lg transition-shadow">
+                <div class="flex flex-col sm:flex-row items-center sm:items-start">
                     <div class="flex-shrink-0">
-                        <div class="rounded-md bg-indigo-500 p-3">
+                        <div class="rounded-md bg-indigo-500 p-2 sm:p-3">
                             <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
                             </svg>
                         </div>
                     </div>
-                    <div class="ml-5 w-0 flex-1">
-                        <dt class="truncate text-sm font-medium text-gray-500">Total Workspaces</dt>
-                        <dd class="flex items-baseline">
-                            <div class="text-2xl font-semibold text-gray-900">{{ workspaces|length }}</div>
-                            <div class="ml-2 text-sm text-gray-500">/ {{ current_user.company.max_workspaces }}</div>
+                    <div class="sm:ml-5 w-full sm:w-0 sm:flex-1 text-center sm:text-left mt-2 sm:mt-0">
+                        <dt class="truncate text-xs sm:text-sm font-medium text-gray-500">Total Workspaces</dt>
+                        <dd class="flex items-baseline justify-center sm:justify-start">
+                            <div class="text-xl sm:text-2xl font-semibold text-gray-900">{{ workspaces|length }}</div>
+                            <div class="ml-1 sm:ml-2 text-xs sm:text-sm text-gray-500">/ {{ current_user.company.max_workspaces }}</div>
                         </dd>
                     </div>
                 </div>
             </div>
 
             <!-- Active Workspaces -->
-            <div class="overflow-hidden rounded-lg bg-white px-4 py-5 shadow hover:shadow-lg transition-shadow">
-                <div class="flex items-center">
+            <div class="overflow-hidden rounded-lg bg-white px-2 sm:px-4 py-3 sm:py-5 shadow hover:shadow-lg transition-shadow">
+                <div class="flex flex-col sm:flex-row items-center sm:items-start">
                     <div class="flex-shrink-0">
-                        <div class="rounded-md bg-green-500 p-3">
+                        <div class="rounded-md bg-green-500 p-2 sm:p-3">
                             <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                             </svg>
                         </div>
                     </div>
-                    <div class="ml-5 w-0 flex-1">
-                        <dt class="truncate text-sm font-medium text-gray-500">Active</dt>
-                        <dd class="flex items-baseline">
-                            <div class="text-2xl font-semibold text-gray-900">
+                    <div class="sm:ml-5 w-full sm:w-0 sm:flex-1 text-center sm:text-left mt-2 sm:mt-0">
+                        <dt class="truncate text-xs sm:text-sm font-medium text-gray-500">Active</dt>
+                        <dd class="flex items-baseline justify-center sm:justify-start">
+                            <div class="text-xl sm:text-2xl font-semibold text-gray-900">
                                 {{ workspaces|selectattr('status', 'equalto', 'active')|list|length }}
                             </div>
                         </dd>
@@ -64,19 +64,19 @@
             </div>
 
             <!-- Total Storage -->
-            <div class="overflow-hidden rounded-lg bg-white px-4 py-5 shadow hover:shadow-lg transition-shadow">
-                <div class="flex items-center">
+            <div class="overflow-hidden rounded-lg bg-white px-2 sm:px-4 py-3 sm:py-5 shadow hover:shadow-lg transition-shadow">
+                <div class="flex flex-col sm:flex-row items-center sm:items-start">
                     <div class="flex-shrink-0">
-                        <div class="rounded-md bg-blue-500 p-3">
+                        <div class="rounded-md bg-blue-500 p-2 sm:p-3">
                             <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
                             </svg>
                         </div>
                     </div>
-                    <div class="ml-5 w-0 flex-1">
-                        <dt class="truncate text-sm font-medium text-gray-500">Total Storage</dt>
-                        <dd class="flex items-baseline">
-                            <div class="text-2xl font-semibold text-gray-900">
+                    <div class="sm:ml-5 w-full sm:w-0 sm:flex-1 text-center sm:text-left mt-2 sm:mt-0">
+                        <dt class="truncate text-xs sm:text-sm font-medium text-gray-500">Total Storage</dt>
+                        <dd class="flex items-baseline justify-center sm:justify-start">
+                            <div class="text-xl sm:text-2xl font-semibold text-gray-900">
                                 {{ workspaces|sum(attribute='disk_quota_gb') }} GB
                             </div>
                         </dd>
@@ -85,24 +85,24 @@
             </div>
 
             <!-- Workspace Quota -->
-            <div class="overflow-hidden rounded-lg bg-white px-4 py-5 shadow hover:shadow-lg transition-shadow">
-                <div class="flex items-center">
+            <div class="overflow-hidden rounded-lg bg-white px-2 sm:px-4 py-3 sm:py-5 shadow hover:shadow-lg transition-shadow">
+                <div class="flex flex-col sm:flex-row items-center sm:items-start">
                     <div class="flex-shrink-0">
-                        <div class="rounded-md bg-purple-500 p-3">
+                        <div class="rounded-md bg-purple-500 p-2 sm:p-3">
                             <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                             </svg>
                         </div>
                     </div>
-                    <div class="ml-5 w-0 flex-1">
-                        <dt class="truncate text-sm font-medium text-gray-500">Workspace Quota</dt>
-                        <dd class="flex items-baseline">
+                    <div class="sm:ml-5 w-full sm:w-0 sm:flex-1 text-center sm:text-left mt-2 sm:mt-0">
+                        <dt class="truncate text-xs sm:text-sm font-medium text-gray-500">Workspace Quota</dt>
+                        <dd class="flex items-baseline justify-center sm:justify-start">
                             {% set user_quota = current_user.workspace_quota if current_user.workspace_quota is defined else current_user.company.max_workspaces %}
-                            <div class="text-2xl font-semibold text-gray-900">
+                            <div class="text-xl sm:text-2xl font-semibold text-gray-900">
                                 {{ current_user.workspaces.count() }} / {{ user_quota }}
                             </div>
                             {% set usage_percent = (current_user.workspaces.count() / user_quota * 100) if user_quota > 0 else 0 %}
-                            <div class="ml-2 flex items-baseline text-sm font-semibold">
+                            <div class="ml-1 sm:ml-2 flex items-baseline text-xs sm:text-sm font-semibold">
                                 <span class="{% if usage_percent >= 80 %}text-red-600{% elif usage_percent >= 60 %}text-yellow-600{% else %}text-green-600{% endif %}">
                                     {{ "%.0f"|format(usage_percent) }}%
                                 </span>
