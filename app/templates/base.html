@@ -75,15 +75,13 @@
 
                         <!-- New Workspace Button -->
                         <div class="hidden sm:block flex-shrink-0">
-                            <button type="button" class="relative inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
-                                    hx-get="{{ url_for('workspace.create') }}"
-                                    hx-target="#modal-container"
-                                    hx-swap="innerHTML">
+                            <a href="{{ url_for('workspace.create') }}"
+                               class="relative inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
                                 <svg class="-ml-0.5 h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                                     <path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z" />
                                 </svg>
                                 <span class="hidden lg:inline">New Workspace</span>
-                            </button>
+                            </a>
                         </div>
 
                         <!-- User menu -->
@@ -116,12 +114,10 @@
                         <a href="{{ url_for('billing.billing_dashboard') }}" class="block border-l-4 {% if request.endpoint and 'billing' in request.endpoint %}border-indigo-500 bg-indigo-50 text-indigo-700{% else %}border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800{% endif %} py-2 pl-3 pr-4 text-base font-medium">
                             Billing
                         </a>
-                        <button type="button" class="w-full text-left block border-l-4 border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 py-2 pl-3 pr-4 text-base font-medium"
-                                hx-get="{{ url_for('workspace.create') }}"
-                                hx-target="#modal-container"
-                                hx-swap="innerHTML">
+                        <a href="{{ url_for('workspace.create') }}"
+                           class="block border-l-4 border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 py-2 pl-3 pr-4 text-base font-medium">
                             + New Workspace
-                        </button>
+                        </a>
                     </div>
                     <div class="border-t border-gray-200 pb-3 pt-4">
                         <div class="px-4">
