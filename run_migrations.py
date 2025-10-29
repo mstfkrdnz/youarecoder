@@ -66,16 +66,67 @@ def run_migrations():
         if not has_is_running:
             print("\n📦 Running migration 007: Add workspace lifecycle...")
             try:
-                import importlib.util
-                spec = importlib.util.spec_from_file_location(
-                    "migration_007",
-                    "migrations/versions/007_add_workspace_lifecycle.py"
-                )
-                migration_007 = importlib.util.module_from_spec(spec)
-                spec.loader.exec_module(migration_007)
-                migration_007.upgrade()
+                # Add lifecycle tracking columns
+                db.session.execute(text("""
+                    ALTER TABLE workspaces
+                    ADD COLUMN is_running BOOLEAN NOT NULL DEFAULT false
+                """))
+                print("  ✓ Added is_running column")
+
+                db.session.execute(text("""
+                    ALTER TABLE workspaces
+                    ADD COLUMN last_started_at TIMESTAMP
+                """))
+                print("  ✓ Added last_started_at column")
+
+                db.session.execute(text("""
+                    ALTER TABLE workspaces
+                    ADD COLUMN last_stopped_at TIMESTAMP
+                """))
+                print("  ✓ Added last_stopped_at column")
+
+                db.session.execute(text("""
+                    ALTER TABLE workspaces
+                    ADD COLUMN last_accessed_at TIMESTAMP
+                """))
+                print("  ✓ Added last_accessed_at column")
+
+                # Add resource management columns
+                db.session.execute(text("""
+                    ALTER TABLE workspaces
+                    ADD COLUMN auto_stop_hours INTEGER NOT NULL DEFAULT 0
+                """))
+                print("  ✓ Added auto_stop_hours column")
+
+                db.session.execute(text("""
+                    ALTER TABLE workspaces
+                    ADD COLUMN cpu_limit_percent INTEGER NOT NULL DEFAULT 100
+                """))
+                print("  ✓ Added cpu_limit_percent column")
+
+                db.session.execute(text("""
+                    ALTER TABLE workspaces
+                    ADD COLUMN memory_limit_mb INTEGER NOT NULL DEFAULT 2048
+                """))
+                print("  ✓ Added memory_limit_mb column")
+
+                # Create indexes for lifecycle queries
+                db.session.execute(text("""
+                    CREATE INDEX ix_workspaces_is_running
+                    ON workspaces (is_running)
+                """))
+                print("  ✓ Created index on is_running")
+
+                db.session.execute(text("""
+                    CREATE INDEX ix_workspaces_last_accessed_at
+                    ON workspaces (last_accessed_at)
+                """))
+                print("  ✓ Created index on last_accessed_at")
+
+                db.session.commit()
                 print("✅ Migration 007 completed successfully")
             except Exception as e:
+                db.session.rollback()
                 print(f"❌ Migration 007 failed: {e}")
                 import traceback
                 traceback.print_exc()
