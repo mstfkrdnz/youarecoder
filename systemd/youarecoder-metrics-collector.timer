@@ -1,0 +1,17 @@
+[Unit]
+Description=YouAreCoder Metrics Collector Timer
+Documentation=https://youarecoder.com
+Requires=youarecoder-metrics-collector.service
+
+[Timer]
+# Run every 10 minutes
+OnCalendar=*:0/10
+# Run 2 minutes after boot if system was down during scheduled time
+OnBootSec=2min
+# Run immediately if last execution was missed
+Persistent=true
+# Randomize start time by up to 1 minute to avoid load spikes
+RandomizedDelaySec=60
+
+[Install]
+WantedBy=timers.target

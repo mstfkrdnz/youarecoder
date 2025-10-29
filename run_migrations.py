@@ -41,6 +41,19 @@ def run_migrations():
             print(f"✗ Error checking is_running: {e}")
             has_is_running = False
 
+        # Check if workspace_metrics table exists
+        try:
+            result = db.session.execute(text("""
+                SELECT table_name
+                FROM information_schema.tables
+                WHERE table_name='workspace_metrics'
+            """))
+            has_metrics_table = result.fetchone() is not None
+            print(f"✓ workspace_metrics table: {'exists' if has_metrics_table else 'missing'}")
+        except Exception as e:
+            print(f"✗ Error checking workspace_metrics: {e}")
+            has_metrics_table = False
+
         # Import and run migration 006 if needed
         if not has_template_id:
             print("\n📦 Running migration 006: Add workspace templates...")
@@ -133,6 +146,65 @@ def run_migrations():
                 return False
         else:
             print("\n⏭️  Skipping migration 007 (already applied)")
+
+        # Import and run migration 008 if needed
+        if not has_metrics_table:
+            print("\n📦 Running migration 008: Add workspace metrics...")
+            try:
+                # Create workspace_metrics table
+                db.session.execute(text("""
+                    CREATE TABLE workspace_metrics (
+                        id SERIAL PRIMARY KEY,
+                        workspace_id INTEGER NOT NULL,
+                        collected_at TIMESTAMP NOT NULL DEFAULT now(),
+                        cpu_percent FLOAT NOT NULL,
+                        memory_used_mb INTEGER NOT NULL,
+                        memory_percent FLOAT NOT NULL,
+                        process_count INTEGER NOT NULL,
+                        uptime_seconds INTEGER NOT NULL
+                    )
+                """))
+                print("  ✓ Created workspace_metrics table")
+
+                # Add foreign key
+                db.session.execute(text("""
+                    ALTER TABLE workspace_metrics
+                    ADD CONSTRAINT fk_workspace_metrics_workspace_id
+                    FOREIGN KEY (workspace_id) REFERENCES workspaces(id)
+                    ON DELETE CASCADE
+                """))
+                print("  ✓ Added foreign key constraint")
+
+                # Create indexes
+                db.session.execute(text("""
+                    CREATE INDEX ix_workspace_metrics_workspace_id
+                    ON workspace_metrics (workspace_id)
+                """))
+                print("  ✓ Created index on workspace_id")
+
+                db.session.execute(text("""
+                    CREATE INDEX ix_workspace_metrics_collected_at
+                    ON workspace_metrics (collected_at)
+                """))
+                print("  ✓ Created index on collected_at")
+
+                # Composite index for time-range queries
+                db.session.execute(text("""
+                    CREATE INDEX ix_workspace_metrics_workspace_time
+                    ON workspace_metrics (workspace_id, collected_at)
+                """))
+                print("  ✓ Created composite index on workspace_id and collected_at")
+
+                db.session.commit()
+                print("✅ Migration 008 completed successfully")
+            except Exception as e:
+                db.session.rollback()
+                print(f"❌ Migration 008 failed: {e}")
+                import traceback
+                traceback.print_exc()
+                return False
+        else:
+            print("\n⏭️  Skipping migration 008 (already applied)")
 
         print("\n✅ All migrations completed successfully!")
         return True

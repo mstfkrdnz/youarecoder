@@ -100,7 +100,7 @@ def create_app(config_name=None):
     login_manager.session_protection = 'strong'
 
     # Register blueprints
-    from app.routes import auth, main, workspace, api, billing, legal, admin
+    from app.routes import auth, main, workspace, api, billing, legal, admin, metrics
     app.register_blueprint(auth.bp)
     app.register_blueprint(main.bp)
     app.register_blueprint(workspace.bp)
@@ -108,6 +108,7 @@ def create_app(config_name=None):
     app.register_blueprint(billing.bp)
     app.register_blueprint(legal.bp)
     app.register_blueprint(admin.bp)
+    app.register_blueprint(metrics.bp)
 
     # Exempt billing callback from CSRF protection
     billing.init_billing_csrf_exempt(csrf)

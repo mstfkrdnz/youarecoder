@@ -698,3 +698,40 @@ class WorkspaceTemplate(db.Model):
             'created_at': self.created_at.isoformat(),
             'updated_at': self.updated_at.isoformat()
         }
+
+
+class WorkspaceMetrics(db.Model):
+    """Workspace resource usage metrics model for monitoring and analytics."""
+    __tablename__ = 'workspace_metrics'
+
+    id = db.Column(db.Integer, primary_key=True)
+    workspace_id = db.Column(db.Integer, db.ForeignKey('workspaces.id', ondelete='CASCADE'), nullable=False, index=True)
+    collected_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, index=True)
+    
+    # Resource usage metrics
+    cpu_percent = db.Column(db.Float, nullable=False)  # Total CPU usage percentage
+    memory_used_mb = db.Column(db.Integer, nullable=False)  # Memory usage in MB
+    memory_percent = db.Column(db.Float, nullable=False)  # Memory usage as percentage of limit
+    process_count = db.Column(db.Integer, nullable=False)  # Number of running processes
+    uptime_seconds = db.Column(db.Integer, nullable=False)  # Uptime since last start
+    
+    # Composite index for efficient time-range queries per workspace
+    __table_args__ = (
+        db.Index('ix_workspace_metrics_workspace_time', 'workspace_id', 'collected_at'),
+    )
+
+    def __repr__(self):
+        return f'<WorkspaceMetrics workspace_id={self.workspace_id} at {self.collected_at}>'
+
+    def to_dict(self):
+        """Convert to dictionary for JSON serialization."""
+        return {
+            'id': self.id,
+            'workspace_id': self.workspace_id,
+            'collected_at': self.collected_at.isoformat(),
+            'cpu_percent': round(self.cpu_percent, 2),
+            'memory_used_mb': self.memory_used_mb,
+            'memory_percent': round(self.memory_percent, 2),
+            'process_count': self.process_count,
+            'uptime_seconds': self.uptime_seconds
+        }
