@@ -534,8 +534,10 @@ WantedBy=multi-user.target
             else:
                 raise WorkspaceProvisionerError(f"Traefik configuration failed: {traefik_result.get('error')}")
 
-            # Update workspace status to active
+            # Update workspace status to active and mark as running (systemd service auto-starts)
             workspace.status = 'active'
+            workspace.is_running = True
+            workspace.last_started_at = db.func.now()
             db.session.commit()
 
             result['success'] = True
