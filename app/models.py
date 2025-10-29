@@ -163,6 +163,8 @@ class Workspace(db.Model):
     disk_quota_gb = db.Column(db.Integer, nullable=False, default=10)
     company_id = db.Column(db.Integer, db.ForeignKey('companies.id'), nullable=False)
     owner_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    template_id = db.Column(db.Integer, db.ForeignKey('workspace_templates.id'), nullable=True)
+    template_applied_at = db.Column(db.DateTime)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 
