@@ -314,6 +314,178 @@ def team_management():
                           total_workspaces_used=total_workspaces_used)
 
 
+@bp.route('/team/add', methods=['POST'])
+@login_required
+@require_company_admin
+def add_team_member():
+    """
+    Add a new team member to the company.
+
+    Creates a new user account with the specified role and workspace quota.
+    Sends an invitation email with a temporary password.
+
+    JSON Body:
+        {
+            "email": "user@example.com",      # Required: User email
+            "role": "developer" | "admin",    # Required: User role
+            "quota": 1                        # Optional: Workspace quota (default: 1)
+        }
+
+    Returns:
+        JSON response with success status and user info
+
+    Validation:
+        - Email must be valid and unique
+        - Role must be "developer" or "admin"
+        - Quota must be positive integer (if provided)
+        - User must not already exist in the system
+
+    Authentication:
+        Requires authenticated admin user (Owner role)
+
+    HTTP Codes:
+        201: User created successfully
+        400: Invalid input or validation error
+        403: Not authorized
+        409: User with email already exists
+    """
+    from flask import request
+    import secrets
+    import string
+
+    try:
+        # Get data from request
+        data = request.get_json()
+
+        # Validate required fields
+        email = data.get('email', '').strip().lower()
+        role = data.get('role', '').strip().lower()
+        quota = data.get('quota', 1)
+
+        if not email:
+            return jsonify({'error': 'Email is required'}), 400
+
+        if not role:
+            return jsonify({'error': 'Role is required'}), 400
+
+        # Validate role
+        valid_roles = ['developer', 'admin']
+        if role not in valid_roles:
+            return jsonify({'error': f'Role must be one of: {", ".join(valid_roles)}'}), 400
+
+        # Validate quota
+        try:
+            quota = int(quota)
+            if quota < 1:
+                return jsonify({'error': 'Quota must be at least 1'}), 400
+        except (ValueError, TypeError):
+            return jsonify({'error': 'Quota must be a valid integer'}), 400
+
+        # Check if user already exists
+        existing_user = User.query.filter_by(email=email).first()
+        if existing_user:
+            return jsonify({'error': 'User with this email already exists'}), 409
+
+        # Generate temporary password (12 characters)
+        alphabet = string.ascii_letters + string.digits
+        temp_password = ''.join(secrets.choice(alphabet) for _ in range(12))
+
+        # Create new user
+        new_user = User(
+            email=email,
+            full_name=email.split('@')[0].title(),  # Use email prefix as name
+            role='member' if role == 'developer' else 'admin',
+            company_id=current_user.company_id,
+            is_active=True,
+            workspace_quota=quota,
+            quota_assigned_at=datetime.utcnow(),
+            quota_assigned_by=current_user.id,
+            terms_accepted=False,  # User must accept on first login
+            privacy_accepted=False
+        )
+        new_user.set_password(temp_password)
+
+        db.session.add(new_user)
+        db.session.commit()
+
+        # Send invitation email with temporary password
+        try:
+            from app.services.email_service import send_email
+
+            company_name = current_user.company.name
+
+            subject = f"Invitation to join {company_name} on YouAreCoder"
+
+            html_body = f"""
+            <h2>Welcome to {company_name}!</h2>
+            <p>You have been invited to join <strong>{company_name}</strong> on YouAreCoder as a {role}.</p>
+
+            <h3>Your Login Credentials:</h3>
+            <ul>
+                <li><strong>Email:</strong> {email}</li>
+                <li><strong>Temporary Password:</strong> <code>{temp_password}</code></li>
+            </ul>
+
+            <p><strong>Workspace Quota:</strong> You can create up to {quota} workspace(s).</p>
+
+            <p>Please log in at <a href="https://youarecoder.com/auth/login">https://youarecoder.com/auth/login</a>
+            and change your password immediately.</p>
+
+            <p>If you have any questions, please contact your team administrator.</p>
+
+            <p>Best regards,<br>
+            The YouAreCoder Team</p>
+            """
+
+            text_body = f"""
+            Welcome to {company_name}!
+
+            You have been invited to join {company_name} on YouAreCoder as a {role}.
+
+            Your Login Credentials:
+            - Email: {email}
+            - Temporary Password: {temp_password}
+
+            Workspace Quota: You can create up to {quota} workspace(s).
+
+            Please log in at https://youarecoder.com/auth/login and change your password immediately.
+
+            If you have any questions, please contact your team administrator.
+
+            Best regards,
+            The YouAreCoder Team
+            """
+
+            send_email(
+                subject=subject,
+                recipients=[email],
+                text_body=text_body,
+                html_body=html_body
+            )
+
+            logger.info(f"Sent invitation email to {email}")
+
+        except Exception as email_error:
+            logger.error(f"Failed to send invitation email to {email}: {str(email_error)}")
+            # Don't fail the request if email sending fails
+
+        logger.info(f"Admin {current_user.id} added new team member {new_user.id} ({email}) with role {role}")
+
+        return jsonify({
+            'success': True,
+            'user_id': new_user.id,
+            'email': new_user.email,
+            'role': new_user.role,
+            'quota': new_user.workspace_quota,
+            'message': 'Team member added successfully. Invitation email sent.'
+        }), 201
+
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error adding team member: {str(e)}")
+        return jsonify({'error': 'Failed to add team member. Please try again.'}), 500
+
+
 @bp.route('/team/<int:user_id>/quota', methods=['POST'])
 @login_required
 @require_company_admin

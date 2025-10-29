@@ -51,6 +51,68 @@
                 </div>
             </div>
 
+            <!-- Add Team Member Form -->
+            <div class="mb-8 bg-white shadow-sm rounded-lg overflow-hidden">
+                <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+                    <h3 class="text-lg font-medium leading-6 text-gray-900">Add Team Member</h3>
+                    <p class="mt-1 text-sm text-gray-500">Invite a new member to join your team</p>
+                </div>
+                <div class="px-4 py-5 sm:p-6">
+                    <form data-testid="team-add-member-form" class="space-y-4" id="addMemberForm" onsubmit="return addTeamMember(event)">
+                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                            <div>
+                                <label for="member-email" class="block text-sm font-medium text-gray-700">Email Address</label>
+                                <input
+                                    type="email"
+                                    name="email"
+                                    id="member-email"
+                                    data-testid="team-member-email"
+                                    required
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                                    placeholder="developer@company.com"
+                                />
+                            </div>
+                            <div>
+                                <label for="member-role" class="block text-sm font-medium text-gray-700">Role</label>
+                                <select
+                                    name="role"
+                                    id="member-role"
+                                    data-testid="team-member-role"
+                                    required
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                                >
+                                    <option value="">Select role...</option>
+                                    <option value="developer">Developer</option>
+                                    <option value="admin">Admin</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="member-quota" class="block text-sm font-medium text-gray-700">Workspace Quota</label>
+                                <input
+                                    type="number"
+                                    name="quota"
+                                    id="member-quota"
+                                    data-testid="team-member-quota"
+                                    min="0"
+                                    value="1"
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                                />
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs text-gray-500" id="add-member-status"></span>
+                            <button
+                                type="submit"
+                                data-testid="team-add-member-btn"
+                                class="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                            >
+                                Add Team Member
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
             <!-- Team Members Table -->
             <div class="bg-white shadow-sm rounded-lg overflow-hidden">
                 <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
@@ -192,6 +254,60 @@
 </div>
 
 <script>
+async function addTeamMember(event) {
+    event.preventDefault();
+
+    const form = event.target;
+    const email = form.querySelector('input[name="email"]').value;
+    const role = form.querySelector('select[name="role"]').value;
+    const quota = parseInt(form.querySelector('input[name="quota"]').value);
+    const statusElement = document.getElementById('add-member-status');
+
+    // Show loading state
+    statusElement.textContent = 'Adding member...';
+    statusElement.className = 'text-xs text-blue-500';
+
+    try {
+        const response = await fetch('/admin/team/add', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                email: email,
+                role: role,
+                quota: quota
+            })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            // Success
+            statusElement.textContent = '✓ Member added successfully';
+            statusElement.className = 'text-xs text-green-600';
+
+            // Reset form
+            form.reset();
+
+            // Reload page after 1 second to show new member
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        } else {
+            // Error from server
+            statusElement.textContent = `✗ ${data.error || 'Failed to add member'}`;
+            statusElement.className = 'text-xs text-red-600';
+        }
+    } catch (error) {
+        // Network or other error
+        statusElement.textContent = `✗ Error: ${error.message}`;
+        statusElement.className = 'text-xs text-red-600';
+    }
+
+    return false;
+}
+
 async function updateQuota(event, userId) {
     event.preventDefault();
 

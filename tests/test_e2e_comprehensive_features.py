@@ -64,18 +64,18 @@ class TestHelpers:
         # Navigate to login page with network idle
         page.goto(f'{BASE_URL}/auth/login', wait_until='networkidle', timeout=60000)
 
-        # Wait for login form to be visible
-        page.wait_for_selector('input[name="email"]', state='visible', timeout=15000)
-        page.wait_for_selector('input[name="password"]', state='visible', timeout=15000)
+        # Wait for login form to be visible (using data-testid)
+        page.wait_for_selector('[data-testid="login-email"]', state='visible', timeout=15000)
+        page.wait_for_selector('[data-testid="login-password"]', state='visible', timeout=15000)
 
-        # Fill login form
-        page.fill('input[name="email"]', email)
+        # Fill login form (using data-testid selectors)
+        page.fill('[data-testid="login-email"]', email)
         time.sleep(0.3)
-        page.fill('input[name="password"]', password)
+        page.fill('[data-testid="login-password"]', password)
         time.sleep(0.3)
 
-        # Submit form
-        page.click('button[type="submit"], input[type="submit"]')
+        # Submit form (using data-testid)
+        page.click('[data-testid="login-submit-btn"]')
 
         # Wait for navigation after login
         page.wait_for_load_state('networkidle', timeout=60000)
@@ -111,34 +111,34 @@ class TestHelpers:
                 # If no register link, navigate directly again
                 page.goto(f'{BASE_URL}/auth/register', wait_until='networkidle', timeout=60000)
 
-        # Wait for form elements to be visible and enabled
-        page.wait_for_selector('input[name="company_name"]', state='visible', timeout=15000)
-        page.wait_for_selector('input[name="email"]', state='visible', timeout=15000)
+        # Wait for form elements to be visible and enabled (using data-testid)
+        page.wait_for_selector('[data-testid="register-company-name"]', state='visible', timeout=15000)
+        page.wait_for_selector('[data-testid="register-email"]', state='visible', timeout=15000)
 
-        # Fill form fields with explicit waits
-        page.fill('input[name="company_name"]', company_data['company_name'])
+        # Fill form fields with explicit waits (using data-testid selectors)
+        page.fill('[data-testid="register-company-name"]', company_data['company_name'])
         time.sleep(0.5)  # Small delay for stability
 
-        page.fill('input[name="subdomain"]', company_data['subdomain'])
+        page.fill('[data-testid="register-subdomain"]', company_data['subdomain'])
         time.sleep(0.5)
 
-        page.fill('input[name="full_name"]', company_data['full_name'])
+        page.fill('[data-testid="register-full-name"]', company_data['full_name'])
         time.sleep(0.5)
 
-        page.fill('input[name="email"]', company_data['email'])
+        page.fill('[data-testid="register-email"]', company_data['email'])
         time.sleep(0.5)
 
-        page.fill('input[name="password"]', company_data['password'])
+        page.fill('[data-testid="register-password"]', company_data['password'])
         time.sleep(0.5)
 
-        page.fill('input[name="password_confirm"]', company_data['password'])
+        page.fill('[data-testid="register-password-confirm"]', company_data['password'])
         time.sleep(0.5)
 
         # Take screenshot before submit
         TestHelpers.take_screenshot(page, 'register_form_filled', test_id)
 
-        # Submit form
-        page.click('button[type="submit"], input[type="submit"]')
+        # Submit form (using data-testid)
+        page.click('[data-testid="register-submit-btn"]')
 
         # Wait for navigation after registration
         page.wait_for_load_state('networkidle', timeout=60000)
@@ -167,19 +167,19 @@ class TestOwnerTeamManagement:
         TestHelpers.take_screenshot(page, 'team_02_team_page', test_id)
 
         # Wait for team form to be visible
-        page.wait_for_selector('input[name="email"]', state='visible', timeout=15000)
+        page.wait_for_selector('[data-testid="team-member-email"]', state='visible', timeout=15000)
 
         # Add new team member
         member_email = f'developer+{test_id}@youarecoder.com'
-        page.fill('input[name="email"]', member_email)
+        page.fill('[data-testid="team-member-email"]', member_email)
         time.sleep(0.5)
 
         # Wait for role selector and select
-        page.wait_for_selector('select[name="role"]', state='visible', timeout=15000)
-        page.select_option('select[name="role"]', 'developer')
+        page.wait_for_selector('[data-testid="team-member-role"]', state='visible', timeout=15000)
+        page.select_option('[data-testid="team-member-role"]', 'developer')
         time.sleep(0.5)
 
-        page.click('button:has-text("Add Team Member"), button:has-text("Invite")')
+        page.click('[data-testid="team-add-member-btn"]')
         page.wait_for_load_state('networkidle', timeout=30000)
 
         # Verify success
@@ -201,16 +201,16 @@ class TestOwnerTeamManagement:
         page.wait_for_load_state('domcontentloaded', timeout=10000)
 
         # Wait for form elements
-        page.wait_for_selector('input[name="email"]', state='visible', timeout=15000)
-        page.wait_for_selector('select[name="role"]', state='visible', timeout=15000)
+        page.wait_for_selector('[data-testid="team-member-email"]', state='visible', timeout=15000)
+        page.wait_for_selector('[data-testid="team-member-role"]', state='visible', timeout=15000)
 
         # Add member as developer
         member_email = f'developer+{test_id}@youarecoder.com'
-        page.fill('input[name="email"]', member_email)
+        page.fill('[data-testid="team-member-email"]', member_email)
         time.sleep(0.5)
-        page.select_option('select[name="role"]', 'developer')
+        page.select_option('[data-testid="team-member-role"]', 'developer')
         time.sleep(0.5)
-        page.click('button:has-text("Add Team Member"), button:has-text("Invite")')
+        page.click('[data-testid="team-add-member-btn"]')
         page.wait_for_load_state('networkidle', timeout=30000)
         time.sleep(2)
 
@@ -237,16 +237,16 @@ class TestOwnerTeamManagement:
         page.wait_for_load_state('domcontentloaded', timeout=10000)
 
         # Wait for form elements
-        page.wait_for_selector('input[name="email"]', state='visible', timeout=15000)
-        page.wait_for_selector('select[name="role"]', state='visible', timeout=15000)
+        page.wait_for_selector('[data-testid="team-member-email"]', state='visible', timeout=15000)
+        page.wait_for_selector('[data-testid="team-member-role"]', state='visible', timeout=15000)
 
         # Add member
         member_email = f'developer+{test_id}@youarecoder.com'
-        page.fill('input[name="email"]', member_email)
+        page.fill('[data-testid="team-member-email"]', member_email)
         time.sleep(0.5)
-        page.select_option('select[name="role"]', 'developer')
+        page.select_option('[data-testid="team-member-role"]', 'developer')
         time.sleep(0.5)
-        page.click('button:has-text("Add Team Member"), button:has-text("Invite")')
+        page.click('[data-testid="team-add-member-btn"]')
         page.wait_for_load_state('networkidle', timeout=30000)
         time.sleep(2)
 
@@ -283,11 +283,11 @@ class TestWorkspaceQuotaEnforcement:
         page.wait_for_load_state('domcontentloaded', timeout=10000)
 
         # Wait for workspace form
-        page.wait_for_selector('input[name="name"]', state='visible', timeout=15000)
+        page.wait_for_selector('[data-testid="workspace-name"]', state='visible', timeout=15000)
 
-        page.fill('input[name="name"]', f'workspace-{test_id}-1')
+        page.fill('[data-testid="workspace-name"]', f'workspace-{test_id}-1')
         time.sleep(0.5)
-        page.click('button[type="submit"]')
+        page.click('[data-testid="workspace-create-btn"]')
         page.wait_for_load_state('networkidle', timeout=60000)
         TestHelpers.take_screenshot(page, 'quota_02_first_workspace_created', test_id)
 
@@ -303,8 +303,8 @@ class TestWorkspaceQuotaEnforcement:
             assert True, "Quota warning displayed correctly"
         else:
             # Try to create and expect failure
-            page.fill('input[name="name"]', f'workspace-{test_id}-2')
-            page.click('button[type="submit"]')
+            page.fill('[data-testid="workspace-name"]', f'workspace-{test_id}-2')
+            page.click('[data-testid="workspace-create-btn"]')
             time.sleep(2)
             TestHelpers.take_screenshot(page, 'quota_04_second_workspace_blocked', test_id)
             TestHelpers.wait_for_toast(page, 'quota')
@@ -322,7 +322,7 @@ class TestWorkspaceQuotaEnforcement:
 
         # Wait for billing page elements
         time.sleep(2)
-        team_button = page.locator('button:has-text("Team"), a:has-text("Team")').first
+        team_button = page.locator('[data-testid="billing-team-plan-btn"]').first
         if team_button.count() > 0:
             team_button.click()
             time.sleep(3)
@@ -332,8 +332,8 @@ class TestWorkspaceQuotaEnforcement:
         # Create multiple workspaces
         for i in range(1, 4):  # Create 3 workspaces
             page.goto(f'{BASE_URL}/workspaces/create', timeout=TIMEOUT)
-            page.fill('input[name="name"]', f'team-workspace-{test_id}-{i}')
-            page.click('button[type="submit"]')
+            page.fill('[data-testid="workspace-name"]', f'team-workspace-{test_id}-{i}')
+            page.click('[data-testid="workspace-create-btn"]')
             page.wait_for_load_state('networkidle', timeout=TIMEOUT)
             time.sleep(2)
 
@@ -367,10 +367,10 @@ class TestTemplateProvisioning:
             TestHelpers.take_screenshot(page, 'template_02_python_selected', test_id)
 
         # Fill workspace name
-        page.fill('input[name="name"]', f'python-workspace-{test_id}')
+        page.fill('[data-testid="workspace-name"]', f'python-workspace-{test_id}')
 
         # Submit
-        page.click('button[type="submit"]')
+        page.click('[data-testid="workspace-create-btn"]')
         page.wait_for_load_state('networkidle', timeout=TIMEOUT)
         time.sleep(3)
 
@@ -402,8 +402,8 @@ class TestTemplateProvisioning:
             if react_option:
                 template_select.select_option(label=react_option)
 
-        page.fill('input[name="name"]', f'react-workspace-{test_id}')
-        page.click('button[type="submit"]')
+        page.fill('[data-testid="workspace-name"]', f'react-workspace-{test_id}')
+        page.click('[data-testid="workspace-create-btn"]')
         page.wait_for_load_state('networkidle', timeout=TIMEOUT)
         time.sleep(3)
 
@@ -425,8 +425,8 @@ class TestWorkspaceLifecycle:
         # Setup: Create workspace
         owner_data = TestHelpers.register_company(page, test_id)
         page.goto(f'{BASE_URL}/workspaces/create', timeout=TIMEOUT)
-        page.fill('input[name="name"]', f'lifecycle-workspace-{test_id}')
-        page.click('button[type="submit"]')
+        page.fill('[data-testid="workspace-name"]', f'lifecycle-workspace-{test_id}')
+        page.click('[data-testid="workspace-create-btn"]')
         page.wait_for_load_state('networkidle', timeout=TIMEOUT)
         time.sleep(5)
 
@@ -458,8 +458,8 @@ class TestWorkspaceLifecycle:
         # Setup: Create and start workspace
         owner_data = TestHelpers.register_company(page, test_id)
         page.goto(f'{BASE_URL}/workspaces/create', timeout=TIMEOUT)
-        page.fill('input[name="name"]', f'stop-test-{test_id}')
-        page.click('button[type="submit"]')
+        page.fill('[data-testid="workspace-name"]', f'stop-test-{test_id}')
+        page.click('[data-testid="workspace-create-btn"]')
         page.wait_for_load_state('networkidle', timeout=TIMEOUT)
         time.sleep(5)
 
@@ -494,8 +494,8 @@ class TestWorkspaceLifecycle:
         # Setup
         owner_data = TestHelpers.register_company(page, test_id)
         page.goto(f'{BASE_URL}/workspaces/create', timeout=TIMEOUT)
-        page.fill('input[name="name"]', f'restart-test-{test_id}')
-        page.click('button[type="submit"]')
+        page.fill('[data-testid="workspace-name"]', f'restart-test-{test_id}')
+        page.click('[data-testid="workspace-create-btn"]')
         page.wait_for_load_state('networkidle', timeout=TIMEOUT)
         time.sleep(5)
 
@@ -549,7 +549,7 @@ class TestPayTRCheckout:
         TestHelpers.take_screenshot(page, 'paytr_02_plans_displayed', test_id)
 
         # Click on Team plan button
-        team_button = page.locator('button:has-text("Team Plan"), a:has-text("Team"), button:has-text("Upgrade to Team")').first
+        team_button = page.locator('[data-testid="billing-team-plan-btn"]').first
         if team_button.count() > 0:
             team_button.click()
             time.sleep(3)
