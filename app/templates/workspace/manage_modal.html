@@ -197,6 +197,15 @@ async function controlWorkspace(workspaceId, action) {
 
             // Update button states
             updateButtonStates(action === 'start' || action === 'restart');
+
+            // Trigger HTMX event to refresh the workspace card on the list page
+            // This will update the badge and button on the card when modal is closed
+            window.dispatchEvent(new CustomEvent('workspace-status-changed', {
+                detail: {
+                    workspaceId: workspaceId,
+                    isRunning: action === 'start' || action === 'restart'
+                }
+            }));
         } else {
             showNotification('error', data.error || `Failed to ${action} workspace`);
             btn.disabled = false;
