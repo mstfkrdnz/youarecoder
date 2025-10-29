@@ -183,7 +183,7 @@
                                         <div class="flex-1 max-w-xs">
                                             <div class="w-full bg-gray-200 rounded-full h-2">
                                                 <div class="{% if usage_percent >= 90 %}bg-red-600{% elif usage_percent >= 70 %}bg-yellow-500{% else %}bg-green-600{% endif %} h-2 rounded-full transition-all duration-300"
-                                                     style="width: {{ min(usage_percent, 100) }}%"></div>
+                                                     style="width: {{ usage_percent if usage_percent <= 100 else 100 }}%"></div>
                                             </div>
                                         </div>
                                         <span class="ml-2 text-xs font-medium {% if usage_percent >= 90 %}text-red-600{% elif usage_percent >= 70 %}text-yellow-600{% else %}text-green-600{% endif %}">
