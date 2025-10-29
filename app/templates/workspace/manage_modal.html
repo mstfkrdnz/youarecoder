@@ -175,10 +175,14 @@ async function controlWorkspace(workspaceId, action) {
     `;
 
     try {
+        // Get CSRF token from meta tag
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
         const response = await fetch(`/workspace/${workspaceId}/${action}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
             }
         });
 
