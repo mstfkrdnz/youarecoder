@@ -3,6 +3,7 @@
 {% block title %}Team Management - YouAreCoder{% endblock %}
 
 {% block extra_head %}
+<meta name="csrf-token" content="{{ csrf_token() }}">
 <style>
     .quota-input {
         transition: all 0.2s ease;
@@ -321,10 +322,14 @@ async function updateQuota(event, userId) {
     statusElement.className = 'text-xs text-blue-500';
 
     try {
+        // Get CSRF token
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+
         const response = await fetch(`/admin/team/${userId}/quota`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
             },
             body: JSON.stringify({ quota: newQuota })
         });
