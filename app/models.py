@@ -166,6 +166,15 @@ class Workspace(db.Model):
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+    # Lifecycle management fields (Phase 4)
+    is_running = db.Column(db.Boolean, nullable=False, default=False)
+    last_started_at = db.Column(db.DateTime)
+    last_stopped_at = db.Column(db.DateTime)
+    last_accessed_at = db.Column(db.DateTime)
+    auto_stop_hours = db.Column(db.Integer, default=0)  # 0 = never auto-stop
+    cpu_limit_percent = db.Column(db.Integer, default=100)
+    memory_limit_mb = db.Column(db.Integer, default=2048)
+
     # Composite unique constraint for name within company
     __table_args__ = (
         db.UniqueConstraint('company_id', 'name', name='uq_company_workspace_name'),

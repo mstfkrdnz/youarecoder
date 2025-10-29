@@ -154,6 +154,28 @@ class AuditLogger:
         )
 
     @staticmethod
+    def log_workspace_action(workspace, action, user_id=None):
+        """
+        Log workspace lifecycle action (start, stop, restart).
+
+        Args:
+            workspace: Workspace model instance
+            action: Action type ('start', 'stop', 'restart')
+            user_id: User ID performing the action
+        """
+        return AuditLogger.log(
+            action_type=f'workspace_{action}',
+            resource_type='workspace',
+            resource_id=workspace.id,
+            details={
+                'workspace_name': workspace.name,
+                'linux_user': workspace.linux_username,
+                'action': action
+            },
+            user_id=user_id
+        )
+
+    @staticmethod
     def log_payment(payment, action='payment_success'):
         """Log payment event."""
         return AuditLogger.log(

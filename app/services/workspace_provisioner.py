@@ -407,3 +407,172 @@ WantedBy=multi-user.target
             current_app.logger.error(f"Workspace deprovisioning failed: {str(e)}")
             result['error'] = str(e)
             raise WorkspaceProvisionerError(f"Deprovisioning failed: {str(e)}")
+
+    # Phase 4: Workspace Lifecycle Management Methods
+
+    def start_workspace_service(self, workspace: Workspace) -> Dict[str, any]:
+        """
+        Start workspace code-server systemd service.
+
+        Args:
+            workspace: Workspace model instance
+
+        Returns:
+            dict: Start result with success status
+        """
+        try:
+            result = subprocess.run([
+                '/bin/systemctl', 'start', f'code-server@{workspace.linux_username}.service'
+            ], check=True, capture_output=True, text=True)
+
+            current_app.logger.info(f"Started workspace service: {workspace.id}")
+
+            return {
+                'success': True,
+                'message': f'Workspace {workspace.name} started successfully'
+            }
+
+        except subprocess.CalledProcessError as e:
+            current_app.logger.error(f"Failed to start workspace {workspace.id}: {e.stderr}")
+            return {
+                'success': False,
+                'message': f'Failed to start workspace service: {e.stderr}'
+            }
+
+    def stop_workspace_service(self, workspace: Workspace) -> Dict[str, any]:
+        """
+        Stop workspace code-server systemd service.
+
+        Args:
+            workspace: Workspace model instance
+
+        Returns:
+            dict: Stop result with success status
+        """
+        try:
+            result = subprocess.run([
+                '/bin/systemctl', 'stop', f'code-server@{workspace.linux_username}.service'
+            ], check=True, capture_output=True, text=True)
+
+            current_app.logger.info(f"Stopped workspace service: {workspace.id}")
+
+            return {
+                'success': True,
+                'message': f'Workspace {workspace.name} stopped successfully'
+            }
+
+        except subprocess.CalledProcessError as e:
+            current_app.logger.error(f"Failed to stop workspace {workspace.id}: {e.stderr}")
+            return {
+                'success': False,
+                'message': f'Failed to stop workspace service: {e.stderr}'
+            }
+
+    def restart_workspace_service(self, workspace: Workspace) -> Dict[str, any]:
+        """
+        Restart workspace code-server systemd service.
+
+        Args:
+            workspace: Workspace model instance
+
+        Returns:
+            dict: Restart result with success status
+        """
+        try:
+            result = subprocess.run([
+                '/bin/systemctl', 'restart', f'code-server@{workspace.linux_username}.service'
+            ], check=True, capture_output=True, text=True)
+
+            current_app.logger.info(f"Restarted workspace service: {workspace.id}")
+
+            return {
+                'success': True,
+                'message': f'Workspace {workspace.name} restarted successfully'
+            }
+
+        except subprocess.CalledProcessError as e:
+            current_app.logger.error(f"Failed to restart workspace {workspace.id}: {e.stderr}")
+            return {
+                'success': False,
+                'message': f'Failed to restart workspace service: {e.stderr}'
+            }
+
+    def get_workspace_service_status(self, workspace: Workspace) -> Dict[str, any]:
+        """
+        Get workspace code-server systemd service status.
+
+        Args:
+            workspace: Workspace model instance
+
+        Returns:
+            dict: Service status information
+        """
+        try:
+            result = subprocess.run([
+                '/bin/systemctl', 'status', f'code-server@{workspace.linux_username}.service'
+            ], capture_output=True, text=True)
+
+            # Parse systemctl status output
+            status_lines = result.stdout.split('\n')
+            active_line = [line for line in status_lines if 'Active:' in line]
+
+            if active_line:
+                active_status = active_line[0].strip()
+                is_active = 'active (running)' in active_status.lower()
+            else:
+                is_active = False
+
+            return {
+                'is_active': is_active,
+                'status_output': result.stdout,
+                'return_code': result.returncode
+            }
+
+        except Exception as e:
+            current_app.logger.error(f"Failed to get workspace {workspace.id} status: {str(e)}")
+            return {
+                'is_active': False,
+                'error': str(e)
+            }
+
+    def get_workspace_logs(self, workspace: Workspace, lines: int = 100, since: Optional[str] = None) -> Dict[str, any]:
+        """
+        Get workspace code-server logs from systemd journal.
+
+        Args:
+            workspace: Workspace model instance
+            lines: Number of log lines to retrieve (default 100)
+            since: Time filter (e.g., "1 hour ago", "2024-01-01")
+
+        Returns:
+            dict: Log data with success status
+        """
+        try:
+            # Build journalctl command
+            cmd = [
+                '/bin/journalctl',
+                '-u', f'code-server@{workspace.linux_username}.service',
+                '-n', str(lines),
+                '--no-pager'
+            ]
+
+            if since:
+                cmd.extend(['--since', since])
+
+            result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+
+            logs = result.stdout.split('\n')
+
+            return {
+                'success': True,
+                'logs': logs,
+                'truncated': len(logs) >= lines
+            }
+
+        except subprocess.CalledProcessError as e:
+            current_app.logger.error(f"Failed to get workspace {workspace.id} logs: {e.stderr}")
+            return {
+                'success': False,
+                'logs': [],
+                'error': e.stderr
+            }
