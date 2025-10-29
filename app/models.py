@@ -672,7 +672,7 @@ class WorkspaceTemplate(db.Model):
     # Relationships
     workspaces = db.relationship('Workspace', backref='template', lazy='dynamic')
     creator = db.relationship('User', foreign_keys=[created_by])
-    company = db.relationship('Company', backref='templates', lazy='dynamic')
+    company = db.relationship('Company', backref=db.backref('templates', lazy='dynamic'))
 
     def __repr__(self):
         return f'<WorkspaceTemplate {self.name} ({self.category})>'
