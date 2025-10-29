@@ -35,7 +35,7 @@
                     <div class="sm:ml-5 w-full sm:w-0 sm:flex-1 text-center sm:text-left mt-2 sm:mt-0">
                         <dt class="truncate text-xs sm:text-sm font-medium text-gray-500">Total Workspaces</dt>
                         <dd class="flex items-baseline justify-center sm:justify-start">
-                            <div class="text-xl sm:text-2xl font-semibold text-gray-900">{{ workspaces|length }}</div>
+                            <div class="text-xl sm:text-2xl font-semibold text-gray-900">{{ all_workspaces|length }}</div>
                             <div class="ml-1 sm:ml-2 text-xs sm:text-sm text-gray-500">/ {{ current_user.company.max_workspaces }}</div>
                         </dd>
                     </div>
@@ -53,10 +53,10 @@
                         </div>
                     </div>
                     <div class="sm:ml-5 w-full sm:w-0 sm:flex-1 text-center sm:text-left mt-2 sm:mt-0">
-                        <dt class="truncate text-xs sm:text-sm font-medium text-gray-500">Active</dt>
+                        <dt class="truncate text-xs sm:text-sm font-medium text-gray-500">Running</dt>
                         <dd class="flex items-baseline justify-center sm:justify-start">
                             <div class="text-xl sm:text-2xl font-semibold text-gray-900">
-                                {{ workspaces|selectattr('status', 'equalto', 'active')|list|length }}
+                                {{ all_workspaces|selectattr('is_running', 'equalto', True)|list|length }}
                             </div>
                         </dd>
                     </div>
@@ -77,7 +77,7 @@
                         <dt class="truncate text-xs sm:text-sm font-medium text-gray-500">Total Storage</dt>
                         <dd class="flex items-baseline justify-center sm:justify-start">
                             <div class="text-xl sm:text-2xl font-semibold text-gray-900">
-                                {{ workspaces|sum(attribute='disk_quota_gb') }} GB
+                                {{ all_workspaces|sum(attribute='disk_quota_gb') }} GB
                             </div>
                         </dd>
                     </div>
