@@ -624,3 +624,66 @@ class EmailLog(db.Model):
             'opened_at': self.opened_at.isoformat() if self.opened_at else None,
             'clicked_at': self.clicked_at.isoformat() if self.clicked_at else None
         }
+
+
+class WorkspaceTemplate(db.Model):
+    """Workspace template model for pre-configured environments."""
+    __tablename__ = 'workspace_templates'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text)
+    category = db.Column(db.String(50))  # web, data-science, mobile, devops, etc.
+    visibility = db.Column(db.String(20), nullable=False, default='company')  # official, company, user
+    is_active = db.Column(db.Boolean, nullable=False, default=True)
+
+    # Template configuration stored as JSON
+    # Schema: {
+    #   "base_image": "python:3.11",
+    #   "packages": ["jupyter", "pandas", "numpy"],
+    #   "extensions": ["ms-python.python", "ms-toolsai.jupyter"],
+    #   "repositories": [{"url": "...", "branch": "..."}],
+    #   "settings": {...},
+    #   "environment": {"KEY": "value"},
+    #   "post_create_script": "pip install -r requirements.txt"
+    # }
+    config = db.Column(db.JSON, nullable=False)
+
+    # Ownership
+    company_id = db.Column(db.Integer, db.ForeignKey('companies.id'), nullable=True)
+    created_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+
+    # Metadata
+    usage_count = db.Column(db.Integer, nullable=False, default=0)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    workspaces = db.relationship('Workspace', backref='template', lazy='dynamic')
+    creator = db.relationship('User', foreign_keys=[created_by])
+    company = db.relationship('Company', backref='templates', lazy='dynamic')
+
+    def __repr__(self):
+        return f'<WorkspaceTemplate {self.name} ({self.category})>'
+
+    def increment_usage(self):
+        """Increment usage counter when template is used."""
+        self.usage_count += 1
+        db.session.commit()
+
+    def to_dict(self):
+        """Convert to dictionary for JSON serialization."""
+        return {
+            'id': self.id,
+            'name': self.name,
+            'description': self.description,
+            'category': self.category,
+            'visibility': self.visibility,
+            'is_active': self.is_active,
+            'config': self.config,
+            'company_id': self.company_id,
+            'created_by': self.created_by,
+            'usage_count': self.usage_count,
+            'created_at': self.created_at.isoformat(),
+            'updated_at': self.updated_at.isoformat()
+        }

@@ -11,7 +11,7 @@ from flask import Blueprint, jsonify, abort, send_file
 from flask_login import login_required, current_user
 
 from app import db
-from app.models import User, Company, AuditLog, WorkspaceSession, Payment, Invoice
+from app.models import User, Company, AuditLog, WorkspaceSession, Payment, Invoice, WorkspaceTemplate
 from app.utils.decorators import require_company_admin
 from app.services.proof_package_generator import ChargebackProofGenerator
 
@@ -402,3 +402,237 @@ def update_user_quota(user_id):
         db.session.rollback()
         logger.error(f"Error updating user quota: {str(e)}", exc_info=True)
         return jsonify({'error': 'Failed to update quota'}), 500
+
+
+@bp.route('/templates')
+@login_required
+@require_company_admin
+def templates_list():
+    """
+    Workspace templates management page.
+
+    Lists all available templates:
+    - Official templates (platform-provided)
+    - Company templates (company-specific)
+    - Personal templates (user-created)
+
+    Returns:
+        HTML page with template listing and management interface
+
+    Authentication:
+        Requires authenticated admin user (Owner role)
+
+    HTTP Codes:
+        200: Success
+        403: Not authorized (not admin)
+    """
+    from flask import render_template
+
+    # Get official templates (no company_id)
+    official_templates = WorkspaceTemplate.query.filter_by(
+        visibility='official',
+        is_active=True
+    ).order_by(WorkspaceTemplate.usage_count.desc()).all()
+
+    # Get company templates
+    company_templates = WorkspaceTemplate.query.filter_by(
+        company_id=current_user.company_id,
+        visibility='company',
+        is_active=True
+    ).order_by(WorkspaceTemplate.created_at.desc()).all()
+
+    # Get user templates
+    user_templates = WorkspaceTemplate.query.filter_by(
+        created_by=current_user.id,
+        visibility='user',
+        is_active=True
+    ).order_by(WorkspaceTemplate.created_at.desc()).all()
+
+    logger.info(f"Admin {current_user.id} accessed templates management page")
+
+    return render_template('admin/templates.html',
+                          official_templates=official_templates,
+                          company_templates=company_templates,
+                          user_templates=user_templates)
+
+
+@bp.route('/templates/create', methods=['GET', 'POST'])
+@login_required
+@require_company_admin
+def template_create():
+    """
+    Create new workspace template.
+
+    GET: Returns template creation form
+    POST: Creates new template from form data
+
+    JSON Body (POST):
+        {
+            "name": "Template Name",
+            "description": "Description",
+            "category": "web",
+            "visibility": "company",
+            "config": { JSON configuration }
+        }
+
+    Returns:
+        GET: HTML form for template creation
+        POST: JSON response with success status and template info
+
+    Authentication:
+        Requires authenticated admin user (Owner role)
+
+    HTTP Codes:
+        200: Success (GET)
+        201: Template created (POST)
+        400: Validation error
+        403: Not authorized
+    """
+    from flask import render_template, request
+
+    if request.method == 'GET':
+        return render_template('admin/template_form.html', template=None)
+
+    # POST - Create template
+    try:
+        data = request.get_json()
+
+        # Validate required fields
+        if not data.get('name'):
+            return jsonify({'error': 'Template name is required'}), 400
+
+        if not data.get('config'):
+            return jsonify({'error': 'Template configuration is required'}), 400
+
+        # Create template
+        template = WorkspaceTemplate(
+            name=data['name'],
+            description=data.get('description', ''),
+            category=data.get('category', 'general'),
+            visibility=data.get('visibility', 'company'),
+            config=data['config'],
+            company_id=current_user.company_id if data.get('visibility') != 'official' else None,
+            created_by=current_user.id
+        )
+
+        db.session.add(template)
+        db.session.commit()
+
+        logger.info(f"Admin {current_user.id} created template {template.id}: {template.name}")
+
+        return jsonify({
+            'success': True,
+            'template': template.to_dict()
+        }), 201
+
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error creating template: {str(e)}", exc_info=True)
+        return jsonify({'error': 'Failed to create template'}), 500
+
+
+@bp.route('/templates/<int:template_id>', methods=['GET', 'PUT', 'DELETE'])
+@login_required
+@require_company_admin
+def template_detail(template_id):
+    """
+    View, update, or delete workspace template.
+
+    GET: Returns template details for editing
+    PUT: Updates template configuration
+    DELETE: Soft deletes template (sets is_active=False)
+
+    Args:
+        template_id: Template ID
+
+    JSON Body (PUT):
+        {
+            "name": "Updated Name",
+            "description": "Updated Description",
+            "category": "web",
+            "config": { JSON configuration }
+        }
+
+    Returns:
+        GET: HTML form with template data
+        PUT: JSON response with updated template
+        DELETE: JSON response with success status
+
+    Validation:
+        - User must own the template or be company admin
+        - Cannot modify official templates unless superadmin
+        - Cannot delete templates in use
+
+    Authentication:
+        Requires authenticated admin user (Owner role)
+
+    HTTP Codes:
+        200: Success
+        400: Validation error
+        403: Not authorized
+        404: Template not found
+    """
+    from flask import render_template, request
+
+    template = WorkspaceTemplate.query.get_or_404(template_id)
+
+    # Check ownership (unless official template)
+    if template.visibility != 'official':
+        if template.company_id != current_user.company_id and template.created_by != current_user.id:
+            logger.warning(f"Admin {current_user.id} attempted to access template {template_id} from another company")
+            abort(403)
+
+    if request.method == 'GET':
+        return render_template('admin/template_form.html', template=template)
+
+    elif request.method == 'PUT':
+        try:
+            data = request.get_json()
+
+            # Update fields
+            if 'name' in data:
+                template.name = data['name']
+            if 'description' in data:
+                template.description = data['description']
+            if 'category' in data:
+                template.category = data['category']
+            if 'config' in data:
+                template.config = data['config']
+
+            template.updated_at = datetime.utcnow()
+
+            db.session.commit()
+
+            logger.info(f"Admin {current_user.id} updated template {template_id}")
+
+            return jsonify({
+                'success': True,
+                'template': template.to_dict()
+            }), 200
+
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Error updating template: {str(e)}", exc_info=True)
+            return jsonify({'error': 'Failed to update template'}), 500
+
+    elif request.method == 'DELETE':
+        try:
+            # Check if template is in use
+            workspaces_using = template.workspaces.count()
+            if workspaces_using > 0:
+                return jsonify({
+                    'error': f'Cannot delete template in use by {workspaces_using} workspace(s)'
+                }), 400
+
+            # Soft delete
+            template.is_active = False
+            db.session.commit()
+
+            logger.info(f"Admin {current_user.id} deleted template {template_id}")
+
+            return jsonify({'success': True}), 200
+
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Error deleting template: {str(e)}", exc_info=True)
+            return jsonify({'error': 'Failed to delete template'}), 500
