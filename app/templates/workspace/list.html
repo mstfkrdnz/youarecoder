@@ -163,7 +163,7 @@ window.addEventListener('workspace-status-changed', function(event) {
     // Update Open Workspace button
     const buttonContainer = card.querySelector('.workspace-actions');
     if (buttonContainer) {
-        const openButton = buttonContainer.querySelector('a, button:first-child');
+        const openButton = buttonContainer.querySelector('.flex-1');
         if (isRunning) {
             // Replace with Open Workspace link
             const workspaceUrl = openButton.getAttribute('data-workspace-url');
