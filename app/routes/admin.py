@@ -9,7 +9,6 @@ import os
 from datetime import datetime
 from flask import Blueprint, jsonify, abort, send_file
 from flask_login import login_required, current_user
-from flask_wtf.csrf import csrf_exempt
 
 from app import db
 from app.models import User, Company, AuditLog, WorkspaceSession, Payment, Invoice, WorkspaceTemplate
@@ -316,7 +315,6 @@ def team_management():
 
 
 @bp.route('/team/add', methods=['POST'])
-@csrf_exempt
 @login_required
 @require_company_admin
 def add_team_member():
@@ -810,3 +808,11 @@ def template_detail(template_id):
             db.session.rollback()
             logger.error(f"Error deleting template: {str(e)}", exc_info=True)
             return jsonify({'error': 'Failed to delete template'}), 500
+
+
+def init_admin_csrf_exempt(csrf):
+    """
+    Initialize CSRF exemptions for admin API endpoints.
+    Called from app/__init__.py after csrf.init_app(app)
+    """
+    csrf.exempt(add_team_member)

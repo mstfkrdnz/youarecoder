@@ -113,6 +113,9 @@ def create_app(config_name=None):
     # Exempt billing callback from CSRF protection
     billing.init_billing_csrf_exempt(csrf)
 
+    # Exempt admin API endpoints from CSRF protection
+    admin.init_admin_csrf_exempt(csrf)
+
     # User loader for Flask-Login
     from app.models import User
 
