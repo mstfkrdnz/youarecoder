@@ -97,10 +97,11 @@
                     <div class="ml-5 w-0 flex-1">
                         <dt class="truncate text-sm font-medium text-gray-500">Workspace Quota</dt>
                         <dd class="flex items-baseline">
+                            {% set user_quota = current_user.workspace_quota if current_user.workspace_quota is defined else current_user.company.max_workspaces %}
                             <div class="text-2xl font-semibold text-gray-900">
-                                {{ current_user.workspaces.count() }} / {{ current_user.company.max_workspaces }}
+                                {{ current_user.workspaces.count() }} / {{ user_quota }}
                             </div>
-                            {% set usage_percent = (current_user.workspaces.count() / current_user.company.max_workspaces * 100) if current_user.company.max_workspaces > 0 else 0 %}
+                            {% set usage_percent = (current_user.workspaces.count() / user_quota * 100) if user_quota > 0 else 0 %}
                             <div class="ml-2 flex items-baseline text-sm font-semibold">
                                 <span class="{% if usage_percent >= 80 %}text-red-600{% elif usage_percent >= 60 %}text-yellow-600{% else %}text-green-600{% endif %}">
                                     {{ "%.0f"|format(usage_percent) }}%

@@ -27,9 +27,17 @@ def create():
     form = WorkspaceForm()
 
     if form.validate_on_submit():
-        # Check if company can create more workspaces
+        # Check user's personal workspace quota (Phase 2: Per-developer quota)
+        user_workspace_count = current_user.workspaces.count()
+        user_quota = getattr(current_user, 'workspace_quota', current_user.company.max_workspaces)
+
+        if user_workspace_count >= user_quota:
+            flash(f'You have reached your workspace quota ({user_quota}). Contact your administrator for more workspace capacity.', 'error')
+            return redirect(url_for('main.dashboard'))
+
+        # Also check company-wide limit (legacy fallback)
         if not current_user.company.can_create_workspace():
-            flash('Workspace limit reached for your plan', 'error')
+            flash('Company workspace limit reached for your plan', 'error')
             return redirect(url_for('main.dashboard'))
 
         # Initialize provisioner

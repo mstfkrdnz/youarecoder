@@ -1,0 +1,294 @@
+{% extends "base.html" %}
+
+{% block title %}Team Management - YouAreCoder{% endblock %}
+
+{% block extra_head %}
+<style>
+    .quota-input {
+        transition: all 0.2s ease;
+    }
+    .quota-input:focus {
+        transform: scale(1.05);
+    }
+    .quota-row:hover {
+        background-color: #f9fafb;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="py-10">
+    <header class="mb-8">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div class="md:flex md:items-center md:justify-between">
+                <div class="min-w-0 flex-1">
+                    <h1 class="text-3xl font-bold leading-7 text-gray-900 sm:truncate sm:text-4xl sm:tracking-tight">
+                        Team Management
+                    </h1>
+                    <p class="mt-2 text-sm text-gray-500">
+                        Manage workspace quotas for your team members
+                    </p>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <!-- Team Statistics -->
+            <div class="mb-8 grid grid-cols-1 gap-5 sm:grid-cols-3">
+                <div class="overflow-hidden rounded-lg bg-white px-4 py-5 shadow">
+                    <dt class="truncate text-sm font-medium text-gray-500">Team Members</dt>
+                    <dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900">{{ team_members|length }}</dd>
+                </div>
+                <div class="overflow-hidden rounded-lg bg-white px-4 py-5 shadow">
+                    <dt class="truncate text-sm font-medium text-gray-500">Total Quotas Assigned</dt>
+                    <dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900">{{ total_quotas_assigned }}</dd>
+                </div>
+                <div class="overflow-hidden rounded-lg bg-white px-4 py-5 shadow">
+                    <dt class="truncate text-sm font-medium text-gray-500">Total Workspaces</dt>
+                    <dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900">{{ total_workspaces_used }}</dd>
+                </div>
+            </div>
+
+            <!-- Team Members Table -->
+            <div class="bg-white shadow-sm rounded-lg overflow-hidden">
+                <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+                    <h3 class="text-lg font-medium leading-6 text-gray-900">Team Members</h3>
+                    <p class="mt-1 text-sm text-gray-500">Manage workspace quotas for each team member</p>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Member
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Role
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Workspace Usage
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Workspace Quota
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Last Updated
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Actions
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for member in team_members %}
+                            {% set workspace_count = member.workspaces.count() %}
+                            {% set member_quota = member.workspace_quota if hasattr(member, 'workspace_quota') and member.workspace_quota else company.max_workspaces %}
+                            {% set usage_percent = (workspace_count / member_quota * 100) if member_quota > 0 else 0 %}
+                            <tr class="quota-row" id="user-row-{{ member.id }}">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div class="flex-shrink-0 h-10 w-10">
+                                            <div class="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center">
+                                                <span class="text-indigo-600 font-medium text-sm">
+                                                    {{ member.full_name[:2].upper() if member.full_name else member.email[:2].upper() }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="ml-4">
+                                            <div class="text-sm font-medium text-gray-900">{{ member.full_name }}</div>
+                                            <div class="text-sm text-gray-500">{{ member.email }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    {% if member.role == 'admin' %}
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                        Owner
+                                    </span>
+                                    {% else %}
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                        Developer
+                                    </span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div class="text-sm font-medium text-gray-900 mr-2">
+                                            {{ workspace_count }} / {{ member_quota }}
+                                        </div>
+                                        <div class="flex-1 max-w-xs">
+                                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                                <div class="{% if usage_percent >= 90 %}bg-red-600{% elif usage_percent >= 70 %}bg-yellow-500{% else %}bg-green-600{% endif %} h-2 rounded-full transition-all duration-300"
+                                                     style="width: {{ min(usage_percent, 100) }}%"></div>
+                                            </div>
+                                        </div>
+                                        <span class="ml-2 text-xs font-medium {% if usage_percent >= 90 %}text-red-600{% elif usage_percent >= 70 %}text-yellow-600{% else %}text-green-600{% endif %}">
+                                            {{ "%.0f"|format(usage_percent) }}%
+                                        </span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    {% if member.role != 'admin' %}
+                                    <form class="quota-form" data-user-id="{{ member.id }}" onsubmit="return updateQuota(event, {{ member.id }})">
+                                        <div class="flex items-center space-x-2">
+                                            <input type="number"
+                                                   name="quota"
+                                                   id="quota-input-{{ member.id }}"
+                                                   value="{{ member_quota }}"
+                                                   min="{{ workspace_count }}"
+                                                   max="100"
+                                                   class="quota-input block w-20 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                                                   required>
+                                            <button type="submit"
+                                                    class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                                Update
+                                            </button>
+                                        </div>
+                                    </form>
+                                    {% else %}
+                                    <span class="text-sm text-gray-500">Unlimited</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {% if hasattr(member, 'quota_assigned_at') and member.quota_assigned_at %}
+                                    {{ member.quota_assigned_at.strftime('%Y-%m-%d %H:%M') }}
+                                    {% else %}
+                                    <span class="text-gray-400">Not set</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <div class="flex items-center justify-end space-x-2">
+                                        <span class="text-xs text-gray-400" id="status-{{ member.id }}"></span>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Help Text -->
+            <div class="mt-6 rounded-md bg-blue-50 p-4">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <div class="ml-3 flex-1 md:flex md:justify-between">
+                        <p class="text-sm text-blue-700">
+                            <strong>Quota Management:</strong> Each developer has a personal workspace quota. You cannot reduce a quota below their current workspace count. Owners have unlimited workspace access.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+async function updateQuota(event, userId) {
+    event.preventDefault();
+
+    const form = event.target;
+    const quotaInput = form.querySelector('input[name="quota"]');
+    const newQuota = parseInt(quotaInput.value);
+    const statusElement = document.getElementById(`status-${userId}`);
+
+    // Show loading state
+    statusElement.textContent = 'Updating...';
+    statusElement.className = 'text-xs text-blue-500';
+
+    try {
+        const response = await fetch(`/admin/team/${userId}/quota`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ quota: newQuota })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            // Success
+            statusElement.textContent = '✓ Updated';
+            statusElement.className = 'text-xs text-green-600';
+
+            // Update the progress bar
+            const row = document.getElementById(`user-row-${userId}`);
+            const currentUsage = data.current_usage;
+            const usagePercent = (currentUsage / newQuota * 100).toFixed(0);
+
+            // Find and update progress bar
+            const progressBar = row.querySelector('.h-2.rounded-full.transition-all');
+            if (progressBar) {
+                progressBar.style.width = `${Math.min(usagePercent, 100)}%`;
+
+                // Update color based on new usage
+                progressBar.className = 'h-2 rounded-full transition-all duration-300 ';
+                if (usagePercent >= 90) {
+                    progressBar.className += 'bg-red-600';
+                } else if (usagePercent >= 70) {
+                    progressBar.className += 'bg-yellow-500';
+                } else {
+                    progressBar.className += 'bg-green-600';
+                }
+            }
+
+            // Update percentage text
+            const percentText = row.querySelector('.ml-2.text-xs.font-medium');
+            if (percentText) {
+                percentText.textContent = `${usagePercent}%`;
+                percentText.className = 'ml-2 text-xs font-medium ';
+                if (usagePercent >= 90) {
+                    percentText.className += 'text-red-600';
+                } else if (usagePercent >= 70) {
+                    percentText.className += 'text-yellow-600';
+                } else {
+                    percentText.className += 'text-green-600';
+                }
+            }
+
+            // Update usage display
+            const usageText = row.querySelector('.text-sm.font-medium.text-gray-900.mr-2');
+            if (usageText) {
+                usageText.textContent = `${currentUsage} / ${newQuota}`;
+            }
+
+            // Clear success message after 3 seconds
+            setTimeout(() => {
+                statusElement.textContent = '';
+            }, 3000);
+        } else {
+            // Error
+            statusElement.textContent = '✗ ' + (data.error || 'Failed');
+            statusElement.className = 'text-xs text-red-600';
+
+            // Reset input to previous value if validation failed
+            if (response.status === 400) {
+                quotaInput.value = quotaInput.defaultValue;
+            }
+
+            // Clear error message after 5 seconds
+            setTimeout(() => {
+                statusElement.textContent = '';
+            }, 5000);
+        }
+    } catch (error) {
+        console.error('Error updating quota:', error);
+        statusElement.textContent = '✗ Network error';
+        statusElement.className = 'text-xs text-red-600';
+
+        setTimeout(() => {
+            statusElement.textContent = '';
+        }, 5000);
+    }
+
+    return false;
+}
+</script>
+{% endblock %}

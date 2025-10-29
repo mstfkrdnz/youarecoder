@@ -262,3 +262,143 @@ def generate_chargeback_proof(payment_id):
     except Exception as e:
         logger.error(f"Error generating chargeback proof: {str(e)}", exc_info=True)
         return jsonify({'error': 'Failed to generate chargeback evidence'}), 500
+
+
+@bp.route('/team')
+@login_required
+@require_company_admin
+def team_management():
+    """
+    Team management page for company owners.
+
+    Displays all team members with their workspace quotas and usage.
+    Allows owners to:
+    - View team member workspace quotas
+    - Update individual workspace quotas
+    - Invite new team members
+    - View workspace usage statistics
+
+    Returns:
+        HTML page with team member listing and quota management interface
+
+    Authentication:
+        Requires authenticated admin user (Owner role)
+
+    HTTP Codes:
+        200: Success
+        403: Not authorized (not admin)
+    """
+    from flask import render_template
+
+    # Get all company members (excluding admins for quota purposes)
+    company = current_user.company
+    team_members = User.query.filter_by(
+        company_id=company.id,
+        is_active=True
+    ).order_by(User.created_at.desc()).all()
+
+    # Calculate team statistics
+    total_quotas_assigned = sum(
+        getattr(user, 'workspace_quota', 0)
+        for user in team_members
+        if user.role != 'admin'
+    )
+    total_workspaces_used = sum(user.workspaces.count() for user in team_members)
+
+    logger.info(f"Admin {current_user.id} accessed team management page")
+
+    return render_template('admin/team.html',
+                          team_members=team_members,
+                          company=company,
+                          total_quotas_assigned=total_quotas_assigned,
+                          total_workspaces_used=total_workspaces_used)
+
+
+@bp.route('/team/<int:user_id>/quota', methods=['POST'])
+@login_required
+@require_company_admin
+def update_user_quota(user_id):
+    """
+    Update workspace quota for a specific team member.
+
+    Args:
+        user_id: User ID to update quota for
+
+    JSON Body:
+        {
+            "quota": 5  # New workspace quota
+        }
+
+    Returns:
+        JSON response with success status and updated user info
+
+    Validation:
+        - User must belong to admin's company
+        - New quota must be >= current workspace count
+        - New quota must be positive integer
+        - Cannot reduce quota below existing workspace count
+
+    Authentication:
+        Requires authenticated admin user (Owner role)
+
+    HTTP Codes:
+        200: Success
+        400: Invalid quota or validation error
+        403: Not authorized
+        404: User not found
+    """
+    from flask import request
+
+    try:
+        # Get user
+        user = User.query.get_or_404(user_id)
+
+        # Verify user belongs to admin's company
+        if user.company_id != current_user.company_id:
+            logger.warning(f"Admin {current_user.id} attempted to modify user {user_id} from another company")
+            abort(403)
+
+        # Get new quota from request
+        data = request.get_json()
+        new_quota = data.get('quota')
+
+        if new_quota is None:
+            return jsonify({'error': 'Quota value is required'}), 400
+
+        try:
+            new_quota = int(new_quota)
+        except (ValueError, TypeError):
+            return jsonify({'error': 'Quota must be a valid integer'}), 400
+
+        if new_quota < 1:
+            return jsonify({'error': 'Quota must be at least 1'}), 400
+
+        # Check current workspace count
+        current_workspace_count = user.workspaces.count()
+        if new_quota < current_workspace_count:
+            return jsonify({
+                'error': f'Cannot reduce quota below current workspace count ({current_workspace_count})'
+            }), 400
+
+        # Update quota
+        user.workspace_quota = new_quota
+        user.quota_assigned_at = datetime.utcnow()
+        user.quota_assigned_by = current_user.id
+
+        db.session.commit()
+
+        logger.info(f"Admin {current_user.id} updated quota for user {user_id} to {new_quota}")
+
+        return jsonify({
+            'success': True,
+            'user_id': user.id,
+            'email': user.email,
+            'new_quota': new_quota,
+            'current_usage': current_workspace_count,
+            'assigned_at': user.quota_assigned_at.isoformat()
+        }), 200
+
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error updating user quota: {str(e)}", exc_info=True)
+        return jsonify({'error': 'Failed to update quota'}), 500
