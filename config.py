@@ -88,8 +88,8 @@ class Config:
                 'USD': 29,       # $29/month
                 'EUR': 27        # €27/month
             },
-            'workspaces': 5,
-            'storage_gb': 10,
+            'max_workspaces': 5,
+            'storage_per_workspace_gb': 10,
             'features': [
                 '5 Development Workspaces',
                 '10GB Storage per Workspace',
@@ -106,8 +106,8 @@ class Config:
                 'USD': 99,       # $99/month
                 'EUR': 92        # €92/month
             },
-            'workspaces': 20,
-            'storage_gb': 50,
+            'max_workspaces': 20,
+            'storage_per_workspace_gb': 50,
             'features': [
                 '20 Development Workspaces',
                 '50GB Storage per Workspace',
@@ -125,8 +125,8 @@ class Config:
                 'USD': 299,      # $299/month
                 'EUR': 279       # €279/month
             },
-            'workspaces': -1,     # Unlimited
-            'storage_gb': 250,
+            'max_workspaces': 999,     # Unlimited (practical limit)
+            'storage_per_workspace_gb': 250,
             'features': [
                 'Unlimited Development Workspaces',
                 '250GB Storage per Workspace',
