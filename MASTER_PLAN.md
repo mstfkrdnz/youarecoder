@@ -1,571 +1,1067 @@
-# YouAreCoder SaaS Platform - Master Implementation Plan
+# YouAreCoder Platform - Comprehensive Master Plan
 
-**Project**: Cloud Development Environment SaaS Platform
-**Status**: Live Payment System Operational ✅
-**Last Updated**: 2025-10-28
-
----
-
-## 🎯 Project Vision
-
-YouAreCoder is a cloud-based development environment platform that provides:
-- Isolated VS Code workspaces in the browser (code-server)
-- Team collaboration and workspace sharing
-- Subscription-based billing with PayTR integration
-- Automated workspace provisioning and management
+**Vision**: Complete Software Development Lifecycle (SDLC) Platform
+**Version**: 2.0
+**Date**: 2025-10-29
+**Status**: Evolution from Code-Server Hosting → Full SDLC Platform
 
 ---
 
-## ✅ COMPLETED PHASES
+## Executive Summary
 
-### Phase 1: Foundation & Infrastructure ✅ (Day 1-2)
+YouAreCoder platform yolculuğunun başlangıcında basit bir code-server hosting hizmeti olarak tasarlandı. Şimdi ise yazılım geliştirme yaşam döngüsünün tüm aşamalarını kapsayan, rol tabanlı işbirliği özellikleriyle donatılmış, kurumsal seviyede bir platforma evrilmesinin yol haritasını çiziyoruz.
 
-**Database & Models**:
-- ✅ PostgreSQL 15 setup on new server (37.27.21.167)
-- ✅ SQLAlchemy models: User, Company, Workspace, Subscription, Payment, Invoice
-- ✅ Alembic migrations (3 versions)
-- ✅ Database relationships and constraints
+### Mevcut Durum
+- **Çalışan sistem**: Multi-tenant SaaS, PayTR entegrasyonu, email bildirimleri
+- **Roller**: Owner (yönetici) + Developer (geliştirici)
+- **Workspace yönetimi**: Manuel oluşturma, temel izolasyon
+- **Canlı ödeme sistemi**: ✅ Başarıyla test edildi (₺2,970 Team planı)
 
-**Flask Application**:
-- ✅ Flask application skeleton with factory pattern
-- ✅ Blueprint architecture (auth, main, workspace, api, billing)
-- ✅ Flask-Login authentication system
-- ✅ Password hashing with bcrypt
-- ✅ Session management
-- ✅ Environment-based configuration
+### Hedef Durum
+- **Tam SDLC platformu**: Analist, Developer, Tester, Client, AI Agent rolleri
+- **Template sistemi**: Hızlı workspace hazırlama (Python, Node.js, React, vb.)
+- **Kişisel kotalar**: Her developer için workspace limitleri
+- **Lifecycle yönetimi**: Start/stop/restart/logs/monitoring
+- **İşbirliği özellikleri**: Workspace paylaşımı, gerçek zamanlı iletişim
 
-**Testing Framework**:
-- ✅ pytest configuration
-- ✅ Test fixtures and utilities
-- ✅ 109/116 tests passing (94% pass rate)
-- ✅ Coverage: 64% overall
-
-**Documentation**:
-- ✅ [DEPLOYMENT.md](DEPLOYMENT.md) - Deployment guide
-- ✅ [claudedocs/](claudedocs/) - Technical documentation
+### İmplementasyon Zaman Çizelgesi
+5 aşama, 6-9 aylık süreç:
+1. **Dashboard Düzeltmeleri** (1 gün) - UI tutarlılığı
+2. **Kota & Ekip Yönetimi** (1-2 hafta) - Temel altyapı
+3. **Template Sistemi** (2-3 hafta) - Hızlı provisioning
+4. **Lifecycle Yönetimi** (2-3 hafta) - Operasyonel olgunluk
+5. **Gelecek Vizyonu** (3+ ay) - Tam SDLC özellikleri
 
 ---
 
-### Phase 2: Authentication & Security ✅ (Day 3-5)
+## İçindekiler
 
-**User Authentication**:
-- ✅ Registration with email validation
-- ✅ Login/logout with Flask-Login
-- ✅ Password complexity requirements
-- ✅ Failed login tracking (5 attempts → 30min lockout)
-- ✅ Account lockout mechanism
-- ✅ Session security (HttpOnly, Secure, SameSite)
-
-**Security Features**:
-- ✅ CSRF protection (Flask-WTF)
-- ✅ Rate limiting (Flask-Limiter)
-- ✅ SQL injection prevention (SQLAlchemy ORM)
-- ✅ XSS protection (template auto-escaping)
-- ✅ Security alert emails
-
-**Authorization**:
-- ✅ Role-based access control (admin, member)
-- ✅ Decorators: `@require_role()`, `@require_company_admin`
-- ✅ Company-level workspace isolation
-
-**Tests**:
-- ✅ 23 auth security tests passing
-- ✅ Login attempt tracking tests
-- ✅ Account lockout validation
+1. [Mevcut Durum Değerlendirmesi](#1-mevcut-durum-değerlendirmesi)
+2. [Vizyon & Mimari](#2-vizyon--mimari)
+3. [Veritabanı Şema Evrimi](#3-veritabanı-şema-evrimi)
+4. [İmplementasyon Aşamaları](#4-implementasyon-aşamaları)
+5. [Teknik Spesifikasyonlar](#5-teknik-spesifikasyonlar)
+6. [İş Modeli Uyumu](#6-iş-modeli-uyumu)
+7. [Güvenlik & Uyumluluk](#7-güvenlik--uyumluluk)
+8. [Test Stratejisi](#8-test-stratejisi)
+9. [Deployment & Operasyonlar](#9-deployment--operasyonlar)
+10. [Başarı Metrikleri](#10-başarı-metrikleri)
+11. [Risk Yönetimi](#11-risk-yönetimi)
+12. [Ekler](#12-ekler)
 
 ---
 
-### Phase 3: PayTR Payment Integration ✅ (Day 6-8)
+## 1. Mevcut Durum Değerlendirmesi
 
-**PayTR API Service** ([app/services/paytr_service.py](app/services/paytr_service.py)):
-- ✅ iFrame token generation (HMAC-SHA256)
-- ✅ Payment callback verification (constant-time comparison)
-- ✅ Trial subscription creation (14 days)
-- ✅ Subscription activation on payment success
-- ✅ Invoice generation
-- ✅ 82% test coverage
+### 1.1 Mimari Genel Bakış
 
-**Billing Routes** ([app/routes/billing.py](app/routes/billing.py)):
-- ✅ POST `/billing/subscribe/<plan>` - Payment initiation
-- ✅ POST `/billing/callback` - PayTR webhook (CSRF exempt)
-- ✅ GET `/billing/payment/success` - Success page
-- ✅ GET `/billing/payment/fail` - Failure page
-- ✅ GET `/billing/` - Billing dashboard
-- ✅ 85% test coverage
+**Teknoloji Stack:**
+- Backend: Flask + SQLAlchemy + PostgreSQL
+- Frontend: Jinja2 templates + Alpine.js + Tailwind CSS
+- Infrastructure: Linux users + systemd + code-server + Traefik
+- Authentication: Flask-Login with bcrypt password hashing
+- Rate Limiting: Flask-Limiter (environment-specific configuration)
 
-**Subscription Plans**:
-- ✅ Starter: $29/mo (5 workspaces, 10GB)
-- ✅ Team: $99/mo (20 workspaces, 50GB)
-- ✅ Enterprise: $299/mo (Unlimited workspaces, 250GB)
-- ✅ 14-day free trial on all plans
+**Deployment Mimarisi:**
+- Production Server: 37.27.21.167
+- Reverse Proxy: Traefik with automatic SSL (Let's Encrypt)
+- Database: PostgreSQL 15
+- Service Management: systemd for Flask app + code-server instances
 
-**Tests**:
-- ✅ 16/16 billing route tests passing
-- ✅ Payment flow validation
-- ✅ CSRF exemption for webhook
-- ✅ Hash verification security
+### 1.2 Mevcut Veritabanı Şeması
 
-**Documentation**:
-- ✅ [claudedocs/billing_implementation_summary.md](claudedocs/billing_implementation_summary.md)
-- ✅ [BILLING_DEPLOYMENT.md](BILLING_DEPLOYMENT.md)
-
----
-
-### Phase 4: Email Notifications ✅ (Day 9)
-
-**Email Service** ([app/services/email_service.py](app/services/email_service.py)):
-- ✅ Mailjet SMTP integration
-- ✅ Asynchronous email sending (background threads)
-- ✅ 3 new payment email functions:
-  - `send_payment_success_email()` - Payment confirmation
-  - `send_payment_failed_email()` - Payment failure alert
-  - `send_trial_expiry_reminder_email()` - Trial expiry warning
-
-**Email Templates**:
-- ✅ Professional HTML templates (responsive design)
-- ✅ Plain text fallbacks
-- ✅ Consistent branding (extends `email/base.html`)
-- ✅ Color-coded messages (green=success, red=error, yellow=warning)
-
-**Email Types**:
-1. **Registration**: Welcome email with account details
-2. **Password Reset**: Secure token link
-3. **Workspace Ready**: Provisioning complete notification
-4. **Security Alert**: Suspicious activity warnings
-5. **Payment Success**: ✅ Confirmation with invoice
-6. **Payment Failed**: ✅ Retry instructions
-7. **Trial Expiry**: ✅ Reminder emails (7, 3, 1 days)
-
-**PayTR Integration**:
-- ✅ Automatic email on payment success
-- ✅ Automatic email on payment failure
-- ✅ Error handling (email failure doesn't break payments)
-
-**Documentation**:
-- ✅ [claudedocs/payment_email_notifications_summary.md](claudedocs/payment_email_notifications_summary.md)
-
----
-
-### Phase 5: Automation System Design ✅ (Day 10)
-
-**Cron Job Architecture** ([claudedocs/cron_automation_design.md](claudedocs/cron_automation_design.md)):
-- ✅ Systemd timers (modern, reliable)
-- ✅ Python scripts with Flask app context
-- ✅ Centralized logging system
-- ✅ Security hardening (least privilege)
-
-**Automated Tasks Designed**:
-1. **Trial Expiry Management** (`trial_check.py`)
-   - Daily 09:00 UTC
-   - Send 7/3/1 day reminders
-   - Auto-suspend expired trials
-   - Stop workspaces on expiration
-
-2. **Subscription Management** (`subscription_manager.py`)
-   - Daily 10:00 UTC
-   - Renewal reminders (7/3 days before)
-   - Failed payment retries
-
-3. **Health Monitoring** (`health_check.py`)
-   - Hourly execution
-   - Data integrity validation
-   - System health checks
-
-**Systemd Units**:
-- ✅ 6 unit files (3 timers + 3 services)
-- ✅ Resource limits (CPU, memory)
-- ✅ Security configurations
-- ✅ Persistence and random delays
-
-**Documentation**:
-- ✅ Complete implementation code
-- ✅ Deployment guide
-- ✅ Monitoring & troubleshooting
-- ✅ Security best practices
-
----
-
-## ✅ LIVE PRODUCTION DEPLOYMENT (Day 11 - 2025-10-28)
-
-### Phase 6: PayTR Live Integration ✅ COMPLETED
-
-**Production Payment Test**:
-- ✅ Live payment processed: ₺2,970 (Team Plan)
-- ✅ Company: Alkedos Teknoloji A.Ş. (ID: 3)
-- ✅ Subscription activated automatically
-- ✅ Plan display working correctly
-- ✅ Workspace limits updated (20 workspaces)
-
-**Issues Resolved (7 total)**:
-1. ✅ Dashboard plan display (company.plan synchronization)
-2. ✅ Navbar billing link addition
-3. ✅ Dashboard button functionality
-4. ✅ Flask endpoint name resolution
-5. ✅ Invoice.amount_display property
-6. ✅ Template property vs method syntax
-7. ✅ Complete billing page functionality
-
-**Files Deployed**:
-- ✅ `app/services/paytr_service.py` - Callback handler enhancements
-- ✅ `app/models.py` - Invoice.amount_display property
-- ✅ `app/templates/base.html` - Navigation updates
-- ✅ `app/templates/dashboard.html` - Button fixes
-- ✅ `app/templates/billing/dashboard.html` - Template syntax
-
-**User Testing**:
-- ✅ All tests successful ("testler başarılı")
-- ✅ Zero errors in production
-- ✅ All features functional
-
-**Documentation Created**:
-- ✅ [claudedocs/DAILY_REPORT_2025-10-28.md](claudedocs/DAILY_REPORT_2025-10-28.md)
-- ✅ [claudedocs/FINAL_STATUS_2025-10-28.md](claudedocs/FINAL_STATUS_2025-10-28.md)
-- ✅ [claudedocs/dashboard_fixes_2025-10-28.md](claudedocs/dashboard_fixes_2025-10-28.md)
-- ✅ [claudedocs/endpoint_fix_2025-10-28.md](claudedocs/endpoint_fix_2025-10-28.md)
-- ✅ [claudedocs/billing_template_fix_2025-10-28.md](claudedocs/billing_template_fix_2025-10-28.md)
-
-**Environment Variables** (Configured ✅):
-```bash
-# PayTR Configuration (Live Mode)
-PAYTR_MERCHANT_ID=<production_id> ✅
-PAYTR_MERCHANT_KEY=<production_key> ✅
-PAYTR_MERCHANT_SALT=<production_salt> ✅
-PAYTR_TEST_MODE=0 ✅  # Live payments active
-
-# Mailjet SMTP (Configured ✅)
-MAIL_SERVER=in-v3.mailjet.com
-MAIL_PORT=587
-MAIL_USERNAME=7a545957c5a1a63b98009a6fc9775950
-MAIL_PASSWORD=77e7dd27f3709fa8adf99ddc7c8ee0fe
-MAIL_DEFAULT_SENDER=noreply@youarecoder.com
+**Companies Tablosu:**
+```python
+class Company(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    subdomain = db.Column(db.String(50), unique=True, nullable=False)
+    admin_email = db.Column(db.String(120), nullable=False)
+    plan = db.Column(db.String(20), default='free')  # free, starter, team, enterprise
+    max_workspaces = db.Column(db.Integer, default=3)
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 ```
 
-**Database Status**:
-- ✅ All billing tables created and populated
-- ✅ Company plan synchronized with subscription
-- ✅ Payment records complete
-- ✅ Invoice generation working
+**Users Tablosu:**
+```python
+class User(UserMixin, db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    password_hash = db.Column(db.String(255), nullable=False)
+    full_name = db.Column(db.String(100), nullable=False)
+    role = db.Column(db.String(20), default='member')  # admin, member
+    # ← Eklenecek: workspace_quota (Faz 2)
+    is_active = db.Column(db.Boolean, default=True)
+    company_id = db.Column(db.Integer, db.ForeignKey('companies.id'))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+```
 
-**Production Status**:
-- ✅ Server: 37.27.21.167 (youarecoder.com)
-- ✅ Service: Active (running)
-- ✅ Workers: 4 gunicorn processes
-- ✅ Memory: 195.4M (healthy)
-- ✅ Uptime: Stable
+**Workspaces Tablosu:**
+```python
+class Workspace(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    subdomain = db.Column(db.String(50), unique=True, nullable=False)
+    linux_username = db.Column(db.String(50), unique=True, nullable=False)
+    port = db.Column(db.Integer, unique=True, nullable=False)
+    code_server_password = db.Column(db.String(255), nullable=False)
+    status = db.Column(db.String(20), default='pending')  # pending, active, error
+    disk_quota_gb = db.Column(db.Integer, default=10)
+    # ← Eklenecek: template_id, is_running, lifecycle fields (Faz 3-4)
+    company_id = db.Column(db.Integer, db.ForeignKey('companies.id'))
+    owner_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow)
+```
 
----
+### 1.3 Mevcut Özellikler
 
-## 🚧 PENDING IMPLEMENTATION (Next Priority)
+**✅ İmplemente Edilmiş:**
+- Multi-tenant company registration
+- User authentication with password validation
+- Owner role with company management
+- Basic workspace provisioning (Linux user + code-server)
+- Subdomain-based access (workspace.youarecoder.com)
+- SSL certificates via Let's Encrypt
+- Workspace listing and basic info display
+- Plan-based workspace limits (company-wide)
+- PayTR payment integration (live, tested)
+- Email notifications (Mailjet SMTP)
+- Multi-currency support (USD, EUR, TRY)
+- Multi-language support (EN, TR)
+- Rate limiting (configurable per environment)
+- Form data persistence on validation errors
 
----
+**❌ Eksik (Vizyon için Gerekli):**
+- Per-developer workspace quotas (Faz 2)
+- Workspace templates (Faz 3)
+- Workspace lifecycle controls (start/stop/restart) (Faz 4)
+- Real-time workspace monitoring (Faz 4)
+- Resource usage tracking (Faz 4)
+- Team management UI (Faz 2)
+- Advanced role system (Analyst, Tester, Client, AI Agent) (Faz 5)
+- Collaboration features (Faz 5)
+- AI Agent integration (Faz 5)
+- Workflow automation (Faz 5)
 
-## 📋 PENDING IMPLEMENTATION
+### 1.4 Mevcut Kullanıcı İş Akışları
 
-### High Priority (Week 2)
+**Owner İş Akışı:**
+1. Company kaydı (owner hesabı otomatik oluşur)
+2. Ekip üyelerine email ile davetiye gönder
+3. Company dashboard'unda tüm workspaces ve ekip üyelerini görüntüle
+4. Workspace kullanımını plan limitlerine karşı izle
+5. Plan upgrade/downgrade yap
 
-**1. Frontend Payment Integration**
-- [ ] Payment modal component
-- [ ] PayTR iframe embedding
-- [ ] Success/failure redirects
-- [ ] Billing dashboard UI enhancements
+**Developer İş Akışı:**
+1. Davetiye al, hesap oluştur
+2. Workspace oluştur (isim, template seç)
+3. Subdomain URL üzerinden workspace'e eriş
+4. code-server ile geliştirme yap
+5. Dashboard'da kişisel workspace'leri görüntüle
 
-**2. Cron Job Deployment**
-- [ ] Deploy scripts to production
-- [ ] Install systemd units
-- [ ] Test trial expiry workflow
-- [ ] Monitor first week of execution
+### 1.5 Mevcut Sorun Noktaları
 
-**3. Workspace Provisioning** (Existing, needs testing)
-- [ ] Test workspace creation flow
-- [ ] Verify Traefik routing
-- [ ] Check code-server startup
-- [ ] Validate SSL certificates
-
-### Medium Priority (Week 3-4)
-
-**4. Admin Dashboard**
-- [ ] View all subscriptions
-- [ ] Manual subscription management
-- [ ] Payment history reports
-- [ ] User management interface
-- [ ] Workspace monitoring
-
-**5. Invoice Management**
-- [ ] PDF invoice generation
-- [ ] Invoice email delivery
-- [ ] Invoice download in dashboard
-- [ ] Tax calculation (if needed)
-
-**6. Additional Email Templates**
-- [ ] Renewal reminder email
-- [ ] Trial expired email
-- [ ] Subscription cancellation email
-- [ ] Payment retry notification
-
-**7. Monitoring & Analytics**
-- [ ] Grafana dashboard setup
-- [ ] Payment metrics tracking
-- [ ] Email delivery monitoring
-- [ ] User growth analytics
-
-### Low Priority (Month 2+)
-
-**8. Advanced Features**
-- [ ] Team management (invite members)
-- [ ] Workspace templates
-- [ ] Custom domains for workspaces
-- [ ] API rate limiting per plan
-- [ ] Usage-based billing (storage, compute)
-
-**9. Multi-Language Support**
-- [ ] Turkish translations
-- [ ] Language detection
-- [ ] Localized email templates
-
-**10. Enhanced Security**
-- [ ] Two-factor authentication (2FA)
-- [ ] API key management
-- [ ] OAuth integration (GitHub, Google)
-- [ ] IP whitelist/blacklist
-
----
-
-## 🎨 UI/UX Improvements
-
-### Planned Enhancements
-
-**Landing Page**:
-- [ ] Hero section with demo video
-- [ ] Feature showcase
-- [ ] Pricing comparison table
-- [ ] Customer testimonials
-- [ ] FAQ section
-
-**Dashboard**:
-- [ ] Workspace quick actions
-- [ ] Resource usage graphs
-- [ ] Recent activity feed
-- [ ] Team member list
-
-**Billing**:
-- [ ] Plan upgrade/downgrade flow
-- [ ] Payment method management
-- [ ] Invoice history with filters
-- [ ] Usage analytics
+1. **Workspace Kotası Yok:** Company limiti tüm kullanıcılar tarafından paylaşılıyor, bireysel kontrol yok
+2. **Manuel Kurulum:** Her workspace manual konfigürasyon gerektiriyor
+3. **Lifecycle Kontrolü Yok:** Workspace'ler durdurulamıyor, sürekli çalışıyor
+4. **Template Yok:** Her workspace boş başlıyor
+5. **Sınırlı Dashboard:** Karışık metrikler gösteriliyor (kişisel + company)
+6. **Kaynak İzleme Yok:** CPU/memory/disk kullanımı görünmüyor
+7. **Temel Rol Sistemi:** Sadece admin/member, özelleşmiş roller yok
+8. **İşbirliği Yok:** Workspace veya dosya paylaşımı yapılamıyor
 
 ---
 
-## 📊 Technical Debt & Improvements
+## 2. Vizyon & Mimari
 
-### Code Quality
+### 2.1 Platform Evrim Aşamaları
 
-**Test Coverage**:
-- Current: 64% overall
-- Target: 80%+
-- Focus areas:
-  - [ ] Workspace provisioning tests
-  - [ ] API endpoint tests
-  - [ ] Email template tests (need User model fix)
+**Faz 0: Code-Server Hosting (Mevcut)**
+- Temel workspace provisioning
+- Owner + Developer rolleri
+- Manuel yönetim
 
-**Documentation**:
-- ✅ API documentation (Swagger/OpenAPI)
-- [ ] User guide
-- [ ] Admin manual
-- [ ] Developer onboarding
+**Faz 1: Developer Platform (Hedef)**
+- Developer başına kotalar
+- Template sistemi
+- Lifecycle yönetimi
+- Kaynak izleme
 
-**Performance**:
-- [ ] Database query optimization
-- [ ] Add caching layer (Redis)
-- [ ] Frontend asset optimization
-- [ ] CDN for static files
+**Faz 2: Ekip İşbirliği**
+- Workspace paylaşımı
+- Rol tabanlı erişim (Analyst, Tester)
+- Gerçek zamanlı işbirliği
+- Aktivite feed'leri
 
-**Security**:
-- [ ] Security audit
-- [ ] Penetration testing
-- [ ] GDPR compliance review
-- [ ] Backup and disaster recovery plan
+**Faz 3: Tam SDLC Platformu**
+- Client portalı
+- AI Agent entegrasyonu
+- Workflow otomasyonu
+- Gelişmiş analytics
+
+### 2.2 Rol Sistemi Mimarisi
+
+**Owner Rolü:**
+- Company yöneticisi
+- Ekip üyelerini yönet (davet, çıkar, kota ata)
+- Tüm company workspace'lerini görüntüle
+- Billing ve plan yönetimi
+- Analytics ve raporlara erişim
+- Company ayarlarını yapılandır
+
+**Developer Rolü:**
+- Workspace oluştur (kişisel kota dahilinde)
+- Sahip olunan workspace'ler üzerinde tam kontrol (start/stop/delete)
+- Paylaşılan workspace'lere erişim (read veya write)
+- Kişisel dashboard görüntüle
+- Extension kurma ve environment konfigürasyonu
+
+**Analyst Rolü (Gelecek):**
+- Workspace'e read-only erişim
+- Kod ve dökümantasyon görüntüleme
+- Requirement ve spesifikasyon oluşturma
+- Kod ve issue'lar üzerine yorum yapma
+- Rapor oluşturma
+
+**Tester Rolü (Gelecek):**
+- Test amaçlı workspace erişimi
+- Test çalıştırma ve sonuçları görüntüleme
+- Bug ve issue raporlama
+- Staging/testing environment'lara erişim
+- Performance monitoring
+
+**Client Rolü (Gelecek):**
+- Proje ilerlemesini görüntüleme
+- Demo environment'lara erişim
+- Feedback sağlama
+- Deliverable'ları onaylama
+- Sınırlı workspace erişimi (proje bazında yapılandırılabilir)
+
+**AI Agent Rolü (Gelecek):**
+- Otomatik kod üretimi
+- Test otomasyonu
+- Kod review ve öneriler
+- Dökümantasyon üretimi
+- Deployment otomasyonu
+
+### 2.3 Workspace Mimarisi
+
+**Workspace = İzole Code-Server Instance**
+- Ayrı Linux kullanıcı hesabı
+- Ayrılmış home directory
+- İzole filesystem
+- code-server için unique port
+- systemd ile process izolasyonu
+- Resource limitleri (CPU, memory, disk)
+
+**Neden Birden Fazla Workspace?**
+- Farklı runtime environment'lar (Python 3.11 vs Node 18)
+- Güvenlik izolasyonu (hassas client dataları)
+- Kaynak izolasyonu (ağır ML training vs web dev)
+- Stabilite izolasyonu (deneysel vs production kodu)
+- Tipik kullanım: Developer başına 1-2 workspace
+
+**VS Code Multi-Root Workspace'ler:**
+- Bir code-server instance'ı birden fazla proje klasörü açabilir
+- Sadece farklı projeler için ayrı instance'lara gerek yok
+- Ayrı instance'lar sadece izolasyon ihtiyacı için kullanılmalı
+
+### 2.4 Template Sistemi
+
+**Amaç:** Önceden yapılandırılmış environment'larla hızlı workspace provisioning
+
+**Template Bileşenleri:**
+1. **Base Image:** OS + runtime + araçlar
+2. **Git Repositories:** Belirtilen repo'ları otomatik clone et
+3. **VS Code Extensions:** Extension listesini otomatik kur
+4. **Settings:** User settings, keybindings, snippets
+5. **Run Configurations:** Debug için launch config'leri
+6. **Environment Variables:** Önceden ayarlanmış ENV değişkenleri
+7. **Scripts:** Post-creation setup scriptleri
+
+**Template Tipleri:**
+- **Official Templates:** YouAreCoder tarafından bakımı yapılan (Python, Node.js, React, vb.)
+- **Company Templates:** Company bazında özel template'ler
+- **User Templates:** Kullanıcılar tarafından oluşturulan kişisel template'ler
+- **Shared Templates:** Community katkılı template'ler
+
+**Örnek Template (Python Data Science):**
+```json
+{
+  "name": "Python Data Science",
+  "description": "Python 3.11 with Jupyter, pandas, numpy, matplotlib",
+  "category": "data-science",
+  "base_image": "python:3.11",
+  "packages": ["jupyter", "pandas", "numpy", "matplotlib", "scikit-learn"],
+  "extensions": [
+    "ms-python.python",
+    "ms-toolsai.jupyter",
+    "ms-python.vscode-pylance"
+  ],
+  "repositories": [],
+  "settings": {
+    "python.defaultInterpreterPath": "/usr/bin/python3.11",
+    "jupyter.notebookFileRoot": "${workspaceFolder}"
+  },
+  "post_create_script": "pip install -r requirements.txt"
+}
+```
+
+### 2.5 Kota Sistemi
+
+**Company Kotası:**
+- Plan başına izin verilen toplam workspace (örn: Business plan için 10)
+- Subscription plan'e göre yönetiliyor
+
+**Developer Kotası:**
+- Belirli developer'a atanan workspace limiti
+- Owner tarafından belirleniyor (örn: Senior Dev: 3, Junior Dev: 1)
+- Default: Company kotasının eşit dağılımı
+- Company kotasını aşabilir (oversubscription modeli)
+
+**Kota Enforcement:**
+- Workspace creation anında kontrol
+- UI'da kullanımı göster (X / Y workspaces)
+- Geçici kota artışına izin ver (grace period)
+- Kota aşıldığında owner'ı bilgilendir
+
+**Örnek Senaryo:**
+- Company Plan: Team (10 workspace)
+- Ekip: 5 developer
+- Default allocation: Her birine 2 workspace
+- Custom allocation: Senior Dev (3), Junior'lar (1'er), Toplam: 7
+- Gelecek atama için mevcut: 3 workspace
+
+### 2.6 Workspace Lifecycle
+
+**Durumlar:**
+- **Creating:** İlk provisioning (Linux user, code-server setup)
+- **Stopped:** Workspace var ama code-server çalışmıyor
+- **Starting:** code-server servisi başlatılıyor
+- **Running:** Aktif ve erişilebilir
+- **Stopping:** code-server servisi kapatılıyor
+- **Error:** Müdahale gerektiren başarısız durum
+- **Deleting:** Temizlik süreci devam ediyor
+
+**Operasyonlar:**
+- **Create:** Yeni workspace provision et (template uygula, environment kur)
+- **Start:** code-server servisini başlat (systemctl start)
+- **Stop:** code-server servisini durdur (systemctl stop)
+- **Restart:** Stop + Start
+- **Delete:** Servisi durdur, Linux user'ı temizle, data'yı sil
+- **View Logs:** code-server loglarına eriş
+- **Monitor:** Gerçek zamanlı kaynak kullanımı (CPU, memory, disk)
+
+**Lifecycle Kuralları:**
+- Yeni workspace'ler "Creating" durumunda başlar
+- Oluşturulduktan sonra kullanıcı tercihe göre auto-start
+- Durdurulan workspace'ler compute kaynağı tüketmez
+- Durdurulan workspace'ler hala kotadan sayılır
+- Silinen workspace'ler kotayı hemen serbest bırakır
 
 ---
 
-## 🗓️ Timeline
+## 3. Veritabanı Şema Evrimi
 
-### Week 1 (Day 1-10) ✅ COMPLETED
-- ✅ Foundation & Database
-- ✅ Authentication & Security
-- ✅ PayTR Integration
-- ✅ Email Notifications
-- ✅ Automation Design
+### 3.1 Faz 2: Kota & Ekip Yönetimi
 
-### Week 2 (Day 11 - 2025-10-28) ✅ LIVE PAYMENTS
-- ✅ Production deployment complete
-- ✅ Live payment testing successful
-- ✅ Dashboard fully functional
-- ⏳ Cron job setup (next)
-- ⏳ Workspace provisioning (next)
+**Users tablosuna eklemeler:**
+```python
+class User(UserMixin, db.Model):
+    # ... mevcut fieldlar ...
+    workspace_quota = db.Column(db.Integer, nullable=False, default=1)
+    quota_assigned_at = db.Column(db.DateTime)
+    quota_assigned_by = db.Column(db.Integer, db.ForeignKey('users.id'))
+```
 
-### Week 3-4 (Features)
-- [ ] Admin dashboard
-- [ ] Invoice PDF generation
-- [ ] Monitoring setup
-- [ ] UI improvements
+**Migration Script:**
+```python
+"""Add workspace quota to users
 
-### Month 2 (Enhancement)
-- [ ] Advanced features
-- [ ] Multi-language
-- [ ] Enhanced security
-- [ ] Performance optimization
+Revision ID: add_user_workspace_quota
+Revises: previous_migration
+Create Date: 2025-11-01
+"""
+
+def upgrade():
+    op.add_column('users', sa.Column('workspace_quota', sa.Integer(), nullable=False, server_default='1'))
+    op.add_column('users', sa.Column('quota_assigned_at', sa.DateTime(), nullable=True))
+    op.add_column('users', sa.Column('quota_assigned_by', sa.Integer(), nullable=True))
+    op.create_foreign_key('fk_quota_assigned_by', 'users', 'users', ['quota_assigned_by'], ['id'])
+
+    # Initialize quotas: equal distribution of company max_workspaces
+    connection = op.get_bind()
+    companies = connection.execute("SELECT id, max_workspaces FROM companies")
+    for company_id, max_workspaces in companies:
+        user_count = connection.execute(
+            "SELECT COUNT(*) FROM users WHERE company_id = %s AND role != 'admin'",
+            (company_id,)
+        ).scalar()
+        if user_count > 0:
+            quota_per_user = max(1, max_workspaces // user_count)
+            connection.execute(
+                "UPDATE users SET workspace_quota = %s WHERE company_id = %s AND role != 'admin'",
+                (quota_per_user, company_id)
+            )
+
+def downgrade():
+    op.drop_constraint('fk_quota_assigned_by', 'users', type_='foreignkey')
+    op.drop_column('users', 'quota_assigned_by')
+    op.drop_column('users', 'quota_assigned_at')
+    op.drop_column('users', 'workspace_quota')
+```
+
+### 3.2 Faz 3: Template Sistemi
+
+**Yeni WorkspaceTemplate tablosu:**
+```python
+class WorkspaceTemplate(db.Model):
+    __tablename__ = 'workspace_templates'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text)
+    category = db.Column(db.String(50))  # web, data-science, mobile, etc.
+    visibility = db.Column(db.String(20), default='company')  # official, company, user
+    is_active = db.Column(db.Boolean, default=True)
+
+    # Template configuration (JSON)
+    config = db.Column(db.JSON, nullable=False)
+
+    # Ownership
+    company_id = db.Column(db.Integer, db.ForeignKey('companies.id'), nullable=True)
+    created_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+
+    # Metadata
+    usage_count = db.Column(db.Integer, default=0)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # Relationships
+    workspaces = db.relationship('Workspace', backref='template', lazy='dynamic')
+```
+
+**Workspaces tablosuna eklemeler:**
+```python
+class Workspace(db.Model):
+    # ... mevcut fieldlar ...
+    template_id = db.Column(db.Integer, db.ForeignKey('workspace_templates.id'), nullable=True)
+    template_applied_at = db.Column(db.DateTime)
+```
+
+### 3.3 Faz 4: Lifecycle Yönetimi
+
+**Workspaces tablosuna eklemeler:**
+```python
+class Workspace(db.Model):
+    # ... mevcut fieldlar ...
+    is_running = db.Column(db.Boolean, default=False, nullable=False)
+    last_started_at = db.Column(db.DateTime)
+    last_stopped_at = db.Column(db.DateTime)
+    last_accessed_at = db.Column(db.DateTime)
+    auto_stop_hours = db.Column(db.Integer, default=0)  # 0 = never auto-stop
+    cpu_limit_percent = db.Column(db.Integer, default=100)
+    memory_limit_mb = db.Column(db.Integer, default=2048)
+```
+
+**Yeni WorkspaceLogs tablosu:**
+```python
+class WorkspaceLog(db.Model):
+    __tablename__ = 'workspace_logs'
+
+    id = db.Column(db.Integer, primary_key=True)
+    workspace_id = db.Column(db.Integer, db.ForeignKey('workspaces.id'), nullable=False)
+    event_type = db.Column(db.String(20), nullable=False)  # start, stop, restart, error
+    message = db.Column(db.Text)
+    severity = db.Column(db.String(10), default='info')  # info, warning, error
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # Relationships
+    workspace = db.relationship('Workspace', backref=db.backref('logs', lazy='dynamic'))
+    user = db.relationship('User')
+```
+
+**Yeni WorkspaceMetrics tablosu:**
+```python
+class WorkspaceMetrics(db.Model):
+    __tablename__ = 'workspace_metrics'
+
+    id = db.Column(db.Integer, primary_key=True)
+    workspace_id = db.Column(db.Integer, db.ForeignKey('workspaces.id'), nullable=False)
+
+    # Resource usage
+    cpu_percent = db.Column(db.Float, default=0)
+    memory_mb = db.Column(db.Integer, default=0)
+    disk_used_gb = db.Column(db.Float, default=0)
+
+    # Network
+    network_in_mb = db.Column(db.Float, default=0)
+    network_out_mb = db.Column(db.Float, default=0)
+
+    # Timestamp
+    recorded_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+
+    # Relationships
+    workspace = db.relationship('Workspace', backref=db.backref('metrics', lazy='dynamic'))
+```
 
 ---
 
-## 📈 Success Metrics
+## 4. İmplementasyon Aşamaları
 
-### Technical KPIs
+### Faz 1: Dashboard Düzeltmeleri (1 Gün)
 
-**Reliability**:
-- ✅ 99%+ uptime target
-- ✅ <500ms API response time
-- ✅ Zero data loss
+**Hedef:** Dashboard metrik tutarsızlıklarını düzelt ve UX iyileştir
 
-**Security**:
-- ✅ No critical vulnerabilities
-- ✅ 100% HTTPS coverage
-- ✅ Regular security audits
+**Kapsam:**
+- Yanıltıcı "Team Members" kartını kaldır
+- "Workspace Quota" kartı ekle (kişisel kullanım göster)
+- Workspace listesinin sadece owner'ın workspace'lerini göstermesini sağla
+- Dashboard layout ve netliği iyileştir
 
-**Performance**:
-- Target: 80%+ test coverage (Current: 64%)
-- Target: <2s page load time
-- Target: 95%+ email delivery rate
+**Teknik Değişiklikler:**
 
-### Business KPIs
+**Dosya: app/templates/dashboard.html**
+```html
+<!-- BU KARTI KALDIR (satırlar 98-110) -->
+<!-- Team Members card -->
 
-**Growth**:
-- Month 1 target: 50 signups
-- Month 3 target: 200 active users
-- Month 6 target: 1000+ users
+<!-- BUNUN YERİNE BU KARTI EKLE -->
+<div class="bg-white overflow-hidden shadow rounded-lg">
+    <div class="p-5">
+        <div class="flex items-center">
+            <div class="flex-shrink-0">
+                <svg class="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+            </div>
+            <div class="ml-5 w-0 flex-1">
+                <dl>
+                    <dt class="text-sm font-medium text-gray-500 truncate">Workspace Kotası</dt>
+                    <dd class="flex items-baseline">
+                        <div class="text-2xl font-semibold text-gray-900">
+                            {{ current_user.workspaces.count() }} / {{ current_user.workspace_quota }}
+                        </div>
+                        <div class="ml-2 flex items-baseline text-sm font-semibold text-gray-500">
+                            {% set usage_percent = (current_user.workspaces.count() / current_user.workspace_quota * 100) if current_user.workspace_quota > 0 else 0 %}
+                            <span class="{% if usage_percent >= 80 %}text-red-600{% elif usage_percent >= 60 %}text-yellow-600{% else %}text-green-600{% endif %}">
+                                {{ "%.0f"|format(usage_percent) }}% kullanılıyor
+                            </span>
+                        </div>
+                    </dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+</div>
+```
 
-**Revenue**:
-- Month 1: $500 MRR
-- Month 3: $5,000 MRR
-- Month 6: $20,000 MRR
+**Kabul Kriterleri:**
+- ✅ "Team Members" kartı kaldırıldı
+- ✅ "Workspace Quota" kartı doğru gösteriliyor (X / Y formatı)
+- ✅ Kota yüzdesi renk kodlamalı (yeşil < 60%, sarı 60-80%, kırmızı > 80%)
+- ✅ Dashboard sadece kullanıcının sahip olduğu workspace'leri gösteriyor
+- ✅ Tüm metrikler tutarlı (kişisel, company-wide değil)
 
-**Retention**:
-- Trial-to-paid conversion: 20%+
-- Monthly churn: <5%
-- Customer lifetime: 12+ months
+**Zaman Tahmini:** 4-6 saat
+**Risk Seviyesi:** Düşük (sadece UI değişiklikleri, veritabanı değişikliği yok)
 
 ---
 
-## 🔗 Key Resources
+### Faz 2: Kota & Ekip Yönetimi (1-2 Hafta)
 
-### Documentation
-- [DEPLOYMENT.md](DEPLOYMENT.md) - Server deployment guide
-- [BILLING_DEPLOYMENT.md](BILLING_DEPLOYMENT.md) - Payment setup
-- [claudedocs/billing_implementation_summary.md](claudedocs/billing_implementation_summary.md)
-- [claudedocs/payment_email_notifications_summary.md](claudedocs/payment_email_notifications_summary.md)
-- [claudedocs/cron_automation_design.md](claudedocs/cron_automation_design.md)
+**Hedef:** Developer başına workspace kotaları ve ekip yönetimi UI implement et
 
-### Infrastructure
-- Production Server: 37.27.21.167
+**Kapsam:**
+- User modeline `workspace_quota` field'ı ekle
+- Owner'lar için ekip yönetimi interface oluştur
+- Workspace creation'da kota enforcement implement et
+- Kota atama functionality ekle
+
+**Zaman Tahmini:** 1-2 hafta
+**Risk Seviyesi:** Orta (database migration, access control değişiklikleri)
+
+---
+
+### Faz 3: Template Sistemi (2-3 Hafta)
+
+**Hedef:** Hızlı workspace provisioning için template sistemi
+
+**Kapsam:**
+- WorkspaceTemplate model ve CRUD operasyonları
+- Official template'lerin oluşturulması (Python, Node.js, React, vb.)
+- Workspace creation sırasında template seçimi
+- Template application servisi (TemplateApplicator)
+- Template marketplace UI
+
+**Zaman Tahmini:** 2-3 hafta
+**Risk Seviyesi:** Orta-Yüksek (karmaşık provisioning logic)
+
+---
+
+### Faz 4: Lifecycle Yönetimi (2-3 Hafta)
+
+**Hedef:** Workspace start/stop/restart ve monitoring
+
+**Kapsam:**
+- Workspace lifecycle state machine
+- systemd service control entegrasyonu
+- Log collection ve display
+- Metrics collection servisi (CPU, memory, disk)
+- Real-time monitoring dashboard
+- Auto-stop after inactivity
+
+**Zaman Tahmini:** 2-3 hafta
+**Risk Seviyesi:** Yüksek (sistem seviyesi operasyonlar, resource monitoring)
+
+---
+
+### Faz 5: Gelecek Vizyonu (3+ Ay)
+
+**Hedef:** Tam SDLC platform özellikleri
+
+**Kapsam:**
+- Analyst, Tester, Client rolleri
+- AI Agent entegrasyonu
+- Workspace sharing ve collaboration
+- Real-time communication (WebSocket)
+- Workflow automation
+- Advanced analytics
+
+**Zaman Tahmini:** 3+ ay
+**Risk Seviyesi:** Yüksek (büyük mimari değişiklikler)
+
+---
+
+## 5. Teknik Spesifikasyonlar
+
+### 5.1 API Endpoints (Gelecek REST API)
+
+**Authentication:**
+```
+POST   /api/v1/auth/login           - Kullanıcı girişi
+POST   /api/v1/auth/logout          - Kullanıcı çıkışı
+POST   /api/v1/auth/register        - Company kaydı
+POST   /api/v1/auth/refresh         - JWT token yenileme
+```
+
+**User Management:**
+```
+GET    /api/v1/users/me             - Mevcut kullanıcı profili
+PUT    /api/v1/users/me             - Profil güncelleme
+GET    /api/v1/users/{id}           - Kullanıcı detayları (admin)
+PUT    /api/v1/users/{id}/quota     - Kullanıcı kotası güncelleme (admin)
+```
+
+**Workspace Management:**
+```
+GET    /api/v1/workspaces           - Kullanıcının workspace'lerini listele
+POST   /api/v1/workspaces           - Workspace oluştur
+GET    /api/v1/workspaces/{id}      - Workspace detayları
+PUT    /api/v1/workspaces/{id}      - Workspace ayarlarını güncelle
+DELETE /api/v1/workspaces/{id}      - Workspace sil
+POST   /api/v1/workspaces/{id}/start    - Workspace başlat
+POST   /api/v1/workspaces/{id}/stop     - Workspace durdur
+POST   /api/v1/workspaces/{id}/restart  - Workspace yeniden başlat
+GET    /api/v1/workspaces/{id}/logs     - Workspace logları
+GET    /api/v1/workspaces/{id}/metrics  - Kaynak metrikleri
+```
+
+**Template Management:**
+```
+GET    /api/v1/templates            - Mevcut template'leri listele
+POST   /api/v1/templates            - Custom template oluştur
+GET    /api/v1/templates/{id}       - Template detayları
+PUT    /api/v1/templates/{id}       - Template güncelle
+DELETE /api/v1/templates/{id}       - Template sil
+```
+
+### 5.2 Database İndeksleri (Performance Optimizasyonu)
+
+```sql
+-- User lookups
+CREATE INDEX idx_users_email ON users(email);
+CREATE INDEX idx_users_company ON users(company_id);
+CREATE INDEX idx_users_role ON users(role);
+
+-- Workspace lookups
+CREATE INDEX idx_workspaces_owner ON workspaces(owner_id);
+CREATE INDEX idx_workspaces_company ON workspaces(company_id);
+CREATE INDEX idx_workspaces_subdomain ON workspaces(subdomain);
+CREATE INDEX idx_workspaces_status ON workspaces(status);
+CREATE INDEX idx_workspaces_is_running ON workspaces(is_running);
+CREATE INDEX idx_workspaces_template ON workspaces(template_id);
+
+-- Template lookups
+CREATE INDEX idx_templates_category ON workspace_templates(category);
+CREATE INDEX idx_templates_visibility ON workspace_templates(visibility);
+CREATE INDEX idx_templates_company ON workspace_templates(company_id);
+
+-- Log queries
+CREATE INDEX idx_logs_workspace ON workspace_logs(workspace_id);
+CREATE INDEX idx_logs_created_at ON workspace_logs(created_at DESC);
+CREATE INDEX idx_logs_event_type ON workspace_logs(event_type);
+
+-- Metrics queries
+CREATE INDEX idx_metrics_workspace ON workspace_metrics(workspace_id);
+CREATE INDEX idx_metrics_recorded_at ON workspace_metrics(recorded_at DESC);
+CREATE INDEX idx_metrics_workspace_time ON workspace_metrics(workspace_id, recorded_at DESC);
+```
+
+---
+
+## 6. İş Modeli Uyumu
+
+### 6.1 Özellik-Plan Matrisi
+
+| Özellik | Free | Starter | Team | Enterprise |
+|---------|------|---------|------|------------|
+| Kullanıcılar | 1 | 5 | 20 | Sınırsız |
+| Workspace'ler | 1 | 3 | 10 | Sınırsız |
+| Workspace Başına Storage | 5 GB | 10 GB | 20 GB | Custom |
+| Template'ler | Official | Official + Custom | Tümü | Tümü + Priority |
+| Lifecycle Control | Manuel | Auto-stop 8h | Tam kontrol | Gelişmiş |
+| Destek | Community | Email | Priority | Dedicated |
+| AI Agent'lar | - | - | 1 | 5+ |
+| Custom Domain'ler | - | - | Evet | Evet |
+| SSO | - | - | - | Evet |
+
+### 6.2 Fiyatlandırma Stratejisi
+
+**Fiyat Katmanları:**
+- Free: $0/ay - Solo developer'lar, öğrenme
+- Starter: $29/ay - Küçük ekipler, erken aşama
+- Team: $99/ay - Büyüyen ekipler, profesyonel kullanım
+- Enterprise: Custom - Büyük organizasyonlar, özel ihtiyaçlar
+
+**Ek Eklentiler:**
+- Ekstra workspace'ler: $5/workspace/ay
+- Ekstra storage: $2/10GB/ay
+- Ek AI agent'lar: $20/agent/ay
+- Priority destek: $50/ay
+
+---
+
+## 7. Güvenlik & Uyumluluk
+
+### 7.1 Güvenlik Önlemleri
+
+**Uygulama Güvenliği:**
+- OWASP Top 10 mitigasyonu
+- SQL injection önleme (parametreli sorgular)
+- XSS koruması (template escaping)
+- CSRF koruması (Flask-WTF token'ları)
+- Güvenli header'lar (Content-Security-Policy, X-Frame-Options)
+
+**Altyapı Güvenliği:**
+- SSH key tabanlı authentication (parola girişi disabled)
+- Firewall konfigürasyonu (UFW ile minimal açık port)
+- Otomatik güvenlik güncellemeleri (unattended-upgrades)
+- Intrusion detection (fail2ban)
+- Düzenli vulnerability scanning
+
+**Workspace Güvenliği:**
+- Kullanıcı izolasyonu (ayrı Linux hesapları)
+- Process izolasyonu (systemd servis sınırları)
+- Kaynak limitleri (cgroups for CPU/memory)
+- Disk kotaları (filesystem seviyesi enforcement)
+- Network segmentasyonu (gelecek: workspace başına VLAN'lar)
+
+---
+
+## 8. Test Stratejisi
+
+### 8.1 Test Kapsama Gereksinimleri
+
+**Unit Tests (Hedef: 80% coverage):**
+- Models: CRUD operasyonları, ilişkiler, validasyon
+- Forms: Validasyon kuralları, hata yönetimi
+- Utilities: Helper fonksiyonlar, business logic
+- Services: WorkspaceProvisioner, TemplateApplicator
+
+**Integration Tests (Kritik yollar):**
+- Authentication flow (register, login, logout)
+- Workspace lifecycle (create, start, stop, delete)
+- Kota enforcement (limit'te creation engelleme)
+- Template application (settings, extensions, repos)
+
+**E2E Tests (Kullanıcı iş akışları):**
+- Company kaydı → Workspace oluştur → code-server'a eriş
+- Owner developer'ı davet et → Developer workspace oluşturur
+- Developer kotaya ulaşır → Owner kotayı artırır → Developer workspace oluşturur
+- Template uygula → Kurulumu doğrula (extensions, repos, settings)
+
+---
+
+## 9. Deployment & Operasyonlar
+
+### 9.1 Deployment Süreci
+
+**Mevcut Production:**
+- Server: 37.27.21.167
 - Database: PostgreSQL 15
-- Email: Mailjet SMTP
-- Payments: PayTR (Turkey)
-- SSL: Let's Encrypt (Traefik)
+- Reverse Proxy: Traefik with Let's Encrypt
+- Process Manager: systemd for Flask + code-server instances
 
-### External Services
-- PayTR Dashboard: https://merchant.paytr.com
-- Mailjet Dashboard: https://app.mailjet.com
-- Domain: youarecoder.com
+**Deployment Script:**
+```bash
+#!/bin/bash
+# deploy.sh - Production deployment script
 
----
+set -e
 
-## 🎯 Next Actions (Priority Order)
+echo "🚀 Deployment başlatılıyor..."
 
-**CURRENT PRIORITY - Next Session:**
+# Son kodu çek
+git pull origin main
 
-1. **Deploy Cron Jobs** (1-2 hours) ← HIGHEST PRIORITY
-   - Copy scripts to server
-   - Install systemd units
-   - Test execution
-   - Monitor logs
+# Virtual environment aktive et
+source venv/bin/activate
 
-2. **Workspace Provisioning Testing** (2-3 hours)
-   - Test workspace creation flow
-   - Verify code-server startup
-   - Check Traefik routing
-   - Validate SSL certificates
+# Dependency'leri güncelle
+pip install -r requirements.txt
 
-**COMPLETED TODAY (2025-10-28):**
-- ✅ Production Payment Test - Live payment successful (₺2,970)
-- ✅ Dashboard Integration - All features working
-- ✅ Error Resolution - 7 critical issues fixed
-- ✅ User Testing - All tests passed
+# Database migration'ları çalıştır
+flask db upgrade
 
-**FUTURE PRIORITIES:**
+# Flask uygulamasını yeniden başlat
+sudo systemctl restart youarecoder
 
-3. **Frontend Payment Integration** (4-6 hours)
-   - Payment modal component
-   - PayTR iframe embedding
-   - Error handling
-   - User feedback
+# Servisin çalıştığını doğrula
+sleep 3
+sudo systemctl status youarecoder
 
-4. **Monitoring Setup** (2-3 hours)
-   - Log aggregation
-   - Email delivery tracking
-   - Payment success rate
-   - System health dashboard
-
-5. **Admin Dashboard** (8-10 hours)
-   - Subscription management
-   - User management
-   - Payment history
-   - System metrics
+echo "✅ Deployment tamamlandı!"
+```
 
 ---
 
-## 📝 Notes
+## 10. Başarı Metrikleri
 
-### Lessons Learned
+### 10.1 Teknik Metrikler
 
-**What Worked Well**:
-- ✅ Test-driven development (TDD) for billing routes
-- ✅ Comprehensive documentation upfront
-- ✅ Modular architecture (blueprints, services)
-- ✅ Security-first approach (CSRF, rate limiting, hashing)
-- ✅ Systemd timers over traditional cron
+**Performance:**
+- Workspace provisioning zamanı: <2 dakika (hedef)
+- Dashboard yükleme zamanı: <1 saniye
+- API yanıt zamanı (p95): <200ms
+- Database sorgu zamanı (p95): <50ms
 
-**Challenges**:
-- ⚠️ Email test fixtures need User model fix (username field)
-- ⚠️ Pre-existing rate limiting test failures (not blocking)
-- ⚠️ PayTR test mode requires manual card entry
+**Güvenilirlik:**
+- Uygulama uptime: 99.9% (hedef)
+- Başarısız workspace creation'lar: <1%
+- Database availability: 99.95%
+- Başarılı deployment'lar: >95%
 
-**Improvements for Next Phase**:
-- 🔄 More frontend testing (Playwright)
-- 🔄 CI/CD pipeline setup
-- 🔄 Automated deployment scripts
-- 🔄 Better error tracking (Sentry)
-
----
-
-## 🤝 Team & Responsibilities
-
-**Development**:
-- Backend: Claude Code (AI-assisted)
-- Frontend: Pending
-- DevOps: Manual deployment (needs automation)
-
-**Operations**:
-- Server Management: Manual
-- Database: PostgreSQL on VPS
-- Monitoring: Basic (needs Grafana)
-
-**Business**:
-- Product: Owner
-- Support: Email-based
-- Marketing: Pending
+**Kalite:**
+- Test coverage: >80%
+- Critical bug çözüm süresi: <24 saat
+- Security vulnerability yaması: <7 gün
+- Code review coverage: 100%
 
 ---
 
-**Document Status**: Living document, updated as project progresses
-**Owner**: Mustafa Karadeniz
-**Version**: 1.0
-**Last Review**: 2025-10-27
+## 11. Risk Yönetimi
+
+### 11.1 Teknik Riskler
+
+| Risk | Olasılık | Etki | Önlem |
+|------|----------|------|-------|
+| Database migration hatası | Orta | Yüksek | Staging'de test et, production öncesi backup |
+| Workspace provisioning hataları | Orta | Orta | Retry logic, detaylı hata loglama, manuel kurtarma |
+| Performance degradasyonu | Düşük | Orta | Load testing, monitoring, resource limitleri |
+| Security vulnerability | Orta | Yüksek | Düzenli güncellemeler, security scan'ler, bug bounty |
+| Veri kaybı | Düşük | Kritik | Otomatik backup'lar, off-site storage, restore testing |
+
+---
+
+## 12. Ekler
+
+### Ek A: Database Şema Diyagramı
+
+```
+┌──────────────────┐
+│    companies     │
+├──────────────────┤
+│ id (PK)          │
+│ name             │
+│ subdomain (UQ)   │
+│ admin_email      │
+│ plan             │
+│ max_workspaces   │
+│ is_active        │
+│ created_at       │
+└────────┬─────────┘
+         │
+         │ 1:N
+         │
+┌────────┴─────────┐
+│      users       │
+├──────────────────┤
+│ id (PK)          │
+│ email (UQ)       │
+│ password_hash    │
+│ full_name        │
+│ role             │
+│ workspace_quota  │◄────┐
+│ quota_assigned_by│─────┘ (self-referencing FK)
+│ is_active        │
+│ company_id (FK)  │
+│ created_at       │
+└────────┬─────────┘
+         │
+         │ 1:N (owner)
+         │
+┌────────┴────────────────┐
+│      workspaces         │
+├─────────────────────────┤
+│ id (PK)                 │
+│ name                    │
+│ subdomain (UQ)          │
+│ linux_username (UQ)     │
+│ port (UQ)               │
+│ code_server_password    │
+│ status                  │
+│ disk_quota_gb           │
+│ template_id (FK) ───────┼─────┐
+│ is_running              │     │
+│ last_started_at         │     │
+│ last_stopped_at         │     │
+│ auto_stop_hours         │     │
+│ cpu_limit_percent       │     │
+│ memory_limit_mb         │     │
+│ company_id (FK)         │     │
+│ owner_id (FK)           │     │
+│ created_at              │     │
+│ updated_at              │     │
+└─────────────────────────┘     │
+                                │
+         ┌──────────────────────┘
+         │
+         │ N:1
+         │
+┌────────┴──────────────────┐
+│  workspace_templates      │
+├───────────────────────────┤
+│ id (PK)                   │
+│ name                      │
+│ description               │
+│ category                  │
+│ visibility                │
+│ is_active                 │
+│ config (JSON)             │
+│ company_id (FK, nullable) │
+│ created_by (FK)           │
+│ usage_count               │
+│ created_at                │
+│ updated_at                │
+└───────────────────────────┘
+```
+
+### Ek B: Rol Yetki Matrisi
+
+| Yetki | Owner | Developer | Analyst | Tester | Client | AI Agent |
+|-------|-------|-----------|---------|--------|--------|----------|
+| Company dashboard görüntüle | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Ekip üyelerini yönet | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Workspace kotaları ata | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Billing görüntüle | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Workspace oluştur | ✅ | ✅ | ❌ | ❌ | ❌ | ✅ |
+| Kendi workspace'lerini sil | ✅ | ✅ | ❌ | ❌ | ❌ | ✅ |
+| Kendi workspace'lerini start/stop | ✅ | ✅ | ❌ | ❌ | ❌ | ✅ |
+| Template oluştur | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Kendi workspace'lerine eriş | ✅ | ✅ | 🟡 R/O | 🟡 Test | 🟡 Demo | ✅ |
+| Paylaşılan workspace'lere eriş | ✅ | 🟡 Davetli | 🟡 Davetli | 🟡 Davetli | 🟡 Davetli | 🟡 Config |
+| Workspace loglarını görüntüle | ✅ | ✅ | ❌ | ✅ | ❌ | ✅ |
+| Workspace metriklerini görüntüle | ✅ | ✅ | ❌ | ✅ | ❌ | ✅ |
+| Test çalıştır | ✅ | ✅ | ❌ | ✅ | ❌ | ✅ |
+| Rapor oluştur | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+
+**Açıklama:**
+- ✅ Tam erişim
+- ❌ Erişim yok
+- 🟡 Sınırlı/koşullu erişim
+- R/O = Read-only
+
+### Ek C: Template Konfigürasyon Örnekleri
+
+**Python Web Development:**
+```json
+{
+  "name": "Python Web Development",
+  "description": "Flask + SQLAlchemy + PostgreSQL development environment",
+  "category": "web",
+  "visibility": "official",
+  "base_image": "python:3.11-slim",
+  "system_packages": ["postgresql-client", "git", "curl"],
+  "python_packages": [
+    "flask==3.0.0",
+    "flask-sqlalchemy==3.1.1",
+    "flask-login==0.6.3",
+    "flask-wtf==1.2.1",
+    "psycopg2-binary==2.9.9",
+    "python-dotenv==1.0.0",
+    "pytest==7.4.3",
+    "pytest-flask==1.3.0"
+  ],
+  "vscode_extensions": [
+    "ms-python.python",
+    "ms-python.vscode-pylance",
+    "ms-python.debugpy",
+    "wholroyd.jinja",
+    "mtxr.sqltools",
+    "mtxr.sqltools-driver-pg"
+  ],
+  "repositories": [],
+  "vscode_settings": {
+    "python.defaultInterpreterPath": "/usr/local/bin/python",
+    "python.linting.enabled": true,
+    "python.linting.pylintEnabled": true,
+    "python.formatting.provider": "black",
+    "editor.formatOnSave": true,
+    "files.exclude": {
+      "**/__pycache__": true,
+      "**/*.pyc": true
+    }
+  },
+  "environment_variables": {
+    "FLASK_ENV": "development",
+    "FLASK_DEBUG": "1"
+  },
+  "post_create_script": "#!/bin/bash\necho 'Creating virtual environment...'\npython -m venv venv\nsource venv/bin/activate\npip install --upgrade pip\nif [ -f requirements.txt ]; then\n  pip install -r requirements.txt\nfi\necho 'Setup complete!'"
+}
+```
+
+---
+
+## Sonuç
+
+Bu Master Plan, YouAreCoder'ın basit bir code-server hosting platformundan tam özellikli bir SDLC platformuna dönüşümü için kapsamlı bir yol haritası sunuyor. Aşamalı yaklaşım şunları garanti ediyor:
+
+1. **Hızlı Kazanımlar:** Faz 1 acil UX sorunlarını çözüyor (1 gün)
+2. **Temel:** Faz 2 kota sistemi ve ekip yönetimi kuruyor (1-2 hafta)
+3. **Farklılaşma:** Faz 3 hızlı provisioning için template sistemi ekliyor (2-3 hafta)
+4. **Operasyonel Olgunluk:** Faz 4 lifecycle kontrolleri ve monitoring implement ediyor (2-3 hafta)
+5. **Gelecek Vizyonu:** Faz 5 gelişmiş rollerle tam SDLC'ye genişliyor (3+ ay)
+
+**Kritik Başarı Faktörleri:**
+- Her fazın bağımsız değer sağladığı artımlı teslimat
+- Evrim boyunca geriye dönük uyumluluğun korunması
+- Her milestone'da kullanıcı geri bildiriminin dahil edilmesi
+- Teknik borcun proaktif olarak ele alınması
+- Güvenlik ve performance'ın baştan itibaren önceliklendirilmesi
+
+**Sonraki Adımlar:**
+1. Bu planı gözden geçir ve onayla
+2. Faz 1 implementasyonuna başla (Dashboard Düzeltmeleri)
+3. Haftalık ilerleme değerlendirmeleri kur
+4. Her fazdan sonra kullanıcı geri bildirimi topla
+5. Öğrenmelere dayalı olarak yol haritasını ayarla
+
+---
+
+*Doküman Versiyonu: 2.0*
+*Son Güncelleme: 2025-10-29*
+*Sonraki Değerlendirme: Faz 2 tamamlandıktan sonra*
