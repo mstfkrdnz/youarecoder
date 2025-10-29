@@ -397,9 +397,6 @@ def add_team_member():
             role='member' if role == 'developer' else 'admin',
             company_id=current_user.company_id,
             is_active=True,
-            workspace_quota=quota,
-            quota_assigned_at=datetime.utcnow(),
-            quota_assigned_by=current_user.id,
             terms_accepted=False,  # User must accept on first login
             privacy_accepted=False
         )
@@ -476,7 +473,7 @@ def add_team_member():
             'user_id': new_user.id,
             'email': new_user.email,
             'role': new_user.role,
-            'quota': new_user.workspace_quota,
+            'quota': quota,
             'message': 'Team member added successfully. Invitation email sent.'
         }), 201
 
