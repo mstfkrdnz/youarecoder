@@ -21,8 +21,9 @@
 
     <!-- Stats Grid -->
     <div class="mt-8">
-        <div class="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
-            <!-- Total Workspaces -->
+        <div class="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-{% if current_user.is_admin() %}4{% else %}3{% endif %}">
+            <!-- Total Workspaces (Admin only) -->
+            {% if current_user.is_admin() %}
             <div class="overflow-hidden rounded-lg bg-white px-2 sm:px-4 py-3 sm:py-5 shadow hover:shadow-lg transition-shadow">
                 <div class="flex flex-col sm:flex-row items-center sm:items-start">
                     <div class="flex-shrink-0">
@@ -41,6 +42,7 @@
                     </div>
                 </div>
             </div>
+            {% endif %}
 
             <!-- Active Workspaces -->
             <div class="overflow-hidden rounded-lg bg-white px-2 sm:px-4 py-3 sm:py-5 shadow hover:shadow-lg transition-shadow">
