@@ -60,9 +60,11 @@
                                 Templates
                             </a>
                             {% endif %}
+                            {% if current_user.is_admin() %}
                             <a href="{{ url_for('billing.billing_dashboard') }}" class="inline-flex items-center border-b-2 {% if request.endpoint and 'billing' in request.endpoint %}border-indigo-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} px-1 pt-1 text-sm font-medium">
                                 Billing
                             </a>
+                            {% endif %}
                         </div>
                     </div>
                     <div class="flex items-center gap-2">
@@ -111,9 +113,11 @@
                             Templates
                         </a>
                         {% endif %}
+                        {% if current_user.is_admin() %}
                         <a href="{{ url_for('billing.billing_dashboard') }}" class="block border-l-4 {% if request.endpoint and 'billing' in request.endpoint %}border-indigo-500 bg-indigo-50 text-indigo-700{% else %}border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800{% endif %} py-2 pl-3 pr-4 text-base font-medium">
                             Billing
                         </a>
+                        {% endif %}
                         <a href="{{ url_for('workspace.create') }}"
                            class="block border-l-4 border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 py-2 pl-3 pr-4 text-base font-medium">
                             + New Workspace

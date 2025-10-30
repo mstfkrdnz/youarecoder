@@ -16,8 +16,11 @@ bp = Blueprint('workspace', __name__, url_prefix='/workspace')
 @bp.route('/')
 @login_required
 def list():
-    """List all workspaces for current company."""
-    workspaces = Workspace.query.filter_by(company_id=current_user.company_id).order_by(Workspace.created_at.desc()).all()
+    """List workspaces (admin sees all company workspaces, developer sees only own)."""
+    if current_user.is_admin():
+        workspaces = Workspace.query.filter_by(company_id=current_user.company_id).order_by(Workspace.created_at.desc()).all()
+    else:
+        workspaces = current_user.workspaces.order_by(Workspace.created_at.desc()).all()
     return render_template('workspace/list.html', workspaces=workspaces)
 
 @bp.route('/create', methods=['GET', 'POST'])

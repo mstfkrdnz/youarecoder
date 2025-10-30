@@ -23,8 +23,11 @@ def dashboard():
     # Get recent workspaces for display
     workspaces = current_user.workspaces.order_by(Workspace.created_at.desc()).limit(6).all()
 
-    # Get all company workspaces for stats calculation
-    all_workspaces = Workspace.query.filter_by(company_id=current_user.company_id).all()
+    # Get workspaces for stats calculation (admin sees all, developer sees only own)
+    if current_user.is_admin():
+        all_workspaces = Workspace.query.filter_by(company_id=current_user.company_id).all()
+    else:
+        all_workspaces = current_user.workspaces.all()
 
     company = current_user.company
 
