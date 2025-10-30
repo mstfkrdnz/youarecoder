@@ -177,11 +177,6 @@
                                     {% endif %}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    {% if member.role == 'admin' %}
-                                    <div class="flex items-center">
-                                        <span class="text-sm font-medium text-gray-600">{{ workspace_count }} workspaces</span>
-                                    </div>
-                                    {% else %}
                                     <div class="flex items-center">
                                         <div class="text-sm font-medium text-gray-900 mr-2">
                                             {{ workspace_count }} / {{ member_quota }}
@@ -196,7 +191,6 @@
                                             {{ "%.0f"|format(usage_percent) }}%
                                         </span>
                                     </div>
-                                    {% endif %}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     {% if member.role != 'admin' %}
@@ -219,7 +213,7 @@
                                         </div>
                                     </form>
                                     {% else %}
-                                    <span class="text-sm text-gray-500">Unlimited</span>
+                                    <span class="text-sm text-gray-500">{{ member_quota }} (plan limit)</span>
                                     {% endif %}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
