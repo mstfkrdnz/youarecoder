@@ -48,6 +48,16 @@ def create():
         form.template_id.choices += [(t.id, f"{t.name} (Company)") for t in company_templates]
 
     if form.validate_on_submit():
+        # Check if workspace name already exists in company
+        existing_workspace = Workspace.query.filter_by(
+            company_id=current_user.company_id,
+            name=form.name.data
+        ).first()
+
+        if existing_workspace:
+            flash(f'A workspace named "{form.name.data}" already exists in your company. Please choose a different name.', 'error')
+            return render_template('workspace/create.html', form=form)
+
         # Check user's personal workspace quota (Phase 2: Per-developer quota)
         user_workspace_count = current_user.workspaces.count()
         user_quota = getattr(current_user, 'workspace_quota', current_user.company.max_workspaces)
@@ -116,7 +126,17 @@ def create():
         except WorkspaceProvisionerError as e:
             current_app.logger.error(f"Workspace provisioning error: {str(e)}")
             flash(f'Error creating workspace: {str(e)}', 'error')
-            
+            return redirect(url_for("main.dashboard"))
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"Unexpected error creating workspace: {str(e)}")
+
+            # Check if it's a duplicate name error (in case pre-check was bypassed)
+            if 'uq_company_workspace_name' in str(e) or 'duplicate key' in str(e).lower():
+                flash(f'A workspace named "{form.name.data}" already exists. Please choose a different name.', 'error')
+                return render_template('workspace/create.html', form=form)
+
+            flash('An unexpected error occurred while creating the workspace. Please try again.', 'error')
             return redirect(url_for("main.dashboard"))
 
         return redirect(url_for("main.dashboard"))
