@@ -7,8 +7,10 @@ import sys
 import os
 import json
 
-# Add app directory to path
-sys.path.insert(0, '/home/mustafa/youarecoder')
+# Set production paths (works on both /home/mustafa and /root)
+script_dir = os.path.dirname(os.path.abspath(__file__))
+os.chdir(script_dir)
+sys.path.insert(0, script_dir)
 
 from app import create_app, db
 from app.models import WorkspaceTemplate
@@ -19,7 +21,9 @@ def seed_odoo_template():
     app = create_app()
 
     with app.app_context():
-        template_file = '/home/mustafa/youarecoder/seeds/odoo_18_4_template.json'
+        # Use relative path from script directory
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        template_file = os.path.join(script_dir, 'seeds', 'odoo_18_4_template.json')
 
         if not os.path.exists(template_file):
             print(f"❌ Error: Template file not found at {template_file}")
