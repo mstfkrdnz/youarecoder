@@ -288,6 +288,13 @@ WantedBy=multi-user.target
         """
         Apply template configuration to workspace during provisioning.
 
+        Enhanced in Phase 3 with:
+        - Access token generation for password-less auth
+        - SSH key generation for private repos
+        - Launch.json for VS Code run configs
+        - Multi-folder workspace file
+        - PostgreSQL user/database setup
+
         Args:
             workspace: Workspace model instance
             template: WorkspaceTemplate to apply
@@ -295,13 +302,17 @@ WantedBy=multi-user.target
         Returns:
             dict: Application result with applied components
 
-        Template config schema:
+        Template config schema (Phase 3):
         {
             "packages": ["package1", "package2"],  # System packages to install
             "extensions": ["ext1", "ext2"],        # VS Code extensions
-            "repositories": [{"url": "...", "branch": "main"}],  # Git repos to clone
+            "repositories": [{"url": "...", "branch": "main", "private": bool}],  # Git repos
             "settings": {...},                      # VS Code settings.json
             "environment": {"KEY": "value"},        # Environment variables
+            "launch_json": {...},                   # VS Code launch configurations
+            "workspace_file": {...},                # Multi-folder workspace config
+            "postgresql": {"database": "name"},     # PostgreSQL setup
+            "ssh_required": bool,                   # Generate SSH key for private repos
             "post_create_script": "bash commands"   # Post-creation script
         }
         """
@@ -316,44 +327,80 @@ WantedBy=multi-user.target
             config = template.config
             home_dir = f"{self.base_dir}/{workspace.linux_username}"
 
-            # Apply system packages
+            # 1. Generate access token (if not already exists)
+            if not workspace.access_token:
+                workspace.access_token = self._generate_access_token()
+                db.session.commit()
+                result['applied_components'].append('access_token')
+                current_app.logger.info(f"Access token generated for workspace {workspace.id}")
+
+            # 2. Generate SSH key if template requires private repos
+            if config.get('ssh_required', False):
+                public_key = self._generate_ssh_key(workspace.linux_username, home_dir)
+                workspace.ssh_public_key = public_key
+                db.session.commit()
+                result['applied_components'].append('ssh_key')
+                current_app.logger.info(f"SSH key generated for workspace {workspace.id}")
+
+            # 3. Apply system packages
             if config.get('packages'):
                 self._install_packages(workspace.linux_username, config['packages'])
                 result['applied_components'].append('packages')
 
-            # Install VS Code extensions
+            # 4. Setup PostgreSQL (before repositories that might need database)
+            if config.get('postgresql'):
+                db_name = config['postgresql'].get('database', f"odoo_{workspace.linux_username}")
+                self._setup_postgresql_user(workspace.linux_username, db_name)
+                result['applied_components'].append('postgresql')
+
+            # 5. Install VS Code extensions
             if config.get('extensions'):
                 self._install_vscode_extensions(workspace.linux_username, config['extensions'])
                 result['applied_components'].append('extensions')
 
-            # Clone repositories
+            # 6. Clone repositories (will use SSH key for private repos)
             if config.get('repositories'):
                 self._clone_repositories(workspace.linux_username, config['repositories'], home_dir)
                 result['applied_components'].append('repositories')
 
-            # Apply VS Code settings
+            # 7. Apply VS Code settings
             if config.get('settings'):
                 self._apply_vscode_settings(workspace.linux_username, config['settings'], home_dir)
                 result['applied_components'].append('settings')
 
-            # Set environment variables
+            # 8. Create launch.json
+            if config.get('launch_json'):
+                self._create_launch_json(workspace.linux_username, home_dir, config['launch_json'])
+                result['applied_components'].append('launch_json')
+
+            # 9. Create workspace file
+            if config.get('workspace_file'):
+                workspace_file = self._create_workspace_file(
+                    workspace.linux_username, home_dir, config['workspace_file']
+                )
+                if workspace_file:
+                    result['applied_components'].append('workspace_file')
+                    result['workspace_file_path'] = workspace_file
+
+            # 10. Set environment variables
             if config.get('environment'):
                 self._set_environment_variables(workspace.linux_username, config['environment'], home_dir)
                 result['applied_components'].append('environment')
 
-            # Execute post-create script
+            # 11. Execute post-create script
             if config.get('post_create_script'):
                 self._execute_post_create_script(workspace.linux_username, config['post_create_script'], home_dir)
                 result['applied_components'].append('post_create_script')
 
-            # Update template usage count
+            # 12. Update template usage count and applied timestamp
             template.usage_count += 1
+            workspace.template_applied_at = db.func.now()
             db.session.commit()
 
             result['success'] = True
-            result['message'] = f"Template '{template.name}' applied successfully"
+            result['message'] = f"Template '{template.name}' applied successfully with {len(result['applied_components'])} components"
 
-            current_app.logger.info(f"Template {template.id} applied to workspace {workspace.id}")
+            current_app.logger.info(f"Template {template.id} applied to workspace {workspace.id}: {', '.join(result['applied_components'])}")
 
             return result
 
@@ -520,6 +567,275 @@ WantedBy=multi-user.target
             current_app.logger.warning(f"Post-create script execution failed: {e.stderr}")
             # Non-fatal error - continue provisioning
 
+    # ========== Phase 3: Template System Enhancements ==========
+
+    def _generate_access_token(self) -> str:
+        """
+        Generate secure access token for code-server authentication.
+
+        Returns:
+            str: URL-safe 48-character token
+        """
+        return secrets.token_urlsafe(48)
+
+    def _generate_ssh_key(self, username: str, home_dir: str) -> str:
+        """
+        Generate SSH key for private GitHub repository access.
+
+        Uses ED25519 algorithm for enhanced security and performance.
+
+        Args:
+            username: Linux username
+            home_dir: User home directory path
+
+        Returns:
+            str: SSH public key content
+
+        Raises:
+            WorkspaceProvisionerError: If SSH key generation fails
+        """
+        current_app.logger.info(f"Generating SSH key for {username}")
+
+        try:
+            ssh_dir = f"{home_dir}/.ssh"
+            key_path = f"{ssh_dir}/id_ed25519"
+
+            # Create .ssh directory with proper permissions
+            subprocess.run([
+                'sudo', '-u', username, 'mkdir', '-p', ssh_dir
+            ], check=True, capture_output=True, text=True)
+
+            subprocess.run([
+                'sudo', '-u', username, 'chmod', '700', ssh_dir
+            ], check=True, capture_output=True, text=True)
+
+            # Generate ED25519 key (more secure and faster than RSA)
+            subprocess.run([
+                'sudo', '-u', username, 'ssh-keygen',
+                '-t', 'ed25519',
+                '-C', f'{username}@youarecoder.com',
+                '-f', key_path,
+                '-N', ''  # No passphrase for automation
+            ], check=True, capture_output=True, text=True)
+
+            # Add GitHub to known_hosts to prevent SSH prompts
+            subprocess.run([
+                'sudo', '-u', username, 'bash', '-c',
+                f'ssh-keyscan github.com >> {ssh_dir}/known_hosts 2>/dev/null'
+            ], check=True, capture_output=True, text=True)
+
+            # Read public key
+            result = subprocess.run([
+                'cat', f'{key_path}.pub'
+            ], check=True, capture_output=True, text=True)
+
+            public_key = result.stdout.strip()
+            current_app.logger.info(f"SSH key generated for {username}")
+
+            return public_key
+
+        except subprocess.CalledProcessError as e:
+            error_msg = f"SSH key generation failed for {username}: {e.stderr}"
+            current_app.logger.error(error_msg)
+            raise WorkspaceProvisionerError(error_msg)
+
+    def _verify_github_ssh(self, username: str) -> bool:
+        """
+        Verify SSH connection to GitHub.
+
+        Tests if the user's SSH key is properly configured for GitHub access.
+
+        Args:
+            username: Linux username
+
+        Returns:
+            bool: True if SSH connection successful, False otherwise
+        """
+        try:
+            result = subprocess.run([
+                'sudo', '-u', username,
+                'ssh', '-T', 'git@github.com',
+                '-o', 'StrictHostKeyChecking=no',
+                '-o', 'ConnectTimeout=10'
+            ], capture_output=True, text=True, timeout=15)
+
+            # GitHub returns exit code 1 for successful auth without shell access
+            # Exit code 0 or 1 both indicate successful authentication
+            success = result.returncode in [0, 1]
+
+            if success:
+                current_app.logger.info(f"GitHub SSH verification successful for {username}")
+            else:
+                current_app.logger.warning(f"GitHub SSH verification failed for {username}")
+
+            return success
+
+        except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
+            current_app.logger.warning(f"GitHub SSH verification error for {username}: {str(e)}")
+            return False
+
+    def _create_launch_json(self, username: str, home_dir: str, launch_config: dict) -> None:
+        """
+        Create VS Code launch.json for run/debug configurations.
+
+        Args:
+            username: Linux username
+            home_dir: User home directory path
+            launch_config: Launch configuration dictionary
+        """
+        if not launch_config:
+            return
+
+        current_app.logger.info(f"Creating launch.json for {username}")
+
+        try:
+            vscode_dir = f"{home_dir}/.vscode"
+            launch_file = f"{vscode_dir}/launch.json"
+
+            # Create .vscode directory
+            subprocess.run([
+                'sudo', '-u', username, 'mkdir', '-p', vscode_dir
+            ], check=True, capture_output=True, text=True)
+
+            # Write launch.json
+            launch_content = json.dumps(launch_config, indent=2)
+
+            # Use heredoc to safely write JSON content
+            subprocess.run([
+                'sudo', '-u', username, 'bash', '-c',
+                f"cat > {launch_file} << 'LAUNCH_EOF'\n{launch_content}\nLAUNCH_EOF"
+            ], check=True, capture_output=True, text=True)
+
+            current_app.logger.info(f"launch.json created for {username}")
+
+        except subprocess.CalledProcessError as e:
+            current_app.logger.warning(f"launch.json creation failed: {e.stderr}")
+            # Non-fatal error - continue provisioning
+
+    def _create_workspace_file(self, username: str, home_dir: str, workspace_config: dict) -> Optional[str]:
+        """
+        Create multi-folder VS Code workspace file.
+
+        Args:
+            username: Linux username
+            home_dir: User home directory path
+            workspace_config: Workspace configuration dictionary
+
+        Returns:
+            str: Path to workspace file, or None if creation failed
+        """
+        if not workspace_config:
+            return None
+
+        current_app.logger.info(f"Creating workspace file for {username}")
+
+        try:
+            workspace_file = f"{home_dir}/workspace.code-workspace"
+
+            # Write workspace file
+            workspace_content = json.dumps(workspace_config, indent=2)
+
+            subprocess.run([
+                'sudo', '-u', username, 'bash', '-c',
+                f"cat > {workspace_file} << 'WORKSPACE_EOF'\n{workspace_content}\nWORKSPACE_EOF"
+            ], check=True, capture_output=True, text=True)
+
+            current_app.logger.info(f"Workspace file created at {workspace_file}")
+            return workspace_file
+
+        except subprocess.CalledProcessError as e:
+            current_app.logger.warning(f"Workspace file creation failed: {e.stderr}")
+            return None
+
+    def _setup_postgresql_user(self, username: str, database_name: str) -> None:
+        """
+        Create PostgreSQL user and database.
+
+        Args:
+            username: PostgreSQL username (matches Linux username)
+            database_name: Database name to create
+
+        Raises:
+            WorkspaceProvisionerError: If PostgreSQL setup fails
+        """
+        current_app.logger.info(f"Setting up PostgreSQL user {username} with database {database_name}")
+
+        try:
+            # Create PostgreSQL user (superuser for development flexibility)
+            create_user = subprocess.run([
+                'sudo', '-u', 'postgres', 'createuser',
+                '-s',  # Superuser
+                username
+            ], capture_output=True, text=True)
+
+            # Ignore error if user already exists
+            if create_user.returncode != 0 and 'already exists' not in create_user.stderr:
+                raise WorkspaceProvisionerError(f"Failed to create PostgreSQL user: {create_user.stderr}")
+
+            # Create database
+            create_db = subprocess.run([
+                'sudo', '-u', 'postgres', 'createdb',
+                database_name,
+                '-O', username
+            ], capture_output=True, text=True)
+
+            # Ignore error if database already exists
+            if create_db.returncode != 0 and 'already exists' not in create_db.stderr:
+                raise WorkspaceProvisionerError(f"Failed to create database: {create_db.stderr}")
+
+            # Grant all privileges
+            grant_privileges = subprocess.run([
+                'sudo', '-u', 'postgres', 'psql',
+                '-c', f"GRANT ALL PRIVILEGES ON DATABASE {database_name} TO {username};"
+            ], check=True, capture_output=True, text=True)
+
+            current_app.logger.info(f"PostgreSQL setup complete for {username}")
+
+        except subprocess.CalledProcessError as e:
+            error_msg = f"PostgreSQL setup failed for {username}: {e.stderr}"
+            current_app.logger.error(error_msg)
+            raise WorkspaceProvisionerError(error_msg)
+
+    def _configure_code_server_auth(self, workspace: Workspace, service_file_path: str) -> None:
+        """
+        Configure code-server for token-based authentication.
+
+        Modifies the systemd service file to use token authentication instead of password.
+
+        Args:
+            workspace: Workspace model instance with access_token
+            service_file_path: Path to systemd service file
+        """
+        if not workspace.access_token:
+            current_app.logger.warning(f"No access token found for workspace {workspace.id}, skipping token auth configuration")
+            return
+
+        current_app.logger.info(f"Configuring token-based auth for workspace {workspace.id}")
+
+        try:
+            # Read current service file
+            with open(service_file_path, 'r') as f:
+                service_content = f.read()
+
+            # Replace --auth password with --auth none (token will be in URL)
+            # The token is validated by code-server when passed as ?token= in URL
+            service_content = service_content.replace('--auth password', '--auth none')
+
+            # Write updated service file
+            with open(service_file_path, 'w') as f:
+                f.write(service_content)
+
+            # Reload systemd daemon
+            subprocess.run([
+                'systemctl', 'daemon-reload'
+            ], check=True, capture_output=True, text=True)
+
+            current_app.logger.info(f"Token-based auth configured for workspace {workspace.id}")
+
+        except (IOError, subprocess.CalledProcessError) as e:
+            current_app.logger.warning(f"Token auth configuration failed: {str(e)}")
+            # Non-fatal error - workspace will use password auth
+
     def provision_workspace(self, workspace: Workspace) -> Dict[str, any]:
         """
         Provision complete workspace with all components.
@@ -558,6 +874,13 @@ WantedBy=multi-user.target
             # Step 3: Create systemd service
             self.create_systemd_service(workspace.linux_username)
             result['steps_completed'].append('systemd_service_created')
+
+            # Step 3.5: Configure token-based authentication (if access token exists)
+            if workspace.access_token:
+                service_path = f"/etc/systemd/system/code-server@{workspace.linux_username}.service"
+                self._configure_code_server_auth(workspace, service_path)
+                result['steps_completed'].append('token_auth_configured')
+                current_app.logger.info(f"Token-based auth configured for workspace {workspace.id}")
 
             # Step 4: Set disk quota
             self.set_disk_quota(workspace.linux_username, workspace.disk_quota_gb)

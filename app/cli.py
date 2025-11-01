@@ -2,8 +2,12 @@
 Flask CLI commands for workspace management and scheduling tasks.
 """
 import click
+import json
+import os
 from flask import current_app
 from flask.cli import with_appcontext
+from app import db
+from app.models import WorkspaceTemplate
 from app.services.auto_stop_scheduler import AutoStopScheduler
 from app.services.resource_metrics_collector import ResourceMetricsCollector
 
@@ -141,9 +145,100 @@ def update_exchange_rates_command(date):
         click.echo('\n✅ Exchange rates updated successfully.')
 
 
+@click.command('seed-odoo-template')
+@with_appcontext
+def seed_odoo_template_command():
+    """
+    Seed Odoo 18.4 Development template into database.
+
+    Usage:
+        $ flask seed-odoo-template
+    """
+    template_file = os.path.join(
+        current_app.root_path,
+        '..',
+        'seeds',
+        'odoo_18_4_template.json'
+    )
+
+    if not os.path.exists(template_file):
+        current_app.logger.error(f"Template file not found: {template_file}")
+        click.echo(f"❌ Error: Template file not found at {template_file}")
+        return
+
+    try:
+        # Load template configuration
+        with open(template_file, 'r') as f:
+            template_data = json.load(f)
+
+        # Check if template already exists
+        existing_template = WorkspaceTemplate.query.filter_by(
+            name=template_data['name'],
+            visibility='official'
+        ).first()
+
+        if existing_template:
+            click.echo(f"⚠️  Template '{template_data['name']}' already exists (ID: {existing_template.id})")
+
+            if not click.confirm('Update existing template?', default=False):
+                click.echo('Skipping template update.')
+                return
+
+            # Update existing template
+            existing_template.description = template_data['description']
+            existing_template.category = template_data['category']
+            existing_template.config = template_data['config']
+            existing_template.is_active = template_data.get('is_active', True)
+
+            db.session.commit()
+            click.echo(f"✅ Template '{template_data['name']}' updated successfully!")
+            click.echo(f"   ID: {existing_template.id}")
+            click.echo(f"   Category: {existing_template.category}")
+            click.echo(f"   Visibility: {existing_template.visibility}")
+            return
+
+        # Create new template
+        template = WorkspaceTemplate(
+            name=template_data['name'],
+            description=template_data['description'],
+            category=template_data['category'],
+            visibility=template_data['visibility'],
+            config=template_data['config'],
+            is_active=template_data.get('is_active', True),
+            company_id=None  # Official template (no company)
+        )
+
+        db.session.add(template)
+        db.session.commit()
+
+        click.echo(f"✅ Odoo 18.4 Development template created successfully!")
+        click.echo(f"   Template ID: {template.id}")
+        click.echo(f"   Name: {template.name}")
+        click.echo(f"   Category: {template.category}")
+        click.echo(f"   Visibility: {template.visibility}")
+        click.echo(f"   Components:")
+        click.echo(f"      - {len(template.config.get('packages', []))} system packages")
+        click.echo(f"      - {len(template.config.get('extensions', []))} VS Code extensions")
+        click.echo(f"      - {len(template.config.get('repositories', []))} Git repositories")
+        click.echo(f"      - PostgreSQL database: {template.config.get('postgresql', {}).get('database', 'N/A')}")
+        click.echo(f"      - SSH required: {template.config.get('ssh_required', False)}")
+        click.echo(f"      - Multi-folder workspace: {len(template.config.get('workspace_file', {}).get('folders', []))} folders")
+
+        current_app.logger.info(f"Odoo 18.4 template seeded successfully (ID: {template.id})")
+
+    except json.JSONDecodeError as e:
+        click.echo(f"❌ Error: Invalid JSON in template file: {str(e)}")
+        current_app.logger.error(f"Template JSON decode error: {str(e)}")
+    except Exception as e:
+        db.session.rollback()
+        click.echo(f"❌ Error seeding template: {str(e)}")
+        current_app.logger.error(f"Template seeding error: {str(e)}")
+
+
 def init_app(app):
     """Register CLI commands with Flask app."""
     app.cli.add_command(auto_stop_check_command)
     app.cli.add_command(collect_metrics_command)
     app.cli.add_command(cleanup_metrics_command)
     app.cli.add_command(update_exchange_rates_command)
+    app.cli.add_command(seed_odoo_template_command)

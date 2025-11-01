@@ -182,6 +182,10 @@ class Workspace(db.Model):
     cpu_limit_percent = db.Column(db.Integer, default=100)
     memory_limit_mb = db.Column(db.Integer, default=2048)
 
+    # Authentication and SSH fields (Phase 3 - Template System)
+    access_token = db.Column(db.String(64), unique=True, nullable=True)  # Token-based code-server auth
+    ssh_public_key = db.Column(db.Text, nullable=True)  # SSH key for private GitHub repos
+
     # Composite unique constraint for name within company
     __table_args__ = (
         db.UniqueConstraint('company_id', 'name', name='uq_company_workspace_name'),
@@ -207,6 +211,12 @@ class Workspace(db.Model):
 
     def get_url(self):
         """Get full workspace URL."""
+        return f"https://{self.subdomain}.youarecoder.com"
+
+    def get_access_url(self):
+        """Get workspace access URL with token (if token-based auth is enabled)."""
+        if self.access_token:
+            return f"https://{self.subdomain}.youarecoder.com/?token={self.access_token}"
         return f"https://{self.subdomain}.youarecoder.com"
 
 

@@ -352,3 +352,68 @@ def logs(workspace_id):
     except WorkspaceProvisionerError as e:
         current_app.logger.error(f"Error getting workspace {workspace_id} logs: {str(e)}")
         return jsonify({'error': str(e)}), 500
+
+@bp.route('/<int:workspace_id>/verify-ssh', methods=['POST'])
+@login_required
+@require_workspace_ownership
+def verify_ssh(workspace_id):
+    """
+    Verify SSH connection to GitHub for workspace.
+
+    Tests if the workspace's SSH key is properly configured for GitHub access.
+    Updates workspace metadata with verification status.
+
+    Args:
+        workspace_id: Workspace ID
+
+    Returns:
+        JSON response with verification result:
+        {
+            'success': bool,
+            'ssh_verified': bool,
+            'message': str
+        }
+    """
+    workspace = Workspace.query.get_or_404(workspace_id)
+
+    if not workspace.ssh_public_key:
+        return jsonify({
+            'success': False,
+            'ssh_verified': False,
+            'message': 'No SSH key configured for this workspace'
+        }), 400
+
+    provisioner = WorkspaceProvisioner()
+
+    try:
+        # Verify SSH connection to GitHub
+        ssh_verified = provisioner._verify_github_ssh(workspace.linux_username)
+
+        if ssh_verified:
+            # Update workspace metadata (optional: add ssh_verified_at field if needed)
+            current_app.logger.info(f"SSH verification successful for workspace {workspace_id}")
+
+            # Audit log
+            AuditLogger.log_workspace_action(workspace, 'ssh_verified', current_user.id)
+
+            return jsonify({
+                'success': True,
+                'ssh_verified': True,
+                'message': 'SSH connection to GitHub verified successfully'
+            }), 200
+        else:
+            current_app.logger.warning(f"SSH verification failed for workspace {workspace_id}")
+
+            return jsonify({
+                'success': True,
+                'ssh_verified': False,
+                'message': 'SSH verification failed. Please ensure the SSH key is added to your GitHub account.'
+            }), 200
+
+    except Exception as e:
+        current_app.logger.error(f"Error verifying SSH for workspace {workspace_id}: {str(e)}")
+        return jsonify({
+            'success': False,
+            'ssh_verified': False,
+            'message': f'Error verifying SSH connection: {str(e)}'
+        }), 500

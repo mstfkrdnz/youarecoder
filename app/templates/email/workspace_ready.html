@@ -11,15 +11,57 @@
     <p style="margin: 0 0 12px 0; font-weight: 600; color: #1F2937;">Workspace Details:</p>
     <ul style="margin: 0;">
         <li><strong>Name:</strong> {{ workspace.name }}</li>
-        <li><strong>URL:</strong> <a href="{{ workspace.get_url() }}">{{ workspace.subdomain }}.youarecoder.com</a></li>
+        <li><strong>URL:</strong> <a href="{{ workspace.get_access_url() }}">{{ workspace.subdomain }}.youarecoder.com</a></li>
+        {% if workspace.access_token %}
+        <li><strong>Access:</strong> <span style="color: #059669;">Password-less (Token-based)</span></li>
+        {% endif %}
         <li><strong>Port:</strong> {{ workspace.port }}</li>
         <li><strong>Storage:</strong> {{ workspace.disk_quota_gb }} GB</li>
         <li><strong>Status:</strong> <span style="color: #059669;">● Active</span></li>
     </ul>
 </div>
 
+{% if workspace.ssh_public_key %}
+<div class="divider"></div>
+
+<h3 style="color: #1F2937; font-size: 18px;">🔑 SSH Key for Private Repositories</h3>
+
+<p>Your workspace requires access to private GitHub repositories. We've generated an SSH key for you:</p>
+
+<div class="info-box" style="border-left-color: #4F46E5; background: #EEF2FF;">
+    <p style="margin: 0 0 8px 0; font-weight: 600; color: #312E81; font-size: 12px;">SSH PUBLIC KEY</p>
+    <pre style="margin: 0; padding: 12px; background: #FFFFFF; border: 1px solid #E0E7FF; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 11px; color: #1F2937; word-wrap: break-word; white-space: pre-wrap; overflow-wrap: break-word;">{{ workspace.ssh_public_key }}</pre>
+</div>
+
+<h4 style="color: #1F2937; font-size: 16px; margin-top: 24px; margin-bottom: 12px;">Setup Instructions:</h4>
+
+<ol style="color: #4B5563; line-height: 1.8; padding-left: 20px;">
+    <li style="margin-bottom: 8px;">
+        <strong>Copy</strong> the SSH public key above
+    </li>
+    <li style="margin-bottom: 8px;">
+        <strong>Go to</strong> <a href="https://github.com/settings/ssh/new" target="_blank" style="color: #4F46E5; text-decoration: none;">GitHub → Settings → SSH Keys</a>
+    </li>
+    <li style="margin-bottom: 8px;">
+        <strong>Click</strong> "New SSH key"
+    </li>
+    <li style="margin-bottom: 8px;">
+        <strong>Paste</strong> your SSH key and give it a title like "<code style="background: #F3F4F6; padding: 2px 6px; border-radius: 3px; font-size: 12px;">{{ workspace.subdomain }} - YouAreCoder</code>"
+    </li>
+    <li style="margin-bottom: 8px;">
+        <strong>Save</strong> the key on GitHub
+    </li>
+</ol>
+
+<div class="info-box" style="border-left-color: #F59E0B; background: #FFFBEB;">
+    <p style="margin: 0; color: #92400E;">
+        <strong>⚠️ Important:</strong> You must add this SSH key to your GitHub account before you can clone private repositories (like Odoo Enterprise).
+    </p>
+</div>
+{% endif %}
+
 <p style="text-align: center; margin: 30px 0;">
-    <a href="{{ workspace.get_url() }}" class="button">Open Workspace</a>
+    <a href="{{ workspace.get_access_url() }}" class="button">Open Workspace</a>
 </p>
 
 <div class="divider"></div>

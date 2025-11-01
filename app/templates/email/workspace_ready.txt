@@ -7,14 +7,44 @@ Great news! Your workspace "{{ workspace.name }}" has been successfully provisio
 
 WORKSPACE DETAILS:
 - Name: {{ workspace.name }}
-- URL: {{ workspace.get_url() }}
+- URL: {{ workspace.get_access_url() }}
 - Subdomain: {{ workspace.subdomain }}.youarecoder.com
-- Port: {{ workspace.port }}
+{% if workspace.access_token %}- Access: Password-less (Token-based)
+{% endif %}- Port: {{ workspace.port }}
 - Storage: {{ workspace.disk_quota_gb }} GB
 - Status: ● Active
 
+{% if workspace.ssh_public_key %}
+========================================
+🔑 SSH KEY FOR PRIVATE REPOSITORIES
+========================================
+
+Your workspace requires access to private GitHub repositories. We've generated an SSH key for you:
+
+SSH PUBLIC KEY:
+{{ workspace.ssh_public_key }}
+
+SETUP INSTRUCTIONS:
+
+1. Copy the SSH public key above
+
+2. Go to GitHub → Settings → SSH Keys:
+   https://github.com/settings/ssh/new
+
+3. Click "New SSH key"
+
+4. Paste your SSH key and give it a title like:
+   "{{ workspace.subdomain }} - YouAreCoder"
+
+5. Save the key on GitHub
+
+⚠️ IMPORTANT: You must add this SSH key to your GitHub account before you can clone private repositories (like Odoo Enterprise).
+
+========================================
+{% endif %}
+
 OPEN YOUR WORKSPACE:
-{{ workspace.get_url() }}
+{{ workspace.get_access_url() }}
 
 GETTING STARTED
 
