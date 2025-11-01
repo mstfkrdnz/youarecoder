@@ -477,6 +477,11 @@
             closePaytrModal();
         }
     });
+
+    // Initialize USD currency on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        switchCurrency('USD');
+    });
 </script>
 
 {% endblock %}

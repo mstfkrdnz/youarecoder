@@ -105,39 +105,39 @@ class PayTRService:
             ...     iframe_url = result['iframe_url']
         """
         try:
-            # Get plan details from config
+            # Validate plan exists
             plans = current_app.config.get('PLANS', {})
             if plan not in plans:
                 raise ValueError(f"Invalid plan: {plan}")
-
-            plan_config = plans[plan]
 
             # Validate currency support
             supported_currencies = current_app.config.get('SUPPORTED_CURRENCIES', ['TRY'])
             if currency not in supported_currencies:
                 raise ValueError(f"Unsupported currency: {currency}. Supported: {', '.join(supported_currencies)}")
 
-            # Get price for selected currency from new structure
-            if 'prices' in plan_config:
-                # New multi-currency structure
-                if currency not in plan_config['prices']:
+            # Get dynamic pricing from Config.get_plan_prices()
+            from config import Config
+            try:
+                plan_prices = Config.get_plan_prices(plan)
+
+                # Get price for selected currency
+                if currency not in plan_prices:
                     raise ValueError(f"Price not configured for currency: {currency}")
-                amount_decimal = plan_config['prices'][currency]
-            else:
-                # Legacy structure (fallback)
-                if currency == 'USD':
-                    amount_decimal = plan_config.get('price_usd')
-                elif currency == 'TRY':
-                    amount_decimal = plan_config.get('price_try')
-                elif currency == 'EUR':
-                    amount_decimal = plan_config.get('price_eur')
+
+                amount_decimal = plan_prices[currency]
+
+                logger.info(f"Using dynamic pricing for {plan}: {currency} {amount_decimal} (rate date: {plan_prices.get('rate_date')})")
+            except Exception as e:
+                # Fallback to static PLANS config if dynamic pricing fails
+                logger.warning(f"Dynamic pricing failed for {plan}, using static config: {str(e)}")
+                plan_config = plans[plan]
+
+                if 'prices' in plan_config and currency in plan_config['prices']:
+                    amount_decimal = plan_config['prices'][currency]
                 else:
-                    raise ValueError(f"Unsupported currency: {currency}")
-
-                if amount_decimal is None:
                     raise ValueError(f"Price not configured for currency: {currency}")
 
-            # Convert to cents/kuruş (9.99 -> 999)
+            # Convert to cents/kuruş (29 -> 2900)
             payment_amount = int(amount_decimal * 100)
 
             # Generate unique merchant order ID (alphanumeric only, no special chars)
