@@ -614,8 +614,9 @@ def update_user_quota(user_id):
 @login_required
 @require_company_admin
 def delete_team_member(user_id):
-    """Delete a team member and all their workspaces."""
+    """Delete a team member and all their workspaces with full system cleanup."""
     from flask import request
+    from app.services.workspace_provisioner import WorkspaceProvisioner
 
     try:
         # Get user
@@ -635,22 +636,40 @@ def delete_team_member(user_id):
         user_name = user.full_name
         workspace_count = user.workspaces.count()
 
-        # Delete all workspaces owned by this user
-        # The cascade will handle related records (sessions, metrics, etc.)
-        for workspace in user.workspaces.all():
-            logger.info(f"Deleting workspace {workspace.id} ({workspace.name}) owned by user {user_id}")
-            db.session.delete(workspace)
+        # Initialize provisioner for system resource cleanup
+        provisioner = WorkspaceProvisioner()
+        failed_workspaces = []
 
-        # Delete the user
+        # Deprovision all workspaces owned by this user
+        # This removes: systemd service, linux user, home directory, traefik routing, and DB record
+        for workspace in user.workspaces.all():
+            logger.info(f"Deprovisioning workspace {workspace.id} ({workspace.name}) owned by user {user_id}")
+            try:
+                result = provisioner.deprovision_workspace(workspace)
+                if not result['success']:
+                    failed_workspaces.append(workspace.name)
+                    logger.warning(f"Failed to fully deprovision workspace {workspace.id}: {result.get('error')}")
+            except Exception as e:
+                failed_workspaces.append(workspace.name)
+                logger.error(f"Error deprovisioning workspace {workspace.id}: {str(e)}")
+                # Continue with other workspaces
+
+        # Delete the user (workspaces already deleted by deprovision_workspace)
         db.session.delete(user)
         db.session.commit()
 
         logger.info(f"Admin {current_user.id} deleted user {user_id} ({user_email}) and {workspace_count} workspaces")
 
-        return jsonify({
-            'success': True,
-            'message': f'Successfully deleted {user_name} and {workspace_count} workspace(s)'
-        }), 200
+        if failed_workspaces:
+            return jsonify({
+                'success': True,
+                'message': f'Deleted {user_name} and {workspace_count} workspace(s). Some workspaces had partial cleanup: {", ".join(failed_workspaces)}'
+            }), 200
+        else:
+            return jsonify({
+                'success': True,
+                'message': f'Successfully deleted {user_name} and {workspace_count} workspace(s) with full system cleanup'
+            }), 200
 
     except Exception as e:
         db.session.rollback()
