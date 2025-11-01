@@ -390,6 +390,9 @@
     function switchCurrency(currency) {
         selectedCurrency = currency;
 
+        // Save selected currency to localStorage
+        localStorage.setItem('selectedCurrency', currency);
+
         // Update button states
         document.querySelectorAll('.currency-btn').forEach(btn => {
             btn.classList.remove('active', 'bg-blue-600', 'text-white');
@@ -481,9 +484,10 @@
         }
     });
 
-    // Initialize USD currency on page load
+    // Initialize currency on page load (restore from localStorage or default to USD)
     document.addEventListener('DOMContentLoaded', function() {
-        switchCurrency('USD');
+        const savedCurrency = localStorage.getItem('selectedCurrency') || 'USD';
+        switchCurrency(savedCurrency);
     });
 </script>
 
