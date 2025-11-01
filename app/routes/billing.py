@@ -281,7 +281,10 @@ def billing_dashboard():
     try:
         company = current_user.company
         subscription = company.subscription
-        payments = company.payments.order_by(Payment.created_at.desc()).limit(10).all()
+        # Only show completed payments (success or failed), hide pending payments
+        payments = company.payments.filter(
+            Payment.status.in_(['success', 'failed'])
+        ).order_by(Payment.created_at.desc()).limit(10).all()
         invoices = company.invoices.order_by(Invoice.created_at.desc()).limit(10).all()
 
         # Get plan details from config with dynamic pricing
