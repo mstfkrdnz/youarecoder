@@ -149,7 +149,7 @@
                         <tbody class="bg-white divide-y divide-gray-200">
                             {% for member in team_members %}
                             {% set workspace_count = member.workspaces.count() %}
-                            {% set member_quota = company.max_workspaces if member.role == 'admin' else (member.workspace_quota if (member.workspace_quota is defined and member.workspace_quota) else company.max_workspaces) %}
+                            {% set member_quota = member.workspace_quota if (member.workspace_quota is defined and member.workspace_quota) else company.max_workspaces %}
                             {% set usage_percent = (workspace_count / member_quota * 100) if member_quota > 0 else 0 %}
                             <tr class="quota-row" id="user-row-{{ member.id }}" data-testid="team-member-row-{{ member.id }}">
                                 <td class="px-6 py-4 whitespace-nowrap">
