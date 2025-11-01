@@ -105,10 +105,12 @@ class PayTRService:
             ...     iframe_url = result['iframe_url']
         """
         try:
-            # Validate plan exists
+            # Validate plan exists and get plan config
             plans = current_app.config.get('PLANS', {})
             if plan not in plans:
                 raise ValueError(f"Invalid plan: {plan}")
+
+            plan_config = plans[plan]  # Get plan config for name, features, etc.
 
             # Validate currency support
             supported_currencies = current_app.config.get('SUPPORTED_CURRENCIES', ['TRY'])
@@ -130,7 +132,6 @@ class PayTRService:
             except Exception as e:
                 # Fallback to static PLANS config if dynamic pricing fails
                 logger.warning(f"Dynamic pricing failed for {plan}, using static config: {str(e)}")
-                plan_config = plans[plan]
 
                 if 'prices' in plan_config and currency in plan_config['prices']:
                     amount_decimal = plan_config['prices'][currency]
