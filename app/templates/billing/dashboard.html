@@ -405,7 +405,10 @@
             const datasetKey = `price${currency.charAt(0).toUpperCase()}${currency.slice(1).toLowerCase()}`;
             const price = priceEl.dataset[datasetKey];
             const symbol = currencySymbols[currency];
-            priceEl.textContent = `${symbol}${price}`;
+
+            // Format number with thousands separator for better readability
+            const formattedPrice = parseInt(price).toLocaleString('en-US');
+            priceEl.textContent = `${symbol}${formattedPrice}`;
         });
     }
 
