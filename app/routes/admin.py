@@ -612,7 +612,7 @@ def update_user_quota(user_id):
 
 @bp.route('/team/<int:user_id>/delete', methods=['POST'])
 @login_required
-@admin_required
+@require_company_admin
 def delete_team_member(user_id):
     """Delete a team member and all their workspaces."""
     from flask import request
