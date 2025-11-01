@@ -224,6 +224,14 @@
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <div class="flex items-center justify-end space-x-2">
                                         <span class="text-xs text-gray-400" id="status-{{ member.id }}"></span>
+                                        {% if member.role != 'admin' %}
+                                        <button type="button"
+                                                onclick="deleteMember({{ member.id }}, '{{ member.full_name }}')"
+                                                data-testid="team-delete-btn-{{ member.id }}"
+                                                class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                                            Delete
+                                        </button>
+                                        {% endif %}
                                     </div>
                                 </td>
                             </tr>
@@ -410,6 +418,67 @@ async function updateQuota(event, userId) {
     }
 
     return false;
+}
+
+async function deleteMember(userId, userName) {
+    // Confirm deletion
+    if (!confirm(`Are you sure you want to delete ${userName}? This will also delete all their workspaces.`)) {
+        return;
+    }
+
+    const statusElement = document.getElementById(`status-${userId}`);
+
+    // Show loading state
+    statusElement.textContent = 'Deleting...';
+    statusElement.className = 'text-xs text-orange-500';
+
+    try {
+        // Get CSRF token
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+
+        const response = await fetch(`/admin/team/${userId}/delete`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            }
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            // Success
+            statusElement.textContent = '✓ Deleted';
+            statusElement.className = 'text-xs text-green-600';
+
+            // Remove row from table with fade effect
+            const row = document.getElementById(`user-row-${userId}`);
+            if (row) {
+                row.style.transition = 'opacity 0.3s';
+                row.style.opacity = '0';
+                setTimeout(() => {
+                    window.location.reload();
+                }, 300);
+            }
+        } else {
+            // Error
+            statusElement.textContent = '✗ ' + (data.error || 'Failed to delete');
+            statusElement.className = 'text-xs text-red-600';
+
+            // Clear error message after 5 seconds
+            setTimeout(() => {
+                statusElement.textContent = '';
+            }, 5000);
+        }
+    } catch (error) {
+        console.error('Error deleting member:', error);
+        statusElement.textContent = '✗ Network error';
+        statusElement.className = 'text-xs text-red-600';
+
+        setTimeout(() => {
+            statusElement.textContent = '';
+        }, 5000);
+    }
 }
 </script>
 {% endblock %}

@@ -610,6 +610,54 @@ def update_user_quota(user_id):
         return jsonify({'error': 'Failed to update quota'}), 500
 
 
+@bp.route('/team/<int:user_id>/delete', methods=['POST'])
+@login_required
+@admin_required
+def delete_team_member(user_id):
+    """Delete a team member and all their workspaces."""
+    from flask import request
+
+    try:
+        # Get user
+        user = User.query.get_or_404(user_id)
+
+        # Verify user belongs to admin's company
+        if user.company_id != current_user.company_id:
+            logger.warning(f"Admin {current_user.id} attempted to delete user {user_id} from another company")
+            abort(403)
+
+        # Prevent deleting admin/owner
+        if user.role == 'admin':
+            return jsonify({'error': 'Cannot delete the owner account'}), 400
+
+        # Get user info for logging before deletion
+        user_email = user.email
+        user_name = user.full_name
+        workspace_count = user.workspaces.count()
+
+        # Delete all workspaces owned by this user
+        # The cascade will handle related records (sessions, metrics, etc.)
+        for workspace in user.workspaces.all():
+            logger.info(f"Deleting workspace {workspace.id} ({workspace.name}) owned by user {user_id}")
+            db.session.delete(workspace)
+
+        # Delete the user
+        db.session.delete(user)
+        db.session.commit()
+
+        logger.info(f"Admin {current_user.id} deleted user {user_id} ({user_email}) and {workspace_count} workspaces")
+
+        return jsonify({
+            'success': True,
+            'message': f'Successfully deleted {user_name} and {workspace_count} workspace(s)'
+        }), 200
+
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error deleting team member: {str(e)}", exc_info=True)
+        return jsonify({'error': 'Failed to delete team member'}), 500
+
+
 @bp.route('/templates')
 @login_required
 @require_company_admin
