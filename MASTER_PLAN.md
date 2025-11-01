@@ -1,8 +1,8 @@
 # YouAreCoder Platform - Comprehensive Master Plan
 
 **Vision**: Complete Software Development Lifecycle (SDLC) Platform
-**Version**: 2.0
-**Date**: 2025-10-29
+**Version**: 2.1
+**Date**: 2025-11-01
 **Status**: Evolution from Code-Server Hosting → Full SDLC Platform
 
 ---
@@ -129,9 +129,12 @@ class Workspace(db.Model):
 - PayTR payment integration (live, tested)
 - Email notifications (Mailjet SMTP)
 - Multi-currency support (USD, EUR, TRY)
+- Dynamic currency pricing with TCMB exchange rates
+- Automated exchange rate updates (3x daily cronjob)
 - Multi-language support (EN, TR)
 - Rate limiting (configurable per environment)
 - Form data persistence on validation errors
+- Payment history filtering (hide pending payments)
 
 **❌ Eksik (Vizyon için Gerekli):**
 - Per-developer workspace quotas (Faz 2)
@@ -145,7 +148,79 @@ class Workspace(db.Model):
 - AI Agent integration (Faz 5)
 - Workflow automation (Faz 5)
 
-### 1.4 Mevcut Kullanıcı İş Akışları
+### 1.4 Dinamik Kur Sistemi (Yeni Eklenen)
+
+**Amaç:** USD/EUR fiyatları güncel TCMB kurlarına göre TRY'ye otomatik dönüştür
+
+**Mimari:**
+- **Base Currency:** USD (Single Source of Truth)
+- **Exchange Rate Source:** TCMB (Türkiye Cumhuriyet Merkez Bankası) XML API
+- **Update Frequency:** Günde 3 kez (16:00, 17:00, 18:00 UTC)
+- **Fallback:** TCMB erişilemezse statik kurlar kullanılır
+
+**Teknik Detaylar:**
+```python
+# Base USD Prices
+BASE_PRICES_USD = {
+    'starter': 29,
+    'team': 99,
+    'enterprise': 299
+}
+
+# Dynamic conversion via ExchangeRate model
+try_price = ExchangeRate.calculate_try_price(usd_price)
+eur_price = ExchangeRate.calculate_eur_price(usd_price)
+```
+
+**Database Schema:**
+```sql
+CREATE TABLE exchange_rates (
+    id SERIAL PRIMARY KEY,
+    source_currency VARCHAR(3) NOT NULL,    -- USD, EUR
+    target_currency VARCHAR(3) NOT NULL,    -- TRY
+    rate NUMERIC(10, 4) NOT NULL,
+    effective_date DATE NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE(source_currency, target_currency, effective_date)
+);
+```
+
+**Cronjob Configuration:**
+```bash
+# /root/youarecoder/scripts/update-exchange-rates.sh
+0 16 * * * /root/youarecoder/scripts/update-exchange-rates.sh
+0 17 * * * /root/youarecoder/scripts/update-exchange-rates.sh
+0 18 * * * /root/youarecoder/scripts/update-exchange-rates.sh
+```
+
+**CLI Command:**
+```bash
+# Manuel kur güncelleme
+flask update-exchange-rates
+
+# Belirli bir tarih için
+flask update-exchange-rates --date 2025-10-31
+```
+
+**Billing UI Features:**
+- Currency selector (TRY, USD, EUR) with flag icons
+- Real-time price conversion without page reload
+- Exchange rate date display (örn: "💱 Exchange rates from 2025-10-31")
+- localStorage ile seçilen para birimi hatırlanır
+- Default currency: USD
+
+**Error Handling:**
+- TCMB API erişilemezse fallback kurlar kullanılır
+- Hafta sonu için son iş günü kurları geçerlidir
+- Başarısız güncelleme denemeleri loglanır
+- Retry mekanizması ile 3 günlük deneme
+
+**Monitoring:**
+- Log dosyası: `/var/log/youarecoder/exchange-rates.log`
+- Database query: `SELECT * FROM exchange_rates ORDER BY effective_date DESC`
+- Cronjob status: `crontab -l | grep exchange-rates`
+
+### 1.5 Mevcut Kullanıcı İş Akışları
 
 **Owner İş Akışı:**
 1. Company kaydı (owner hesabı otomatik oluşur)
@@ -1062,6 +1137,7 @@ Bu Master Plan, YouAreCoder'ın basit bir code-server hosting platformundan tam 
 
 ---
 
-*Doküman Versiyonu: 2.0*
-*Son Güncelleme: 2025-10-29*
+*Doküman Versiyonu: 2.1*
+*Son Güncelleme: 2025-11-01*
+*Eklenen Özellikler: Dinamik kur sistemi (TCMB entegrasyonu), payment history filtering*
 *Sonraki Değerlendirme: Faz 2 tamamlandıktan sonra*
