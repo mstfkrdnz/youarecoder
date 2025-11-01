@@ -301,7 +301,6 @@ def team_management():
     total_quotas_assigned = sum(
         getattr(user, 'workspace_quota', 0)
         for user in team_members
-        if user.role != 'admin'
     )
     total_workspaces_used = sum(user.workspaces.count() for user in team_members)
 
