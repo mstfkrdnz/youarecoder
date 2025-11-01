@@ -125,10 +125,10 @@ class Config:
                 'USD': 299,      # $299/month
                 'EUR': 279       # €279/month
             },
-            'max_workspaces': 999,     # Unlimited (practical limit)
+            'max_workspaces': 150,     # Enterprise limit
             'storage_per_workspace_gb': 250,
             'features': [
-                'Unlimited Development Workspaces',
+                'Up to 150 Development Workspaces',
                 '250GB Storage per Workspace',
                 'Code-Server IDE',
                 'SSL Certificates',

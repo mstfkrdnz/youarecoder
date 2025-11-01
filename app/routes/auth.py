@@ -165,12 +165,14 @@ def register():
         db.session.add(company)
         db.session.flush()
 
-        # Create admin user
+        # Create admin user with initial quota of 1
         user = User(
             email=form.email.data,
             full_name=form.full_name.data,
             role='admin',
-            company_id=company.id
+            company_id=company.id,
+            workspace_quota=1,
+            quota_assigned_at=datetime.utcnow()
         )
         user.set_password(form.password.data)
 

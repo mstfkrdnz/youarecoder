@@ -43,8 +43,10 @@
                     <dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900">{{ team_members|length }}</dd>
                 </div>
                 <div class="overflow-hidden rounded-lg bg-white px-4 py-5 shadow">
-                    <dt class="truncate text-sm font-medium text-gray-500">Total Quotas Assigned</dt>
-                    <dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900">{{ total_quotas_assigned }}</dd>
+                    <dt class="truncate text-sm font-medium text-gray-500">Quota Allocation</dt>
+                    <dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900">
+                        {{ total_quotas_assigned }} <span class="text-2xl text-gray-500">/ {{ company.max_workspaces }}</span>
+                    </dd>
                 </div>
                 <div class="overflow-hidden rounded-lg bg-white px-4 py-5 shadow">
                     <dt class="truncate text-sm font-medium text-gray-500">Total Workspaces</dt>
@@ -193,7 +195,6 @@
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    {% if member.role != 'admin' %}
                                     <form class="quota-form" data-user-id="{{ member.id }}" data-testid="team-quota-form-{{ member.id }}" onsubmit="return updateQuota(event, {{ member.id }})">
                                         <div class="flex items-center space-x-2">
                                             <input type="number"
@@ -202,7 +203,7 @@
                                                    data-testid="team-quota-input-{{ member.id }}"
                                                    value="{{ member_quota }}"
                                                    min="{{ workspace_count }}"
-                                                   max="100"
+                                                   max="{{ company.max_workspaces }}"
                                                    class="quota-input block w-20 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                                                    required>
                                             <button type="submit"
@@ -212,9 +213,6 @@
                                             </button>
                                         </div>
                                     </form>
-                                    {% else %}
-                                    <span class="text-sm text-gray-500">{{ member_quota }} (plan limit)</span>
-                                    {% endif %}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                     {% if (member.quota_assigned_at is defined and member.quota_assigned_at) %}

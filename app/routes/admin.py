@@ -381,6 +381,23 @@ def add_team_member():
         except (ValueError, TypeError):
             return jsonify({'error': 'Quota must be a valid integer'}), 400
 
+        # Check total quota allocation doesn't exceed plan limit
+        company = current_user.company
+
+        # Calculate total quota for all existing users
+        total_quota = db.session.query(db.func.sum(User.workspace_quota)).filter(
+            User.company_id == company.id,
+            User.workspace_quota.isnot(None)
+        ).scalar() or 0
+
+        # Add the new user's quota
+        total_quota += quota
+
+        if total_quota > company.max_workspaces:
+            return jsonify({
+                'error': f'Total quota allocation ({total_quota}) would exceed plan limit ({company.max_workspaces}). Available: {company.max_workspaces - (total_quota - quota)}'
+            }), 400
+
         # Check if user already exists
         existing_user = User.query.filter_by(email=email).first()
         if existing_user:
@@ -550,6 +567,24 @@ def update_user_quota(user_id):
         if new_quota < current_workspace_count:
             return jsonify({
                 'error': f'Cannot reduce quota below current workspace count ({current_workspace_count})'
+            }), 400
+
+        # Check total quota allocation doesn't exceed plan limit
+        company = current_user.company
+
+        # Calculate total quota for all users except the one being updated
+        total_quota = db.session.query(db.func.sum(User.workspace_quota)).filter(
+            User.company_id == company.id,
+            User.id != user_id,
+            User.workspace_quota.isnot(None)
+        ).scalar() or 0
+
+        # Add the new quota for this user
+        total_quota += new_quota
+
+        if total_quota > company.max_workspaces:
+            return jsonify({
+                'error': f'Total quota allocation ({total_quota}) would exceed plan limit ({company.max_workspaces}). Available: {company.max_workspaces - (total_quota - new_quota)}'
             }), 400
 
         # Update quota
