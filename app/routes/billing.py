@@ -284,9 +284,26 @@ def billing_dashboard():
         payments = company.payments.order_by(Payment.created_at.desc()).limit(10).all()
         invoices = company.invoices.order_by(Invoice.created_at.desc()).limit(10).all()
 
-        # Get plan details from config
+        # Get plan details from config with dynamic pricing
         from flask import current_app
+        from config import Config
+
         plans = current_app.config.get('PLANS', {})
+
+        # Get dynamic prices for all plans
+        dynamic_prices = {}
+        for plan_key in ['starter', 'team', 'enterprise']:
+            try:
+                dynamic_prices[plan_key] = Config.get_plan_prices(plan_key)
+            except Exception as e:
+                logger.warning(f"Failed to get dynamic prices for {plan_key}: {str(e)}")
+                # Fallback to static prices from PLANS
+                dynamic_prices[plan_key] = {
+                    'TRY': plans.get(plan_key, {}).get('prices', {}).get('TRY', 0),
+                    'USD': plans.get(plan_key, {}).get('prices', {}).get('USD', 0),
+                    'EUR': plans.get(plan_key, {}).get('prices', {}).get('EUR', 0),
+                    'rate_date': None
+                }
 
         logger.info(f"Billing dashboard accessed by user {current_user.id}")
 
@@ -296,6 +313,7 @@ def billing_dashboard():
                              payments=payments,
                              invoices=invoices,
                              plans=plans,
+                             dynamic_prices=dynamic_prices,
                              title='Billing & Subscription')
 
     except Exception as e:

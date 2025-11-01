@@ -70,7 +70,7 @@ class Config:
 
     # Multi-Currency Support (PayTR USD/EUR Approved)
     SUPPORTED_CURRENCIES = ['TRY', 'USD', 'EUR']
-    DEFAULT_CURRENCY = 'TRY'
+    DEFAULT_CURRENCY = 'USD'  # USD as default (changed from TRY for billing page)
 
     # Currency symbols for display
     CURRENCY_SYMBOLS = {
@@ -79,7 +79,62 @@ class Config:
         'EUR': '€'
     }
 
-    # Subscription Plans with Multi-Currency Pricing
+    # Base USD Prices (Single Source of Truth)
+    BASE_PRICES_USD = {
+        'starter': 29,
+        'team': 99,
+        'enterprise': 299
+    }
+
+    @staticmethod
+    def get_plan_prices(plan_key):
+        """
+        Get plan prices with dynamic currency conversion.
+
+        Converts USD base prices to TRY and EUR using latest TCMB exchange rates.
+        Falls back to static prices if exchange rates are unavailable.
+
+        Args:
+            plan_key: Plan identifier ('starter', 'team', 'enterprise')
+
+        Returns:
+            dict: {'TRY': int, 'USD': int, 'EUR': int, 'rate_date': 'YYYY-MM-DD' or None}
+        """
+        from app.models import ExchangeRate
+
+        usd_price = Config.BASE_PRICES_USD.get(plan_key)
+        if not usd_price:
+            raise ValueError(f"Invalid plan key: {plan_key}")
+
+        # Try dynamic conversion with TCMB rates
+        try:
+            try_price = ExchangeRate.calculate_try_price(usd_price)
+            eur_price = ExchangeRate.calculate_eur_price(usd_price)
+
+            # Get rate date for display
+            usd_rate = ExchangeRate.get_latest_rate('USD', 'TRY')
+            rate_date = usd_rate.effective_date.isoformat() if usd_rate else None
+
+            return {
+                'TRY': try_price,
+                'USD': usd_price,
+                'EUR': eur_price,
+                'rate_date': rate_date
+            }
+        except Exception:
+            # Fallback to static prices if exchange rate unavailable
+            static_plan = Config.PLANS.get(plan_key, {})
+            static_prices = static_plan.get('prices', {})
+
+            return {
+                'TRY': static_prices.get('TRY', usd_price * 30),  # Fallback: 30 TRY/USD
+                'USD': usd_price,
+                'EUR': static_prices.get('EUR', int(usd_price * 0.92)),  # Fallback: 0.92 EUR/USD
+                'rate_date': None
+            }
+
+    # Subscription Plans with Multi-Currency Pricing (DEPRECATED: Use get_plan_prices())
+    # Kept for backward compatibility during migration
     PLANS = {
         'starter': {
             'name': 'Starter',

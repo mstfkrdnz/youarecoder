@@ -128,19 +128,27 @@
                 </p>
 
                 <!-- Currency Selector -->
-                <div class="flex justify-center items-center gap-2 mb-4">
-                    <span class="text-sm text-gray-600 font-medium">Currency:</span>
-                    <div class="inline-flex rounded-lg border border-gray-300 bg-white p-1 shadow-sm">
-                        <button onclick="switchCurrency('TRY')" id="currency-TRY" class="currency-btn px-4 py-2 text-sm font-medium rounded-md transition-all active" data-currency="TRY">
-                            🇹🇷 TRY
-                        </button>
-                        <button onclick="switchCurrency('USD')" id="currency-USD" class="currency-btn px-4 py-2 text-sm font-medium rounded-md transition-all" data-currency="USD">
-                            🇺🇸 USD
-                        </button>
-                        <button onclick="switchCurrency('EUR')" id="currency-EUR" class="currency-btn px-4 py-2 text-sm font-medium rounded-md transition-all" data-currency="EUR">
-                            🇪🇺 EUR
-                        </button>
+                <div class="flex flex-col items-center gap-2 mb-4">
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm text-gray-600 font-medium">Currency:</span>
+                        <div class="inline-flex rounded-lg border border-gray-300 bg-white p-1 shadow-sm">
+                            <button onclick="switchCurrency('TRY')" id="currency-TRY" class="currency-btn px-4 py-2 text-sm font-medium rounded-md transition-all" data-currency="TRY">
+                                🇹🇷 TRY
+                            </button>
+                            <button onclick="switchCurrency('USD')" id="currency-USD" class="currency-btn px-4 py-2 text-sm font-medium rounded-md transition-all active" data-currency="USD">
+                                🇺🇸 USD
+                            </button>
+                            <button onclick="switchCurrency('EUR')" id="currency-EUR" class="currency-btn px-4 py-2 text-sm font-medium rounded-md transition-all" data-currency="EUR">
+                                🇪🇺 EUR
+                            </button>
+                        </div>
                     </div>
+                    <!-- Exchange Rate Info -->
+                    {% if dynamic_prices and dynamic_prices.get('starter', {}).get('rate_date') %}
+                    <div class="text-xs text-gray-500">
+                        💱 Exchange rates from {{ dynamic_prices['starter']['rate_date'] }}
+                    </div>
+                    {% endif %}
                 </div>
             </div>
 
@@ -158,14 +166,15 @@
                         <!-- Plan Name -->
                         <h3 class="text-2xl font-bold text-gray-900 mb-2">{{ plan_info.name }}</h3>
 
-                        <!-- Pricing (Multi-Currency) -->
+                        <!-- Pricing (Multi-Currency with Dynamic Rates) -->
                         <div class="mb-6">
                             <div class="flex items-baseline">
+                                {% set plan_prices = dynamic_prices.get(plan_key, plan_info.prices) %}
                                 <span class="price-display text-5xl font-extrabold text-gray-900"
-                                      data-price-try="{{ plan_info.prices.TRY }}"
-                                      data-price-usd="{{ plan_info.prices.USD }}"
-                                      data-price-eur="{{ plan_info.prices.EUR }}">
-                                    ₺{{ plan_info.prices.TRY }}
+                                      data-price-try="{{ plan_prices.TRY if plan_prices is mapping else plan_prices.get('TRY', plan_info.prices.TRY) }}"
+                                      data-price-usd="{{ plan_prices.USD if plan_prices is mapping else plan_prices.get('USD', plan_info.prices.USD) }}"
+                                      data-price-eur="{{ plan_prices.EUR if plan_prices is mapping else plan_prices.get('EUR', plan_info.prices.EUR) }}">
+                                    ${{ plan_prices.USD if plan_prices is mapping else plan_prices.get('USD', plan_info.prices.USD) }}
                                 </span>
                                 <span class="text-xl text-gray-600 ml-2">/month</span>
                             </div>
@@ -367,8 +376,8 @@
 </div>
 
 <script>
-    // Global selected currency
-    let selectedCurrency = 'TRY';
+    // Global selected currency (default to USD)
+    let selectedCurrency = 'USD';
 
     // Currency symbols
     const currencySymbols = {

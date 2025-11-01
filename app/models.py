@@ -740,3 +740,99 @@ class WorkspaceMetrics(db.Model):
             'process_count': self.process_count,
             'uptime_seconds': self.uptime_seconds
         }
+
+
+class ExchangeRate(db.Model):
+    """
+    Exchange rate tracking for multi-currency pricing with TCMB integration.
+
+    Stores daily exchange rates from Turkish Central Bank (TCMB) to enable
+    dynamic currency conversion for pricing display.
+    """
+    __tablename__ = 'exchange_rates'
+
+    id = db.Column(db.Integer, primary_key=True)
+    source_currency = db.Column(db.String(3), nullable=False, default='USD')  # USD or EUR
+    target_currency = db.Column(db.String(3), nullable=False, default='TRY')  # Always TRY
+    rate = db.Column(db.Numeric(10, 4), nullable=False)  # e.g., 34.2567
+    effective_date = db.Column(db.Date, nullable=False, index=True)  # Date when rate is effective
+    source = db.Column(db.String(50), nullable=False, default='TCMB')  # TCMB or manual
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+    # Composite unique constraint: one rate per currency pair per day
+    __table_args__ = (
+        db.UniqueConstraint('source_currency', 'target_currency', 'effective_date',
+                          name='uq_currency_date'),
+    )
+
+    def __repr__(self):
+        return f'<ExchangeRate {self.source_currency}/{self.target_currency} = {self.rate} on {self.effective_date}>'
+
+    @classmethod
+    def get_latest_rate(cls, source_currency='USD', target_currency='TRY'):
+        """
+        Get the most recent exchange rate for a currency pair.
+
+        Args:
+            source_currency: Source currency code (USD, EUR)
+            target_currency: Target currency code (TRY)
+
+        Returns:
+            ExchangeRate object or None if not found
+        """
+        return cls.query.filter_by(
+            source_currency=source_currency,
+            target_currency=target_currency
+        ).order_by(cls.effective_date.desc()).first()
+
+    @classmethod
+    def calculate_try_price(cls, usd_price):
+        """
+        Convert USD price to TRY using latest exchange rate.
+
+        Args:
+            usd_price: Price in USD (as integer or float)
+
+        Returns:
+            int: Price in TRY (rounded to nearest integer)
+        """
+        rate = cls.get_latest_rate('USD', 'TRY')
+        if not rate:
+            # Fallback to default rate if no TCMB data available
+            return int(usd_price * 30)  # Default: 30 TRY/USD
+        return int(usd_price * float(rate.rate))
+
+    @classmethod
+    def calculate_eur_price(cls, usd_price):
+        """
+        Convert USD price to EUR via TRY (USD → TRY → EUR).
+
+        Args:
+            usd_price: Price in USD (as integer or float)
+
+        Returns:
+            int: Price in EUR (rounded to nearest integer)
+        """
+        usd_rate = cls.get_latest_rate('USD', 'TRY')
+        eur_rate = cls.get_latest_rate('EUR', 'TRY')
+
+        if not usd_rate or not eur_rate:
+            # Fallback calculation: assume EUR is ~1.1x USD
+            return int(usd_price * 0.92)  # Default: 1 EUR ≈ 1.1 USD
+
+        # Convert USD → TRY → EUR
+        try_price = usd_price * float(usd_rate.rate)
+        eur_price = try_price / float(eur_rate.rate)
+        return int(eur_price)
+
+    def to_dict(self):
+        """Convert to dictionary for JSON serialization."""
+        return {
+            'id': self.id,
+            'source_currency': self.source_currency,
+            'target_currency': self.target_currency,
+            'rate': float(self.rate),
+            'effective_date': self.effective_date.isoformat(),
+            'source': self.source,
+            'created_at': self.created_at.isoformat()
+        }
