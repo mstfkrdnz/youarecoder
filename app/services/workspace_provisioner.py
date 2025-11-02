@@ -517,7 +517,8 @@ WantedBy=multi-user.target
             for repo in repositories:
                 repo_url = repo.get('url')
                 branch = repo.get('branch', 'main')
-                target_dir = repo.get('target_dir', os.path.basename(repo_url).replace('.git', ''))
+                # Support both 'target' and 'target_dir' for backward compatibility
+                target_dir = repo.get('target') or repo.get('target_dir', os.path.basename(repo_url).replace('.git', ''))
                 shallow = repo.get('shallow', False)  # Default to full clone for backward compatibility
 
                 clone_path = f"{home_dir}/{target_dir}"
