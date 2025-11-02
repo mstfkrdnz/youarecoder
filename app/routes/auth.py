@@ -2,6 +2,7 @@
 Authentication routes (login, logout, register).
 """
 from datetime import datetime, timedelta
+from urllib.parse import urlparse, urljoin
 from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app
 from flask_login import login_user, logout_user, login_required, current_user
 from app import db, limiter
@@ -11,6 +12,28 @@ from app.services.email_service import send_registration_email
 from app.services.audit_logger import AuditLogger
 
 bp = Blueprint('auth', __name__, url_prefix='/auth')
+
+
+def is_safe_url(target):
+    """
+    Check if redirect URL is safe (prevent open redirect vulnerability).
+
+    Args:
+        target: The URL to validate
+
+    Returns:
+        bool: True if URL is safe to redirect to
+    """
+    if not target:
+        return False
+
+    ref_url = urlparse(request.host_url)
+    test_url = urlparse(urljoin(request.host_url, target))
+
+    # Allow redirects to same host or any *.youarecoder.com subdomain
+    return (test_url.scheme in ('http', 'https') and
+            (test_url.netloc == ref_url.netloc or
+             test_url.netloc.endswith('.youarecoder.com')))
 
 
 def get_real_ip():
@@ -45,6 +68,10 @@ def login():
         return redirect(url_for('main.index'))
 
     form = LoginForm()
+
+    # Get next parameter from query string (GET) or form data (POST)
+    next_page = request.args.get('next') or request.form.get('next')
+
     if form.validate_on_submit():
         user = User.query.filter_by(email=form.email.data).first()
         ip_address = get_real_ip()
@@ -87,8 +114,11 @@ def login():
             # Audit log: successful login
             AuditLogger.log_login(user, success=True)
 
-            next_page = request.args.get('next')
-            return redirect(next_page) if next_page else redirect(url_for('main.dashboard'))
+            # Handle redirect after login with security validation
+            if next_page and is_safe_url(next_page):
+                return redirect(next_page)
+
+            return redirect(url_for('main.dashboard'))
         else:
             # Failed login
             if user:
@@ -118,7 +148,7 @@ def login():
 
             flash('Invalid email or password', 'error')
 
-    return render_template('auth/login.html', form=form)
+    return render_template('auth/login.html', form=form, next=next_page)
 
 
 @bp.route('/logout')

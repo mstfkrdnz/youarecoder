@@ -3,6 +3,7 @@ Traefik configuration manager for dynamic workspace routing.
 """
 import os
 import yaml
+import subprocess
 from typing import Dict, Any
 from flask import current_app
 
@@ -75,6 +76,33 @@ class TraefikManager:
             current_app.logger.error(f"Error saving Traefik config: {str(e)}")
             raise
 
+    def _generate_htpasswd(self, username: str, password: str) -> str:
+        """Generate htpasswd hash for BasicAuth.
+
+        Args:
+            username: Username for authentication
+            password: Plain text password
+
+        Returns:
+            Htpasswd formatted string (username:hash)
+        """
+        try:
+            # Use htpasswd command to generate hash (use full path for systemd service)
+            result = subprocess.run(
+                ['/usr/bin/htpasswd', '-nbB', username, password],
+                capture_output=True,
+                text=True,
+                check=True,
+                timeout=5
+            )
+            return result.stdout.strip()
+        except subprocess.CalledProcessError as e:
+            current_app.logger.error(f"htpasswd generation failed: {e.stderr}")
+            raise
+        except FileNotFoundError:
+            current_app.logger.error("htpasswd command not found - install apache2-utils")
+            raise
+
     def _get_default_middlewares(self) -> Dict[str, Any]:
         """Get default middleware configuration.
 
@@ -100,15 +128,28 @@ class TraefikManager:
                     'burst': 50,
                     'period': '1m'
                 }
+            },
+            'workspaceAuth': {
+                'forwardAuth': {
+                    'address': 'https://youarecoder.com/api/auth/verify',
+                    'trustForwardHeader': True,
+                    'authResponseHeaders': ['X-Auth-User', 'X-Auth-User-ID', 'X-Auth-Company'],
+                    'authRequestHeaders': ['Cookie'],
+                    # Redirect to login page when authentication fails
+                    'authResponseHeadersRegex': '^X-Auth-',
+                    'addAuthCookiesToResponse': []
+                }
             }
         }
 
-    def add_workspace_route(self, workspace_subdomain: str, port: int) -> Dict[str, Any]:
-        """Add Traefik route for a workspace.
+    def add_workspace_route(self, workspace_subdomain: str, port: int, username: str = None, password: str = None) -> Dict[str, Any]:
+        """Add Traefik route for a workspace with ForwardAuth.
 
         Args:
             workspace_subdomain: Full subdomain (e.g., 'dev.testco')
             port: Code-server port number
+            username: DEPRECATED - kept for backward compatibility
+            password: DEPRECATED - kept for backward compatibility
 
         Returns:
             Dictionary with operation result
@@ -119,12 +160,27 @@ class TraefikManager:
             # Sanitize router/service name (replace dots with dashes)
             router_name = f"workspace-{workspace_subdomain.replace('.', '-')}"
 
+            # Create workspace-specific middleware to preserve original hostname
+            workspace_header_middleware = f"{router_name}-headers"
+            config['http']['middlewares'][workspace_header_middleware] = {
+                'headers': {
+                    'customRequestHeaders': {
+                        'X-Workspace-Host': f"{workspace_subdomain}.youarecoder.com"
+                    }
+                }
+            }
+
+            # Use ForwardAuth middleware for Flask session-based authentication
+            # IMPORTANT: workspace-specific headers middleware MUST be first in the chain
+            # so that X-Workspace-Host header is set before ForwardAuth is called
+            middlewares = [workspace_header_middleware, 'workspaceAuth', 'secureHeaders', 'rateLimitWorkspace']
+
             # Add router with high priority to override Flask app wildcard
             config['http']['routers'][router_name] = {
                 'rule': f"Host(`{workspace_subdomain}.youarecoder.com`)",
                 'entryPoints': ['websecure'],
                 'service': router_name,
-                'middlewares': ['secureHeaders', 'rateLimitWorkspace'],
+                'middlewares': middlewares,
                 'tls': {},  # Use default certificate from tls.yml
                 'priority': 100  # Higher priority than Flask app wildcard (default is 0)
             }
@@ -180,6 +236,11 @@ class TraefikManager:
             # Remove service if exists
             if router_name in config['http']['services']:
                 del config['http']['services'][router_name]
+
+            # Remove workspace-specific headers middleware if exists
+            workspace_header_middleware = f"{router_name}-headers"
+            if workspace_header_middleware in config['http']['middlewares']:
+                del config['http']['middlewares'][workspace_header_middleware]
 
             # Save configuration
             self._save_workspaces_config(config)

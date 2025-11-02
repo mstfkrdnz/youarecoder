@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block title %}SSH Setup - {{ workspace.name }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Include SSH Setup Modal (will auto-show on page load) -->
+        {% include 'workspace/ssh_setup_modal.html' %}
+    </div>
+</div>
+{% endblock %}

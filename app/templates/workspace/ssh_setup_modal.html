@@ -241,10 +241,12 @@ async function verifySshAndOpen() {
 
     try {
         const workspaceId = '{{ workspace.id }}';
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
         const response = await fetch(`/workspace/${workspaceId}/verify-ssh`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
             }
         });
 

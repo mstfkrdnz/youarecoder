@@ -97,10 +97,11 @@ def create_app(config_name=None):
     # Configure login manager
     login_manager.login_view = 'auth.login'
     login_manager.login_message = 'Please log in to access this page.'
-    login_manager.session_protection = 'strong'
+    # Changed from 'strong' to 'basic' to allow ForwardAuth requests from Traefik (different IP)
+    login_manager.session_protection = 'basic'
 
     # Register blueprints
-    from app.routes import auth, main, workspace, api, billing, legal, admin, metrics
+    from app.routes import auth, main, workspace, api, billing, legal, admin, metrics, auth_verify
     app.register_blueprint(auth.bp)
     app.register_blueprint(main.bp)
     app.register_blueprint(workspace.bp)
@@ -109,12 +110,16 @@ def create_app(config_name=None):
     app.register_blueprint(legal.bp)
     app.register_blueprint(admin.bp)
     app.register_blueprint(metrics.bp)
+    app.register_blueprint(auth_verify.bp)
 
     # Exempt billing callback from CSRF protection
     billing.init_billing_csrf_exempt(csrf)
 
     # Exempt admin API endpoints from CSRF protection
     admin.init_admin_csrf_exempt(csrf)
+
+    # Exempt ForwardAuth endpoint from CSRF protection (Traefik calls it)
+    csrf.exempt(auth_verify.bp)
 
     # User loader for Flask-Login
     from app.models import User

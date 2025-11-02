@@ -27,6 +27,7 @@ class Config:
     SESSION_COOKIE_SECURE = True  # HTTPS only
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = 'Lax'
+    SESSION_COOKIE_DOMAIN = '.youarecoder.com'  # Allow cookie for all subdomains
 
     # Security
     WTF_CSRF_ENABLED = True
