@@ -1,7 +1,7 @@
 """
 Workspace routes (create, delete, manage).
 """
-from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, current_app, make_response
+from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, current_app, make_response, session
 from flask_login import login_required, current_user
 from app import db
 from app.models import Workspace, WorkspaceTemplate
@@ -118,8 +118,14 @@ def create():
                 except Exception as e:
                     current_app.logger.error(f"Failed to send workspace email to {current_user.email}: {str(e)}")
 
-                flash(f'Workspace "{form.name.data}" created and provisioned successfully! Check your email.', 'success')
+                flash(f'Workspace "{form.name.data}" created and provisioned successfully!', 'success')
                 current_app.logger.info(f"Workspace created: {workspace.id} on port {port}")
+
+                # If workspace has SSH key (template requires private repos), redirect to SSH setup
+                if workspace.ssh_public_key:
+                    flash('Please add the SSH key to your GitHub account to access private repositories.', 'info')
+                    return redirect(url_for('workspace.ssh_setup', workspace_id=workspace.id))
+
             else:
                 flash(f'Workspace created but provisioning incomplete', 'warning')
 
@@ -143,6 +149,101 @@ def create():
 
     # GET request - return full page template
     return render_template('workspace/create.html', form=form)
+
+@bp.route('/<int:workspace_id>/settings')
+@login_required
+@require_workspace_ownership
+def settings(workspace_id):
+    """
+    Workspace settings page with SSH key access and configuration.
+
+    Provides persistent access to workspace SSH key for GitHub integration.
+    Shows workspace details, SSH public key with copy functionality.
+
+    Args:
+        workspace_id: Workspace ID
+
+    Returns:
+        Rendered workspace settings page
+    """
+    workspace = Workspace.query.get_or_404(workspace_id)
+    return render_template('workspace/settings.html', workspace=workspace)
+
+@bp.route('/<int:workspace_id>/welcome')
+@login_required
+@require_workspace_ownership
+def welcome(workspace_id):
+    """
+    Workspace welcome page with onboarding information.
+
+    Shows first-time setup instructions, template info, installed extensions,
+    cloned repositories, and getting started guide. Displayed only once per
+    workspace using session-based tracking.
+
+    Args:
+        workspace_id: Workspace ID
+
+    Returns:
+        Rendered welcome page or redirect to workspace if already shown
+    """
+    workspace = Workspace.query.get_or_404(workspace_id)
+
+    # Check if welcome page was already shown for this workspace
+    welcome_key = f'welcome_shown_{workspace_id}'
+    if session.get(welcome_key):
+        # Already shown, redirect to workspace
+        return redirect(workspace.get_access_url())
+
+    # Mark as shown for this session
+    session[welcome_key] = True
+
+    # Prepare welcome data based on template
+    welcome_data = {
+        'workspace': workspace,
+        'has_template': workspace.template is not None,
+    }
+
+    if workspace.template:
+        template = workspace.template
+        config = template.config or {}
+
+        welcome_data.update({
+            'template_name': template.name,
+            'template_description': template.description,
+            'extensions': config.get('extensions', []),
+            'repositories': config.get('repositories', []),
+            'packages': config.get('packages', []),
+            'postgresql_db': config.get('postgresql', {}).get('database'),
+            'has_ssh_key': workspace.ssh_public_key is not None,
+            'getting_started': template.getting_started_guide,
+        })
+
+    return render_template('workspace/welcome.html', **welcome_data)
+
+@bp.route('/<int:workspace_id>/ssh-setup')
+@login_required
+@require_workspace_ownership
+def ssh_setup(workspace_id):
+    """
+    Display SSH setup instructions for workspace.
+
+    Shows modal with SSH public key and GitHub integration instructions.
+    Only shown for workspaces that have SSH keys (templates with ssh_required=true).
+
+    Args:
+        workspace_id: Workspace ID
+
+    Returns:
+        Rendered SSH setup page with modal
+    """
+    workspace = Workspace.query.get_or_404(workspace_id)
+
+    if not workspace.ssh_public_key:
+        # No SSH key - redirect to workspace or dashboard
+        flash('This workspace does not require SSH setup', 'info')
+        return redirect(url_for('main.dashboard'))
+
+    return render_template('workspace/ssh_setup.html', workspace=workspace)
 
 @bp.route('/<int:workspace_id>/delete', methods=['POST'])
 @login_required
