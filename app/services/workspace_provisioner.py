@@ -621,7 +621,7 @@ WantedBy=multi-user.target
             subprocess.run([
                 '/usr/bin/su', '-', username, '-c',
                 f"bash {script_path}"
-            ], check=True, capture_output=True, text=True, timeout=300)
+            ], check=True, capture_output=True, text=True, timeout=600)
 
             # Clean up script
             subprocess.run([
@@ -904,6 +904,38 @@ WantedBy=multi-user.target
             current_app.logger.warning(f"Token auth configuration failed: {str(e)}")
             # Non-fatal error - workspace will use password auth
 
+    def _install_extensions(self, username: str, extensions: list) -> None:
+        """
+        Install VS Code extensions for the workspace.
+
+        Args:
+            username: Linux username
+            extensions: List of extension IDs to install (e.g., ['ms-python.python', 'ms-python.debugpy'])
+        """
+        if not extensions:
+            return
+
+        current_app.logger.info(f"Installing {len(extensions)} extensions for {username}")
+
+        try:
+            for ext_id in extensions:
+                current_app.logger.info(f"Installing extension: {ext_id}")
+                result = subprocess.run([
+                    '/usr/bin/sudo', '-u', username,
+                    '/usr/bin/code-server', '--install-extension', ext_id, '--force'
+                ], capture_output=True, text=True, timeout=60)
+
+                if result.returncode == 0:
+                    current_app.logger.info(f"Extension {ext_id} installed successfully")
+                else:
+                    current_app.logger.warning(f"Extension {ext_id} installation warning: {result.stderr}")
+
+        except subprocess.TimeoutExpired:
+            current_app.logger.warning(f"Extension installation timed out for {username}")
+        except subprocess.CalledProcessError as e:
+            current_app.logger.warning(f"Extension installation failed: {str(e)}")
+            # Non-fatal error - workspace will work without extensions
+
     def provision_workspace(self, workspace: Workspace) -> Dict[str, any]:
         """
         Provision complete workspace with all components.
@@ -974,6 +1006,14 @@ WantedBy=multi-user.target
                     result['template_applied'] = template_result
                     current_app.logger.info(f"Template {template.name} applied to workspace {workspace.id}")
 
+                    # Step 5.5: Install post-provision extensions (if specified in template)
+                    config = json.loads(template.config) if template.config else {}
+                    extensions = config.get('post_provision_extensions', [])
+                    if extensions:
+                        self._install_extensions(workspace.linux_username, extensions)
+                        result['steps_completed'].append('extensions_installed')
+                        current_app.logger.info(f"Installed {len(extensions)} extensions for workspace {workspace.id}")
+
             # Step 6: Configure Traefik routing with BasicAuth
             traefik_result = self.traefik_manager.add_workspace_route(
                 workspace.subdomain,
@@ -983,7 +1023,12 @@ WantedBy=multi-user.target
             )
             if traefik_result['success']:
                 result['steps_completed'].append('traefik_route_added')
-                result['workspace_url'] = traefik_result['url']
+                # Add workspace file parameter to URL if workspace file exists
+                base_url = traefik_result['url']
+                if workspace_file_path:
+                    result['workspace_url'] = f"{base_url}?workspace={workspace_file_path}"
+                else:
+                    result['workspace_url'] = base_url
             else:
                 raise WorkspaceProvisionerError(f"Traefik configuration failed: {traefik_result.get('error')}")
 
