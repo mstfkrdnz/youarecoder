@@ -139,9 +139,9 @@ class WorkspaceProvisioner:
             ], check=True, capture_output=True, text=True)
 
             # Create code-server configuration
+            # Note: auth is disabled since Traefik handles authentication
             config_content = f"""bind-addr: 127.0.0.1:{port}
-auth: password
-password: {password}
+auth: none
 cert: false
 """
             config_path = f"{config_dir}/config.yaml"
@@ -165,16 +165,22 @@ cert: false
         except (subprocess.CalledProcessError, IOError) as e:
             raise CodeServerSetupError(f"Failed to setup code-server for {username}: {str(e)}")
 
-    def create_systemd_service(self, username: str) -> None:
+    def create_systemd_service(self, username: str, workspace_file_path: Optional[str] = None) -> None:
         """
         Create systemd service for workspace code-server.
 
         Args:
             username: Linux username
+            workspace_file_path: Optional path to .code-workspace file to auto-open
 
         Raises:
             CodeServerSetupError: If systemd service creation fails
         """
+        # Build ExecStart command with optional workspace file
+        exec_start = f"/usr/bin/code-server --config {self.base_dir}/{username}/.config/code-server/config.yaml"
+        if workspace_file_path:
+            exec_start += f" {workspace_file_path}"
+
         service_content = f"""[Unit]
 Description=code-server for {username}
 After=network.target
@@ -183,7 +189,7 @@ After=network.target
 Type=simple
 User={username}
 WorkingDirectory={self.base_dir}/{username}
-ExecStart=/usr/bin/code-server --config {self.base_dir}/{username}/.config/code-server/config.yaml
+ExecStart={exec_start}
 Restart=always
 RestartSec=10
 
@@ -220,20 +226,49 @@ WantedBy=multi-user.target
 
     def set_disk_quota(self, username: str, quota_gb: int) -> None:
         """
-        Set disk quota for user workspace.
+        Set disk quota for user workspace using Linux setquota command.
 
         Args:
             username: Linux username
             quota_gb: Disk quota in GB
 
         Note:
-            Requires quota support enabled on filesystem.
-            This is a placeholder - actual implementation depends on filesystem setup.
+            Requires quota support enabled on filesystem (usrquota option in /etc/fstab).
+            Run scripts/enable_disk_quotas.sh to set up quota system.
+
+        Raises:
+            WorkspaceProvisionerError: If quota setting fails
         """
-        # TODO: Implement disk quota using quotactl or setquota
-        # For now, just log the intended quota
-        current_app.logger.info(f"Disk quota set for {username}: {quota_gb}GB")
-        pass
+        current_app.logger.info(f"Setting disk quota for {username}: {quota_gb}GB")
+
+        try:
+            # Convert GB to KB for setquota (setquota uses 1KB blocks)
+            quota_kb = quota_gb * 1024 * 1024
+
+            # Set soft and hard limits to the same value (hard limit enforces the quota)
+            # setquota -u <username> <soft_block_limit> <hard_block_limit> <soft_inode_limit> <hard_inode_limit> <filesystem>
+            # Set block limits to quota_kb, inode limits to 0 (unlimited)
+            subprocess.run([
+                '/usr/sbin/setquota',
+                '-u', username,
+                str(quota_kb),  # Soft block limit (KB)
+                str(quota_kb),  # Hard block limit (KB)
+                '0',            # Soft inode limit (unlimited)
+                '0',            # Hard inode limit (unlimited)
+                '/'             # Filesystem (root partition)
+            ], check=True, capture_output=True, text=True)
+
+            current_app.logger.info(f"Disk quota successfully set for {username}: {quota_gb}GB ({quota_kb}KB)")
+
+        except subprocess.CalledProcessError as e:
+            error_msg = f"Failed to set disk quota for {username}: {e.stderr}"
+            current_app.logger.error(error_msg)
+            # Don't raise exception - quota failure shouldn't block workspace creation
+            # This allows workspaces to be created even if quota system isn't set up yet
+            current_app.logger.warning("Quota setting failed - workspace created without disk quota enforcement")
+
+        except Exception as e:
+            current_app.logger.warning(f"Unexpected error setting quota for {username}: {str(e)}")
 
     def resize_workspace_disk(self, workspace: Workspace, new_quota_gb: int) -> Dict[str, any]:
         """
@@ -306,7 +341,15 @@ WantedBy=multi-user.target
         {
             "packages": ["package1", "package2"],  # System packages to install
             "extensions": ["ext1", "ext2"],        # VS Code extensions
-            "repositories": [{"url": "...", "branch": "main", "private": bool}],  # Git repos
+            "repositories": [                       # Git repos
+                {
+                    "url": "...",
+                    "branch": "main",
+                    "target_dir": "optional-name",  # optional, defaults to repo name
+                    "private": bool,                # optional, for tracking SSH requirement
+                    "shallow": bool                 # optional, use --depth 1 for faster clone
+                }
+            ],
             "settings": {...},                      # VS Code settings.json
             "environment": {"KEY": "value"},        # Environment variables
             "launch_json": {...},                   # VS Code launch configurations
@@ -420,7 +463,7 @@ WantedBy=multi-user.target
         try:
             # Try pip for Python packages
             subprocess.run([
-                'su', '-', username, '-c',
+                '/usr/bin/su', '-', username, '-c',
                 f"pip3 install --user {' '.join(packages)}"
             ], check=True, capture_output=True, text=True, timeout=300)
 
@@ -440,7 +483,7 @@ WantedBy=multi-user.target
         try:
             for extension in extensions:
                 subprocess.run([
-                    'su', '-', username, '-c',
+                    '/usr/bin/su', '-', username, '-c',
                     f"/usr/bin/code-server --install-extension {extension}"
                 ], check=True, capture_output=True, text=True, timeout=120)
 
@@ -451,7 +494,20 @@ WantedBy=multi-user.target
             # Non-fatal error - continue provisioning
 
     def _clone_repositories(self, username: str, repositories: list, home_dir: str) -> None:
-        """Clone Git repositories into workspace."""
+        """
+        Clone Git repositories into workspace.
+
+        Supports shallow cloning for large repositories via 'shallow' config option.
+
+        Repository config schema:
+        {
+            "url": "https://github.com/...",
+            "branch": "main",
+            "target_dir": "repo-name",  # optional, defaults to repo name from URL
+            "private": false,           # optional, for tracking SSH requirement
+            "shallow": true             # optional, use --depth 1 for shallow clone (default: false)
+        }
+        """
         if not repositories:
             return
 
@@ -462,18 +518,29 @@ WantedBy=multi-user.target
                 repo_url = repo.get('url')
                 branch = repo.get('branch', 'main')
                 target_dir = repo.get('target_dir', os.path.basename(repo_url).replace('.git', ''))
+                shallow = repo.get('shallow', False)  # Default to full clone for backward compatibility
 
                 clone_path = f"{home_dir}/{target_dir}"
 
+                # Build git clone command with optional shallow flag
+                clone_cmd = f"git clone -b {branch}"
+                if shallow:
+                    clone_cmd += " --depth 1"
+                    current_app.logger.info(f"Using shallow clone for {repo_url}")
+                clone_cmd += f" {repo_url} {clone_path}"
+
                 subprocess.run([
-                    'su', '-', username, '-c',
-                    f"git clone -b {branch} {repo_url} {clone_path}"
-                ], check=True, capture_output=True, text=True, timeout=120)
+                    '/usr/bin/su', '-', username, '-c',
+                    clone_cmd
+                ], check=True, capture_output=True, text=True, timeout=600)  # Increased from 120s to 600s
 
             current_app.logger.info(f"Repositories cloned successfully for {username}")
 
         except subprocess.CalledProcessError as e:
             current_app.logger.warning(f"Repository cloning failed: {e.stderr}")
+            # Non-fatal error - continue provisioning
+        except subprocess.TimeoutExpired as e:
+            current_app.logger.error(f"Repository cloning timeout after 600s: {str(e)}")
             # Non-fatal error - continue provisioning
 
     def _apply_vscode_settings(self, username: str, settings: dict, home_dir: str) -> None:
@@ -489,14 +556,14 @@ WantedBy=multi-user.target
 
             # Create directory
             subprocess.run([
-                'su', '-', username, '-c',
+                '/usr/bin/su', '-', username, '-c',
                 f"mkdir -p {settings_dir}"
             ], check=True, capture_output=True, text=True)
 
             # Write settings file
             settings_json = json.dumps(settings, indent=2)
             subprocess.run([
-                'su', '-', username, '-c',
+                '/usr/bin/su', '-', username, '-c',
                 f"echo '{settings_json}' > {settings_file}"
             ], check=True, capture_output=True, text=True)
 
@@ -523,7 +590,7 @@ WantedBy=multi-user.target
             env_content = '\n'.join(env_lines)
 
             subprocess.run([
-                'su', '-', username, '-c',
+                '/usr/bin/su', '-', username, '-c',
                 f"echo '{env_content}' >> {bashrc_path}"
             ], check=True, capture_output=True, text=True)
 
@@ -545,19 +612,19 @@ WantedBy=multi-user.target
 
             # Write script
             subprocess.run([
-                'su', '-', username, '-c',
+                '/usr/bin/su', '-', username, '-c',
                 f"echo '{script}' > {script_path} && chmod +x {script_path}"
             ], check=True, capture_output=True, text=True)
 
             # Execute script
             subprocess.run([
-                'su', '-', username, '-c',
+                '/usr/bin/su', '-', username, '-c',
                 f"bash {script_path}"
             ], check=True, capture_output=True, text=True, timeout=300)
 
             # Clean up script
             subprocess.run([
-                'su', '-', username, '-c',
+                '/usr/bin/su', '-', username, '-c',
                 f"rm {script_path}"
             ], check=True, capture_output=True, text=True)
 
@@ -602,16 +669,16 @@ WantedBy=multi-user.target
 
             # Create .ssh directory with proper permissions
             subprocess.run([
-                'sudo', '-u', username, 'mkdir', '-p', ssh_dir
+                '/usr/bin/sudo', '-u', username, 'mkdir', '-p', ssh_dir
             ], check=True, capture_output=True, text=True)
 
             subprocess.run([
-                'sudo', '-u', username, 'chmod', '700', ssh_dir
+                '/usr/bin/sudo', '-u', username, 'chmod', '700', ssh_dir
             ], check=True, capture_output=True, text=True)
 
             # Generate ED25519 key (more secure and faster than RSA)
             subprocess.run([
-                'sudo', '-u', username, 'ssh-keygen',
+                '/usr/bin/sudo', '-u', username, 'ssh-keygen',
                 '-t', 'ed25519',
                 '-C', f'{username}@youarecoder.com',
                 '-f', key_path,
@@ -620,13 +687,13 @@ WantedBy=multi-user.target
 
             # Add GitHub to known_hosts to prevent SSH prompts
             subprocess.run([
-                'sudo', '-u', username, 'bash', '-c',
+                '/usr/bin/sudo', '-u', username, 'bash', '-c',
                 f'ssh-keyscan github.com >> {ssh_dir}/known_hosts 2>/dev/null'
             ], check=True, capture_output=True, text=True)
 
             # Read public key
             result = subprocess.run([
-                'cat', f'{key_path}.pub'
+                '/usr/bin/cat', f'{key_path}.pub'
             ], check=True, capture_output=True, text=True)
 
             public_key = result.stdout.strip()
@@ -653,7 +720,7 @@ WantedBy=multi-user.target
         """
         try:
             result = subprocess.run([
-                'sudo', '-u', username,
+                '/usr/bin/sudo', '-u', username,
                 'ssh', '-T', 'git@github.com',
                 '-o', 'StrictHostKeyChecking=no',
                 '-o', 'ConnectTimeout=10'
@@ -694,7 +761,7 @@ WantedBy=multi-user.target
 
             # Create .vscode directory
             subprocess.run([
-                'sudo', '-u', username, 'mkdir', '-p', vscode_dir
+                '/usr/bin/sudo', '-u', username, 'mkdir', '-p', vscode_dir
             ], check=True, capture_output=True, text=True)
 
             # Write launch.json
@@ -702,7 +769,7 @@ WantedBy=multi-user.target
 
             # Use heredoc to safely write JSON content
             subprocess.run([
-                'sudo', '-u', username, 'bash', '-c',
+                '/usr/bin/sudo', '-u', username, 'bash', '-c',
                 f"cat > {launch_file} << 'LAUNCH_EOF'\n{launch_content}\nLAUNCH_EOF"
             ], check=True, capture_output=True, text=True)
 
@@ -736,7 +803,7 @@ WantedBy=multi-user.target
             workspace_content = json.dumps(workspace_config, indent=2)
 
             subprocess.run([
-                'sudo', '-u', username, 'bash', '-c',
+                '/usr/bin/sudo', '-u', username, 'bash', '-c',
                 f"cat > {workspace_file} << 'WORKSPACE_EOF'\n{workspace_content}\nWORKSPACE_EOF"
             ], check=True, capture_output=True, text=True)
 
@@ -763,7 +830,7 @@ WantedBy=multi-user.target
         try:
             # Create PostgreSQL user (superuser for development flexibility)
             create_user = subprocess.run([
-                'sudo', '-u', 'postgres', 'createuser',
+                '/usr/bin/sudo', '-u', 'postgres', 'createuser',
                 '-s',  # Superuser
                 username
             ], capture_output=True, text=True)
@@ -774,7 +841,7 @@ WantedBy=multi-user.target
 
             # Create database
             create_db = subprocess.run([
-                'sudo', '-u', 'postgres', 'createdb',
+                '/usr/bin/sudo', '-u', 'postgres', 'createdb',
                 database_name,
                 '-O', username
             ], capture_output=True, text=True)
@@ -785,7 +852,7 @@ WantedBy=multi-user.target
 
             # Grant all privileges
             grant_privileges = subprocess.run([
-                'sudo', '-u', 'postgres', 'psql',
+                '/usr/bin/sudo', '-u', 'postgres', 'psql',
                 '-c', f"GRANT ALL PRIVILEGES ON DATABASE {database_name} TO {username};"
             ], check=True, capture_output=True, text=True)
 
@@ -827,7 +894,7 @@ WantedBy=multi-user.target
 
             # Reload systemd daemon
             subprocess.run([
-                'systemctl', 'daemon-reload'
+                '/usr/bin/systemctl', 'daemon-reload'
             ], check=True, capture_output=True, text=True)
 
             current_app.logger.info(f"Token-based auth configured for workspace {workspace.id}")
@@ -871,8 +938,19 @@ WantedBy=multi-user.target
             )
             result['steps_completed'].append('code_server_configured')
 
-            # Step 3: Create systemd service
-            self.create_systemd_service(workspace.linux_username)
+            # Step 2.5: Determine if workspace file will be created by template
+            workspace_file_path = None
+            if workspace.template_id:
+                template = WorkspaceTemplate.query.get(workspace.template_id)
+                if template and template.is_active:
+                    config = json.loads(template.config) if template.config else {}
+                    if config.get('workspace_file'):
+                        # Workspace file will be created at this path by template application
+                        workspace_file_path = f"{self.base_dir}/{workspace.linux_username}/workspace.code-workspace"
+                        current_app.logger.info(f"Template will create workspace file at {workspace_file_path}")
+
+            # Step 3: Create systemd service with workspace file path (if applicable)
+            self.create_systemd_service(workspace.linux_username, workspace_file_path)
             result['steps_completed'].append('systemd_service_created')
 
             # Step 3.5: Configure token-based authentication (if access token exists)
@@ -895,10 +973,12 @@ WantedBy=multi-user.target
                     result['template_applied'] = template_result
                     current_app.logger.info(f"Template {template.name} applied to workspace {workspace.id}")
 
-            # Step 6: Configure Traefik routing
+            # Step 6: Configure Traefik routing with BasicAuth
             traefik_result = self.traefik_manager.add_workspace_route(
                 workspace.subdomain,
-                workspace.port
+                workspace.port,
+                username=workspace.linux_username,
+                password=workspace.code_server_password
             )
             if traefik_result['success']:
                 result['steps_completed'].append('traefik_route_added')
@@ -984,25 +1064,51 @@ WantedBy=multi-user.target
         }
 
         try:
-            # Stop and remove systemd service
-            subprocess.run([
-                '/bin/systemctl', 'stop', f'code-server@{workspace.linux_username}.service'
-            ], check=True, capture_output=True, text=True)
-            result['steps_completed'].append('service_stopped')
+            # Stop and remove systemd service - handle both naming patterns
+            service_name = f'code-server@{workspace.linux_username}.service'
+            service_path = f'/etc/systemd/system/{service_name}'
 
-            subprocess.run([
-                '/bin/systemctl', 'disable', f'code-server@{workspace.linux_username}.service'
-            ], check=True, capture_output=True, text=True)
-            result['steps_completed'].append('service_disabled')
+            # Fallback to alternative naming pattern
+            if not os.path.exists(service_path):
+                service_name = f'{workspace.linux_username}.service'
+                service_path = f'/etc/systemd/system/{service_name}'
 
-            os.remove(f"/etc/systemd/system/code-server@{workspace.linux_username}.service")
-            result['steps_completed'].append('service_removed')
+            # Only attempt service removal if service file exists
+            if os.path.exists(service_path):
+                # Stop service (don't fail if already stopped)
+                subprocess.run([
+                    '/bin/systemctl', 'stop', service_name
+                ], capture_output=True, text=True)
+                result['steps_completed'].append('service_stopped')
 
-            # Remove Linux user and home directory
-            subprocess.run([
+                # Disable service (don't fail if already disabled)
+                subprocess.run([
+                    '/bin/systemctl', 'disable', service_name
+                ], capture_output=True, text=True)
+                result['steps_completed'].append('service_disabled')
+
+                # Remove service file
+                os.remove(service_path)
+                result['steps_completed'].append('service_removed')
+
+                # Reload systemd daemon
+                subprocess.run(['/bin/systemctl', 'daemon-reload'], capture_output=True, text=True)
+
+                current_app.logger.info(f"Removed service file: {service_path}")
+            else:
+                current_app.logger.warning(f"Service file not found (skipping): {service_name}")
+                result['steps_completed'].append('service_not_found')
+
+            # Remove Linux user and home directory (don't fail if user doesn't exist)
+            user_result = subprocess.run([
                 '/usr/sbin/userdel', '-r', workspace.linux_username
-            ], check=True, capture_output=True, text=True)
-            result['steps_completed'].append('user_removed')
+            ], capture_output=True, text=True)
+            if user_result.returncode == 0:
+                result['steps_completed'].append('user_removed')
+                current_app.logger.info(f"Removed Linux user: {workspace.linux_username}")
+            else:
+                current_app.logger.warning(f"User removal warning (user may not exist): {user_result.stderr}")
+                result['steps_completed'].append('user_not_found')
 
             # Remove Traefik routing
             traefik_result = self.traefik_manager.remove_workspace_route(workspace.subdomain)
@@ -1030,6 +1136,34 @@ WantedBy=multi-user.target
 
     # Phase 4: Workspace Lifecycle Management Methods
 
+    def _get_service_name(self, workspace: Workspace) -> str:
+        """
+        Get the actual systemd service name for a workspace.
+        Handles both naming patterns: code-server@{username}.service and {username}.service
+
+        Args:
+            workspace: Workspace model instance
+
+        Returns:
+            str: Actual service name found, or default pattern if neither exists
+        """
+        # Try standard pattern first
+        service_name = f'code-server@{workspace.linux_username}.service'
+        service_path = f'/etc/systemd/system/{service_name}'
+
+        if os.path.exists(service_path):
+            return service_name
+
+        # Try alternative pattern
+        service_name = f'{workspace.linux_username}.service'
+        service_path = f'/etc/systemd/system/{service_name}'
+
+        if os.path.exists(service_path):
+            return service_name
+
+        # Return default pattern if neither exists
+        return f'code-server@{workspace.linux_username}.service'
+
     def start_workspace_service(self, workspace: Workspace) -> Dict[str, any]:
         """
         Start workspace code-server systemd service.
@@ -1041,11 +1175,13 @@ WantedBy=multi-user.target
             dict: Start result with success status
         """
         try:
+            service_name = self._get_service_name(workspace)
+
             result = subprocess.run([
-                '/bin/systemctl', 'start', f'code-server@{workspace.linux_username}.service'
+                '/bin/systemctl', 'start', service_name
             ], check=True, capture_output=True, text=True)
 
-            current_app.logger.info(f"Started workspace service: {workspace.id}")
+            current_app.logger.info(f"Started workspace service: {workspace.id} ({service_name})")
 
             return {
                 'success': True,
@@ -1070,11 +1206,13 @@ WantedBy=multi-user.target
             dict: Stop result with success status
         """
         try:
+            service_name = self._get_service_name(workspace)
+
             result = subprocess.run([
-                '/bin/systemctl', 'stop', f'code-server@{workspace.linux_username}.service'
+                '/bin/systemctl', 'stop', service_name
             ], check=True, capture_output=True, text=True)
 
-            current_app.logger.info(f"Stopped workspace service: {workspace.id}")
+            current_app.logger.info(f"Stopped workspace service: {workspace.id} ({service_name})")
 
             return {
                 'success': True,
@@ -1099,11 +1237,13 @@ WantedBy=multi-user.target
             dict: Restart result with success status
         """
         try:
+            service_name = self._get_service_name(workspace)
+
             result = subprocess.run([
-                '/bin/systemctl', 'restart', f'code-server@{workspace.linux_username}.service'
+                '/bin/systemctl', 'restart', service_name
             ], check=True, capture_output=True, text=True)
 
-            current_app.logger.info(f"Restarted workspace service: {workspace.id}")
+            current_app.logger.info(f"Restarted workspace service: {workspace.id} ({service_name})")
 
             return {
                 'success': True,
@@ -1128,8 +1268,10 @@ WantedBy=multi-user.target
             dict: Service status information
         """
         try:
+            service_name = self._get_service_name(workspace)
+
             result = subprocess.run([
-                '/bin/systemctl', 'status', f'code-server@{workspace.linux_username}.service'
+                '/bin/systemctl', 'status', service_name
             ], capture_output=True, text=True)
 
             # Parse systemctl status output
@@ -1145,7 +1287,8 @@ WantedBy=multi-user.target
             return {
                 'is_active': is_active,
                 'status_output': result.stdout,
-                'return_code': result.returncode
+                'return_code': result.returncode,
+                'service_name': service_name
             }
 
         except Exception as e:
