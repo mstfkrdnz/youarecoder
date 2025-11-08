@@ -1,0 +1,31 @@
+[options]
+# Database configuration
+db_host = localhost
+db_port = 5432
+db_user = {db_user}
+db_password = False
+db_name = {db_name}
+dbfilter = {dbfilter}
+
+# Addons paths (community, enterprise, customs)
+addons_path = {addons_path}
+
+# Data directory for filestore
+data_dir = {data_dir}
+
+# XML-RPC port for Odoo instance
+xmlrpc_port = {xmlrpc_port}
+
+# Logging
+log_level = info
+logfile = False  # Log to stdout for systemd/supervisor
+
+# Admin password (will be generated on first Odoo startup if not set)
+admin_passwd = $pbkdf2-sha512$600000$3xvjfC8F4Lx3LgXgvDd2Lg$fBJvNnvP2Z3z3z3z3z3z3z3z3z3z3z3z3z3z3z3z3z3z3z3z3z3z3z3z3z3z3z3z3z
+
+# Performance
+workers = 0  # Development mode: single worker
+max_cron_threads = 1
+
+# Locale
+without_demo = False  # Include demo data for development
