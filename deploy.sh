@@ -54,10 +54,14 @@ rsync -avz --delete \
 
 echo "✅ Files synced to production"
 
-# Step 5: Run database migrations
+# Step 5: Run database migrations (if flask-migrate is available)
 echo "🗄️  Running database migrations..."
-ssh "$PROD_SERVER" "cd $PROD_PATH && source venv/bin/activate && FLASK_APP=app flask db upgrade"
-echo "✅ Database migrations complete"
+if ssh "$PROD_SERVER" "cd $PROD_PATH && source venv/bin/activate && FLASK_APP=app flask db --help &> /dev/null"; then
+    ssh "$PROD_SERVER" "cd $PROD_PATH && source venv/bin/activate && FLASK_APP=app flask db upgrade"
+    echo "✅ Database migrations complete"
+else
+    echo "⚠️  Flask-Migrate not available, skipping migrations"
+fi
 
 # Step 6: Restart services
 echo "🔄 Restarting services..."
