@@ -101,7 +101,6 @@ def admin_user(db_session, company):
     """Create test admin user."""
     user = User(
         email='admin@test.com',
-        username='admin',
         full_name='Admin User',
         role='admin',
         company_id=company.id
@@ -117,7 +116,6 @@ def member_user(db_session, company):
     """Create test member user."""
     user = User(
         email='member@test.com',
-        username='member',
         full_name='Member User',
         role='member',
         company_id=company.id

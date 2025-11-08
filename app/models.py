@@ -2,9 +2,26 @@
 Database models for YouAreCoder platform.
 """
 from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy import JSON, TypeDecorator
 from datetime import datetime, timedelta
 from flask_login import UserMixin
 from app import db, bcrypt
+
+
+# Database-agnostic JSON column type that uses JSONB for PostgreSQL and JSON for SQLite
+class JSONType(TypeDecorator):
+    """
+    Platform-independent JSON type.
+    Uses JSONB for PostgreSQL (better performance, indexing) and JSON for SQLite (testing).
+    """
+    impl = JSON
+    cache_ok = True
+
+    def load_dialect_impl(self, dialect):
+        if dialect.name == 'postgresql':
+            return dialect.type_descriptor(JSONB())
+        else:
+            return dialect.type_descriptor(JSON())
 
 
 class Company(db.Model):
@@ -903,12 +920,12 @@ class TemplateAction(db.Model):
     handler_class = db.Column(db.String(200), nullable=False)
 
     # Parameters and configuration
-    required_parameters = db.Column(JSONB, nullable=False, default=list)
-    optional_parameters = db.Column(JSONB, nullable=False, default=list)
-    default_parameters = db.Column(JSONB, nullable=False, default=dict)
+    required_parameters = db.Column(JSONType, nullable=False, default=list)
+    optional_parameters = db.Column(JSONType, nullable=False, default=list)
+    default_parameters = db.Column(JSONType, nullable=False, default=dict)
 
     # Validation and rollback
-    validation_methods = db.Column(JSONB, nullable=False, default=list)
+    validation_methods = db.Column(JSONType, nullable=False, default=list)
     rollback_handler = db.Column(db.String(200), nullable=True)
 
     # Metadata
@@ -954,20 +971,20 @@ class TemplateActionSequence(db.Model):
     fatal_on_error = db.Column(db.Boolean, nullable=False, default=False)
 
     # Retry configuration
-    retry_config = db.Column(JSONB, nullable=False, default=lambda: {
+    retry_config = db.Column(JSONType, nullable=False, default=lambda: {
         'max_attempts': 1, 'retry_delay_seconds': 0, 'exponential_backoff': False
     })
 
     # Action parameters
-    parameters = db.Column(JSONB, nullable=False, default=dict)
+    parameters = db.Column(JSONType, nullable=False, default=dict)
 
     # Dependencies and conditions
-    dependencies = db.Column(JSONB, nullable=False, default=list)
-    condition = db.Column(JSONB, nullable=True)
+    dependencies = db.Column(JSONType, nullable=False, default=list)
+    condition = db.Column(JSONType, nullable=True)
 
     # Validation and rollback
-    validation = db.Column(JSONB, nullable=True)
-    rollback = db.Column(JSONB, nullable=True)
+    validation = db.Column(JSONType, nullable=True)
+    rollback = db.Column(JSONType, nullable=True)
 
     # Metadata
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
@@ -1014,7 +1031,7 @@ class WorkspaceActionExecution(db.Model):
     duration_seconds = db.Column(db.Float, nullable=True)
 
     # Results
-    result = db.Column(JSONB, nullable=True)
+    result = db.Column(JSONType, nullable=True)
     error_message = db.Column(db.Text, nullable=True)
     stack_trace = db.Column(db.Text, nullable=True)
 
