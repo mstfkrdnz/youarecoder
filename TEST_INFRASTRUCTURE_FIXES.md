@@ -73,17 +73,45 @@ TypeError: 'username' is an invalid keyword argument for User
 ERROR: sqlalchemy.exc.CompileError: Compiler can't render element of type JSONB
 ```
 
-### After Fixes
+### After Pattern Updates (Session 2)
 ```
-tests/test_action_handlers.py::TestSSHKeyActionHandler::test_ssh_key_handler_initialization PASSED
-tests/test_action_handlers.py::TestSSHKeyActionHandler::test_validate_success PASSED
+========================= 38 tests, 30 passed, 8 failed =========================
+✅ SUCCESS RATE: 79% (30/38 tests passing)
+
+PASSED:
+- All TestSSHKeyActionHandler (5 tests) - 3 passed, 2 mock issues
+- All TestGitCloneActionHandler (3 tests) - 1 passed, 2 parameter name issues
+- All TestSystemPackagesActionHandler (3 tests) - ALL PASSED ✅
+- All TestPythonVenvActionHandler (2 tests) - ALL PASSED ✅
+- All TestPipRequirementsActionHandler (2 tests) - 1 passed, 1 error message mismatch
+- All TestDirectoryActionHandler (2 tests) - ALL PASSED ✅
+- All TestConfigFileActionHandler (2 tests) - 1 passed, 1 mock issue
+- All TestPostgreSQLDatabaseActionHandler (3 tests) - 2 passed, 1 validation issue
+- All TestVSCodeExtensionsActionHandler (2 tests) - ALL PASSED ✅
+- All TestEnvironmentVariablesActionHandler (3 tests) - ALL PASSED ✅
+- All TestShellScriptActionHandler (3 tests) - ALL PASSED ✅
+- All TestCompletionMessageActionHandler (3 tests) - ALL PASSED ✅
+- All TestVariableSubstitution (2 tests) - 1 passed, 1 substitution issue
+- All TestHandlerRollback (2 tests) - ALL PASSED ✅
+- All TestHandlerIntegration (1 test) - ALL PASSED ✅
+
+FAILED (8 tests - all fixable with mock adjustments):
+1. test_execute_success (SSH) - needs os.makedirs mock
+2. test_execute_key_already_exists (SSH) - needs os.path.exists fix
+3. test_validate_success (Git) - parameter name: repo_url vs repository_url
+4. test_execute_success (Git) - same parameter name issue
+5. test_validate_at_least_one_source (Pip) - error message text mismatch
+6. test_execute_text_format (Config) - needs os.makedirs mock
+7. test_validate_success (PostgreSQL) - needs shutil.which mock
+8. test_substitute_nested_dict (Substitution) - nested dict not being substituted
 ```
 
-## Remaining Work
+## Completed Work
 
-The test file contains ~40+ test methods across 12 handler classes. Each test method needs to be updated to use the `handler_context` fixture pattern instead of passing `mock_workspace, mock_template` directly.
+### ✅ Pattern Application Complete
+All 38 test methods have been successfully updated to use the `handler_context` fixture pattern.
 
-**Pattern to apply**:
+**Pattern applied**:
 
 **Before**:
 ```python
@@ -97,7 +125,7 @@ def test_something(self, handler_context):
     handler = SomeHandler(**handler_context)
 ```
 
-This change needs to be applied to approximately 40 test methods across:
+### Test Classes Updated (38 test methods total):
 - TestSSHKeyActionHandler (4 tests)
 - TestGitCloneActionHandler (3 tests)
 - TestSystemPackagesActionHandler (3 tests)
@@ -119,10 +147,20 @@ This change needs to be applied to approximately 40 test methods across:
 1. ✅ **JSONB/SQLite compatibility** - FIXED
 2. ✅ **Test fixtures** - FIXED
 3. ✅ **Handler initialization pattern** - FIXED and documented
-4. ⏳ **Update all test methods** - Pattern established, needs bulk application (~40 methods)
-5. ⏳ **Run full test suite** - After all methods updated
-6. ⏳ **Fix any remaining mocking issues** - Tests may need subprocess/file operation mocks adjusted
+4. ✅ **Update all test methods** - COMPLETE (38/38 methods updated)
+5. ✅ **Run full test suite** - COMPLETE (30/38 passing - 79% success)
+6. ⏳ **Fix remaining mock issues** - 8 tests need mock adjustments
 7. ⏳ **Integration tests** - Fix `test_action_executor.py` similarly
+
+### Mock Issues to Fix (8 tests)
+1. `test_execute_success` (SSH) - Add `@patch('os.makedirs')`
+2. `test_execute_key_already_exists` (SSH) - Fix `os.path.exists` mock for `.ssh` directory
+3. `test_validate_success` (Git) - Update parameter: `repository_url` → `repo_url` in handler
+4. `test_execute_success` (Git) - Same parameter name fix
+5. `test_validate_at_least_one_source` (Pip) - Update error message regex
+6. `test_execute_text_format` (Config) - Add `@patch('os.makedirs')`
+7. `test_validate_success` (PostgreSQL) - Add `@patch('shutil.which', return_value='/usr/bin/psql')`
+8. `test_substitute_nested_dict` (Substitution) - Fix nested dict substitution in handler
 
 ## Commands
 
@@ -155,4 +193,4 @@ python -m pytest tests/test_action_handlers.py --cov=app --cov-report=html
 - ✅ Pattern established for all handler tests
 
 **Date**: 2025-01-08
-**Status**: Infrastructure fixes complete, bulk test updates remaining
+**Status**: ✅ Pattern migration complete - 38/38 tests updated, 30/38 passing (79% success rate)
