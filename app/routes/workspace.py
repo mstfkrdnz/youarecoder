@@ -459,10 +459,12 @@ def logs(workspace_id):
 @require_workspace_ownership
 def verify_ssh(workspace_id):
     """
-    Verify SSH connection to GitHub for workspace.
+    Verify SSH connection to GitHub for workspace and resume provisioning.
 
-    Tests if the workspace's SSH key is properly configured for GitHub access.
-    Updates workspace metadata with verification status.
+    Enhanced with state machine integration:
+    - Verifies SSH connection to GitHub
+    - Resumes provisioning workflow from 'awaiting_ssh_verification' state
+    - Clones private repositories and completes workspace setup
 
     Args:
         workspace_id: Workspace ID
@@ -472,7 +474,8 @@ def verify_ssh(workspace_id):
         {
             'success': bool,
             'ssh_verified': bool,
-            'message': str
+            'message': str,
+            'workspace_url': str (if provisioning completed)
         }
     """
     workspace = Workspace.query.get_or_404(workspace_id)
@@ -491,17 +494,75 @@ def verify_ssh(workspace_id):
         ssh_verified = provisioner._verify_github_ssh(workspace.linux_username)
 
         if ssh_verified:
-            # Update workspace metadata (optional: add ssh_verified_at field if needed)
             current_app.logger.info(f"SSH verification successful for workspace {workspace_id}")
 
             # Audit log
             AuditLogger.log_workspace_action(workspace, 'ssh_verified', current_user.id)
 
-            return jsonify({
-                'success': True,
-                'ssh_verified': True,
-                'message': 'SSH connection to GitHub verified successfully'
-            }), 200
+            # Check if workspace is awaiting SSH verification
+            if workspace.provisioning_state == 'awaiting_ssh_verification':
+                # Resume provisioning workflow using state machine
+                current_app.logger.info(f"Resuming provisioning for workspace {workspace_id} after SSH verification")
+
+                try:
+                    resume_result = provisioner.resume_provisioning_after_ssh_verification(
+                        workspace,
+                        current_user.id
+                    )
+
+                    response_message = 'SSH connection verified and workspace provisioning completed successfully'
+                    if resume_result.get('clone_result'):
+                        clone_result = resume_result['clone_result']
+                        if clone_result['cloned_count'] > 0:
+                            response_message += f". Cloned {clone_result['cloned_count']} private repository/repositories."
+                        if clone_result['failed_repos']:
+                            response_message += f" ({len(clone_result['failed_repos'])} failed)"
+
+                    return jsonify({
+                        'success': True,
+                        'ssh_verified': True,
+                        'provisioning_completed': True,
+                        'message': response_message,
+                        'workspace_url': resume_result.get('workspace_url'),
+                        'clone_result': {
+                            'cloned_count': resume_result.get('clone_result', {}).get('cloned_count', 0),
+                            'failed_count': len(resume_result.get('clone_result', {}).get('failed_repos', []))
+                        }
+                    }), 200
+
+                except Exception as resume_error:
+                    current_app.logger.error(f"Failed to resume provisioning: {str(resume_error)}")
+                    return jsonify({
+                        'success': False,
+                        'ssh_verified': True,
+                        'provisioning_completed': False,
+                        'message': f'SSH verified but provisioning resume failed: {str(resume_error)}'
+                    }), 500
+
+            else:
+                # Workspace not in awaiting_ssh_verification state - use legacy clone behavior
+                current_app.logger.info(f"Workspace {workspace_id} not in awaiting state, cloning private repos only")
+                clone_result = provisioner.clone_pending_private_repositories(workspace)
+
+                if clone_result['cloned_count'] > 0:
+                    current_app.logger.info(f"Cloned {clone_result['cloned_count']} private repositories after SSH verification")
+
+                response_message = 'SSH connection to GitHub verified successfully'
+                if clone_result['cloned_count'] > 0:
+                    response_message += f". Cloned {clone_result['cloned_count']} private repository/repositories."
+                if clone_result['failed_repos']:
+                    response_message += f" ({len(clone_result['failed_repos'])} failed)"
+
+                return jsonify({
+                    'success': True,
+                    'ssh_verified': True,
+                    'provisioning_completed': False,
+                    'message': response_message,
+                    'clone_result': {
+                        'cloned_count': clone_result['cloned_count'],
+                        'failed_count': len(clone_result['failed_repos'])
+                    }
+                }), 200
         else:
             current_app.logger.warning(f"SSH verification failed for workspace {workspace_id}")
 

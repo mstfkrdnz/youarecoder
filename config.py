@@ -24,14 +24,15 @@ class Config:
 
     # Session settings
     PERMANENT_SESSION_LIFETIME = timedelta(hours=24)
-    SESSION_COOKIE_SECURE = True  # HTTPS only
+    SESSION_COOKIE_SECURE = True  # HTTPS connections (via Traefik)
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = 'Lax'
-    SESSION_COOKIE_DOMAIN = '.youarecoder.com'  # Allow cookie for all subdomains
+    SESSION_COOKIE_DOMAIN = None  # Use current domain (youarecoder.com)
 
     # Security
     WTF_CSRF_ENABLED = True
     WTF_CSRF_TIME_LIMIT = None
+    WTF_CSRF_SSL_STRICT = False  # Required: Flask app is behind Traefik (SSL terminating proxy)
 
     # Rate limiting
     RATELIMIT_ENABLED = True

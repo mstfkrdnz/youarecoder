@@ -10,6 +10,7 @@ from flask_limiter.util import get_remote_address
 from flask_talisman import Talisman
 from flask_wtf.csrf import CSRFProtect
 from flask_mail import Mail
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 # Initialize extensions
 db = SQLAlchemy()
@@ -46,6 +47,16 @@ def create_app(config_name=None):
         config_name = os.environ.get('FLASK_ENV', 'development')
 
     app.config.from_object(config[config_name])
+
+    # Configure proxy headers handling (required for Flask behind Traefik reverse proxy)
+    # Trust X-Forwarded-* headers from proxy
+    app.wsgi_app = ProxyFix(
+        app.wsgi_app,
+        x_for=1,      # Trust X-Forwarded-For
+        x_proto=1,    # Trust X-Forwarded-Proto (HTTPS detection)
+        x_host=1,     # Trust X-Forwarded-Host
+        x_prefix=1    # Trust X-Forwarded-Prefix
+    )
 
     # Initialize extensions with app
     db.init_app(app)

@@ -44,19 +44,22 @@
         "url": "https://github.com/odoo/odoo.git",
         "branch": "18.0",
         "target": "odoo-community",
-        "private": false
+        "private": false,
+        "shallow": true
       },
       {
         "url": "git@github.com:odoo/enterprise.git",
         "branch": "18.0",
         "target": "odoo-enterprise",
-        "private": true
+        "private": true,
+        "shallow": true
       },
       {
         "url": "https://github.com/alkedos/m0-odoo-development.git",
         "branch": "main",
         "target": "odoo-dev-tools",
-        "private": false
+        "private": false,
+        "shallow": false
       }
     ],
     "settings": {

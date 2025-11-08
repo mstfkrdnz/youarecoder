@@ -1,6 +1,7 @@
 """
 Database models for YouAreCoder platform.
 """
+from sqlalchemy.dialects.postgresql import JSONB
 from datetime import datetime, timedelta
 from flask_login import UserMixin
 from app import db, bcrypt
@@ -103,7 +104,7 @@ class User(UserMixin, db.Model):
     quota_assigned_by = db.Column(db.Integer, db.ForeignKey('users.id'))
 
     # Relationships
-    workspaces = db.relationship('Workspace', backref='owner', lazy='dynamic', cascade='all, delete-orphan')
+    owned_workspaces = db.relationship('Workspace', foreign_keys='Workspace.owner_id', back_populates='owner', lazy='dynamic', overlaps="workspaces")
 
     def __repr__(self):
         return f'<User {self.email}>'
@@ -148,7 +149,7 @@ class User(UserMixin, db.Model):
             'role': self.role,
             'is_active': self.is_active,
             'company_id': self.company_id,
-            'workspace_count': self.workspaces.count(),
+            'workspace_count': self.owned_workspaces.count(),
             'created_at': self.created_at.isoformat(),
             'last_login': self.last_login.isoformat() if self.last_login else None
         }
@@ -163,6 +164,22 @@ class Workspace(db.Model):
     subdomain = db.Column(db.String(50), nullable=False, unique=True, index=True)
     linux_username = db.Column(db.String(50), nullable=False, unique=True)
     port = db.Column(db.Integer, nullable=False, unique=True)
+    odoo_port = db.Column(db.Integer, nullable=True)
+    db_name = db.Column(db.String(255), nullable=True, index=True)
+    # Job tracking fields
+    job_id = db.Column(db.String(255), nullable=True)
+    job_status = db.Column(db.String(50), nullable=True)
+    progress_percent = db.Column(db.Integer, default=0)
+    progress_message = db.Column(db.String(500), nullable=True)
+    last_error = db.Column(db.Text, nullable=True)
+    retry_count = db.Column(db.Integer, default=0)
+    retry_reason = db.Column(db.Text, nullable=True)
+    
+    # Odoo-specific provisioning flags
+    venv_created = db.Column(db.Boolean, default=False)
+    requirements_installed = db.Column(db.Boolean, default=False)
+    database_initialized = db.Column(db.Boolean, default=False)
+    odoo_config_generated = db.Column(db.Boolean, default=False)
     code_server_password = db.Column(db.String(255), nullable=False)
     status = db.Column(db.String(20), nullable=False, default='pending')  # pending, active, suspended, failed
     disk_quota_gb = db.Column(db.Integer, nullable=False, default=10)
@@ -185,6 +202,25 @@ class Workspace(db.Model):
     # Authentication and SSH fields (Phase 3 - Template System)
     access_token = db.Column(db.String(64), unique=True, nullable=True)  # Token-based code-server auth
     ssh_public_key = db.Column(db.Text, nullable=True)  # SSH key for private GitHub repos
+    extra_data = db.Column(db.JSON, nullable=True)  # Additional workspace data (e.g., pending_private_repos)
+
+    # State machine fields for provisioning tracking (Phase 5)
+    provisioning_state = db.Column(db.String(50), nullable=False, default='created')
+    provisioning_step = db.Column(db.Integer, nullable=False, default=0)
+    total_steps = db.Column(db.Integer, nullable=False, default=0)
+    provisioning_steps = db.Column(db.JSON, nullable=True)  # List of step details with status
+    max_retries = db.Column(db.Integer, nullable=False, default=3)
+    last_retry_at = db.Column(db.DateTime, nullable=True)
+
+    # Manual approval fields
+    requires_manual_approval = db.Column(db.Boolean, nullable=False, default=False)
+    # TEMPORARY: Commented out to avoid SQLAlchemy ambiguous FK error - will fix properly
+    # approved_by_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    approved_at = db.Column(db.DateTime, nullable=True)
+
+    # Relationships
+    owner = db.relationship('User', foreign_keys=[owner_id], back_populates='owned_workspaces', overlaps="owned_workspaces,workspaces")
+    # approved_by = db.relationship('User', foreign_keys=[approved_by_user_id])
 
     # Composite unique constraint for name within company
     __table_args__ = (
@@ -846,3 +882,179 @@ class ExchangeRate(db.Model):
             'source': self.source,
             'created_at': self.created_at.isoformat()
         }
+
+
+# =====================================================
+# ACTION-BASED TEMPLATE SYSTEM MODELS
+# =====================================================
+
+class TemplateAction(db.Model):
+    """
+    Reusable action definition library.
+    Defines action types that can be used across multiple templates.
+    """
+    __tablename__ = 'template_actions'
+
+    id = db.Column(db.Integer, primary_key=True)
+    action_type = db.Column(db.String(100), unique=True, nullable=False, index=True)
+    display_name = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    category = db.Column(db.String(50), nullable=False, index=True)
+    handler_class = db.Column(db.String(200), nullable=False)
+
+    # Parameters and configuration
+    required_parameters = db.Column(JSONB, nullable=False, default=list)
+    optional_parameters = db.Column(JSONB, nullable=False, default=list)
+    default_parameters = db.Column(JSONB, nullable=False, default=dict)
+
+    # Validation and rollback
+    validation_methods = db.Column(JSONB, nullable=False, default=list)
+    rollback_handler = db.Column(db.String(200), nullable=True)
+
+    # Metadata
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    is_active = db.Column(db.Boolean, nullable=False, default=True)
+
+    def __repr__(self):
+        return f'<TemplateAction {self.action_type}>'
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'action_type': self.action_type,
+            'display_name': self.display_name,
+            'description': self.description,
+            'category': self.category,
+            'handler_class': self.handler_class,
+            'required_parameters': self.required_parameters,
+            'optional_parameters': self.optional_parameters,
+            'default_parameters': self.default_parameters,
+            'validation_methods': self.validation_methods,
+            'rollback_handler': self.rollback_handler,
+            'is_active': self.is_active
+        }
+
+
+class TemplateActionSequence(db.Model):
+    """Template → Action mapping with execution configuration"""
+    __tablename__ = 'template_action_sequences'
+
+    id = db.Column(db.Integer, primary_key=True)
+    template_id = db.Column(db.Integer, db.ForeignKey('workspace_templates.id', ondelete='CASCADE'), nullable=False, index=True)
+    action_id = db.Column(db.String(100), nullable=False)
+    action_type = db.Column(db.String(100), nullable=False)
+    display_name = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    category = db.Column(db.String(50), nullable=False)
+
+    # Execution configuration
+    order = db.Column(db.Integer, nullable=False)
+    enabled = db.Column(db.Boolean, nullable=False, default=True)
+    fatal_on_error = db.Column(db.Boolean, nullable=False, default=False)
+
+    # Retry configuration
+    retry_config = db.Column(JSONB, nullable=False, default=lambda: {
+        'max_attempts': 1, 'retry_delay_seconds': 0, 'exponential_backoff': False
+    })
+
+    # Action parameters
+    parameters = db.Column(JSONB, nullable=False, default=dict)
+
+    # Dependencies and conditions
+    dependencies = db.Column(JSONB, nullable=False, default=list)
+    condition = db.Column(JSONB, nullable=True)
+
+    # Validation and rollback
+    validation = db.Column(JSONB, nullable=True)
+    rollback = db.Column(JSONB, nullable=True)
+
+    # Metadata
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    template = db.relationship('WorkspaceTemplate', backref=db.backref('action_sequences', lazy='dynamic', cascade='all, delete-orphan'))
+
+    __table_args__ = (
+        db.UniqueConstraint('template_id', 'action_id', name='uq_template_action_sequences_template_action'),
+        db.Index('ix_template_action_sequences_template_order', 'template_id', 'order'),
+    )
+
+    def __repr__(self):
+        return f'<TemplateActionSequence {self.template_id}:{self.action_id}>'
+
+
+class WorkspaceActionExecution(db.Model):
+    """Execution tracking for workspace action provisioning"""
+    __tablename__ = 'workspace_action_executions'
+
+    STATUS_PENDING = 'pending'
+    STATUS_RUNNING = 'running'
+    STATUS_COMPLETED = 'completed'
+    STATUS_FAILED = 'failed'
+    STATUS_SKIPPED = 'skipped'
+    STATUS_ROLLED_BACK = 'rolled_back'
+
+    id = db.Column(db.Integer, primary_key=True)
+    workspace_id = db.Column(db.Integer, db.ForeignKey('workspaces.id', ondelete='CASCADE'), nullable=False, index=True)
+    template_id = db.Column(db.Integer, db.ForeignKey('workspace_templates.id', ondelete='CASCADE'), nullable=False, index=True)
+    action_sequence_id = db.Column(db.Integer, db.ForeignKey('template_action_sequences.id', ondelete='CASCADE'), nullable=False, index=True)
+    action_id = db.Column(db.String(100), nullable=False)
+    action_type = db.Column(db.String(100), nullable=False)
+
+    # Execution state
+    status = db.Column(db.String(50), nullable=False, default=STATUS_PENDING, index=True)
+    attempt_number = db.Column(db.Integer, nullable=False, default=1)
+    max_attempts = db.Column(db.Integer, nullable=False, default=1)
+
+    # Timing
+    started_at = db.Column(db.DateTime, nullable=True)
+    completed_at = db.Column(db.DateTime, nullable=True)
+    duration_seconds = db.Column(db.Float, nullable=True)
+
+    # Results
+    result = db.Column(JSONB, nullable=True)
+    error_message = db.Column(db.Text, nullable=True)
+    stack_trace = db.Column(db.Text, nullable=True)
+
+    # Rollback tracking
+    rollback_attempted = db.Column(db.Boolean, nullable=False, default=False)
+    rollback_successful = db.Column(db.Boolean, nullable=True)
+    rollback_error = db.Column(db.Text, nullable=True)
+
+    # Metadata
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    workspace = db.relationship('Workspace', backref=db.backref('action_executions', lazy='dynamic', cascade='all, delete-orphan'))
+
+    __table_args__ = (
+        db.Index('ix_workspace_action_executions_workspace_status', 'workspace_id', 'status'),
+        db.Index('ix_workspace_action_executions_template_action', 'template_id', 'action_id'),
+    )
+
+    def __repr__(self):
+        return f'<WorkspaceActionExecution {self.workspace_id}:{self.action_id} [{self.status}]>'
+
+    def mark_started(self):
+        self.status = self.STATUS_RUNNING
+        self.started_at = datetime.utcnow()
+
+    def mark_completed(self, result=None, duration_seconds=None):
+        self.status = self.STATUS_COMPLETED
+        self.completed_at = datetime.utcnow()
+        self.result = result
+        if duration_seconds is not None:
+            self.duration_seconds = duration_seconds
+        elif self.started_at:
+            self.duration_seconds = (self.completed_at - self.started_at).total_seconds()
+
+    def mark_failed(self, error_message, stack_trace=None):
+        self.status = self.STATUS_FAILED
+        self.completed_at = datetime.utcnow()
+        self.error_message = error_message
+        self.stack_trace = stack_trace
+        if self.started_at:
+            self.duration_seconds = (self.completed_at - self.started_at).total_seconds()
