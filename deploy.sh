@@ -65,7 +65,7 @@ fi
 
 # Step 6: Restart services
 echo "🔄 Restarting services..."
-ssh "$PROD_SERVER" "sudo systemctl restart youarecoder gunicorn"
+ssh "$PROD_SERVER" "sudo systemctl restart youarecoder youarecoder-worker"
 echo "✅ Services restarted"
 
 # Step 7: Verify deployment
