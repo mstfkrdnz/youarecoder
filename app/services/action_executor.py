@@ -27,43 +27,6 @@ from app.services.action_handlers import (
     ShellScriptActionHandler,
     CompletionMessageActionHandler,
 )
-from app.services.action_handlers import (
-    SSHKeyActionHandler,
-    GitCloneActionHandler,
-    SystemPackagesActionHandler,
-    PythonVenvActionHandler,
-    PipRequirementsActionHandler,
-    DirectoryActionHandler,
-    ConfigFileActionHandler,
-    PostgreSQLDatabaseActionHandler,
-    VSCodeExtensionsActionHandler,
-    EnvironmentVariablesActionHandler,
-    ShellScriptActionHandler,
-    CompletionMessageActionHandler,
-)
-from app.services.action_handlers import (
-    SSHKeyActionHandler,
-    GitCloneActionHandler,
-    SystemPackagesActionHandler,
-    PythonVenvActionHandler,
-    HANDLER_REGISTRY = {
-        'generate_ssh_key': SSHKeyActionHandler,
-        'clone_git_repository': GitCloneActionHandler,
-        'install_system_packages': SystemPackagesActionHandler,
-        'create_python_venv': PythonVenvActionHandler,
-        'install_pip_requirements': PipRequirementsActionHandler,
-        'create_directory': DirectoryActionHandler,
-        'write_configuration_file': ConfigFileActionHandler,
-        'create_postgresql_database': PostgreSQLDatabaseActionHandler,
-        'install_vscode_extensions': VSCodeExtensionsActionHandler,
-        'set_environment_variables': EnvironmentVariablesActionHandler,
-        'execute_shell_script': ShellScriptActionHandler,
-        'display_completion_message': CompletionMessageActionHandler,
-    }
-    SystemPackagesActionHandler,
-    PythonVenvActionHandler,
-    PipRequirementsActionHandler,
-)
 
 
 class ActionExecutor:
@@ -82,7 +45,16 @@ class ActionExecutor:
     HANDLER_REGISTRY = {
         'generate_ssh_key': SSHKeyActionHandler,
         'clone_git_repository': GitCloneActionHandler,
-        # More handlers will be added as they're implemented
+        'install_system_packages': SystemPackagesActionHandler,
+        'create_python_venv': PythonVenvActionHandler,
+        'install_pip_requirements': PipRequirementsActionHandler,
+        'create_directory': DirectoryActionHandler,
+        'write_configuration_file': ConfigFileActionHandler,
+        'create_postgresql_database': PostgreSQLDatabaseActionHandler,
+        'install_vscode_extensions': VSCodeExtensionsActionHandler,
+        'set_environment_variables': EnvironmentVariablesActionHandler,
+        'execute_shell_script': ShellScriptActionHandler,
+        'display_completion_message': CompletionMessageActionHandler,
     }
 
     def __init__(self, workspace: Workspace, template: WorkspaceTemplate):
