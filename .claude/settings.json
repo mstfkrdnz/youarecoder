@@ -2,12 +2,12 @@
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "mcp__playwright__.*",
+        "matcher": ".*",
         "hooks": [
           {
             "type": "command",
-            "command": "/home/mustafa/.claude/hooks/playwright-auto-approve.sh",
-            "timeout": 5
+            "command": "/home/mustafa/.claude/hooks/auto-approve-tools.sh",
+            "timeout": 10
           }
         ]
       }
