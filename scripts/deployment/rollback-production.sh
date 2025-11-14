@@ -6,7 +6,7 @@
 set -e
 
 PRODUCTION_SERVER="root@37.27.21.167"
-PRODUCTION_PATH="/var/www/youarecoder"
+PRODUCTION_PATH="/root/youarecoder"
 SERVICE_NAME="youarecoder"
 
 # Colors
@@ -50,7 +50,7 @@ ROLLBACK_SCRIPT=$(cat <<'REMOTESCRIPT'
 #!/bin/bash
 set -e
 
-PROD_PATH="/var/www/youarecoder"
+PROD_PATH="/root/youarecoder"
 SERVICE_NAME="youarecoder"
 
 echo "🔵 Entering production directory..."
