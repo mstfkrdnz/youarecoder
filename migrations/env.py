@@ -7,6 +7,11 @@ from sqlalchemy import pool
 
 from alembic import context
 
+# Load environment variables from .env file
+from dotenv import load_dotenv
+env_path = os.path.realpath(os.path.join(os.path.dirname(__file__), '..', '.env'))
+load_dotenv(env_path)
+
 # Add parent directory to path to import Flask app
 sys.path.insert(0, os.path.realpath(os.path.join(os.path.dirname(__file__), '..')))
 
@@ -21,14 +26,17 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# Create Flask app instance
-app = create_app('development')
+# Create Flask app instance using FLASK_ENV from environment
+flask_env = os.environ.get('FLASK_ENV', 'development')
+app = create_app(flask_env)
 
 # Set target metadata from Flask-SQLAlchemy
 target_metadata = db.metadata
 
 # Override sqlalchemy.url from Flask config
-config.set_main_option('sqlalchemy.url', app.config['SQLALCHEMY_DATABASE_URI'])
+# Escape % for ConfigParser by doubling them
+db_uri = app.config['SQLALCHEMY_DATABASE_URI'].replace('%', '%%')
+config.set_main_option('sqlalchemy.url', db_uri)
 
 
 def run_migrations_offline() -> None:

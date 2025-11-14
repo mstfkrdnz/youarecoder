@@ -18,7 +18,13 @@ class Config:
     DB_PORT = os.environ.get('DB_PORT', '5432')
     DB_NAME = os.environ.get('DB_NAME', 'youarecoder')
 
-    SQLALCHEMY_DATABASE_URI = f'postgresql://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}'
+    # Build connection URI - handle Unix socket paths
+    if DB_HOST.startswith('/'):
+        # Unix socket connection (peer authentication)
+        SQLALCHEMY_DATABASE_URI = f'postgresql://{DB_USER}@/{DB_NAME}?host={quote_plus(DB_HOST)}'
+    else:
+        # TCP connection
+        SQLALCHEMY_DATABASE_URI = f'postgresql://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ECHO = False  # Set to True for SQL query logging
 
@@ -205,6 +211,9 @@ class DevelopmentConfig(Config):
     SQLALCHEMY_ECHO = True
     SESSION_COOKIE_SECURE = False  # Allow HTTP in development
     RATELIMIT_ENABLED = False  # Disable rate limiting in development
+
+    # Mock provisioning for development (no root privileges needed)
+    MOCK_PROVISIONING = os.environ.get('MOCK_PROVISIONING', 'True') == 'True'
 
     # Email settings for development
     MAIL_SUPPRESS_SEND = True  # Don't send real emails, print to console

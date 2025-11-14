@@ -468,17 +468,18 @@ def status(workspace_id):
             from app.models import WorkspaceActionExecution, TemplateActionSequence
             from datetime import datetime
 
-            # Join with template_action_sequences to get the execution order
-            executions = db.session.query(WorkspaceActionExecution).join(
+            # Join with template_action_sequences to get the execution order and action details
+            executions = db.session.query(WorkspaceActionExecution, TemplateActionSequence).join(
                 TemplateActionSequence,
                 WorkspaceActionExecution.action_sequence_id == TemplateActionSequence.id
             ).filter(
                 WorkspaceActionExecution.workspace_id == workspace.id
             ).order_by(TemplateActionSequence.order).all()
 
-            for execution in executions:
+            for execution, action_sequence in executions:
                 action_data = {
-                    'description': execution.action_id,  # Use action_id as description since we don't have action relationship
+                    'action_name': execution.action_id,
+                    'description': action_sequence.display_name,
                     'status': execution.status,
                     'started_at': execution.started_at.isoformat() if execution.started_at else None,
                     'completed_at': execution.completed_at.isoformat() if execution.completed_at else None,

@@ -1,0 +1,17 @@
+[Unit]
+Description=YouAreCoder Flask Application (mustafa-dev)
+After=network.target postgresql.service
+
+[Service]
+Type=simple
+User=mustafa
+Group=mustafa
+WorkingDirectory=/home/mustafa/youarecoder
+Environment="PATH=/home/mustafa/youarecoder/venv/bin"
+EnvironmentFile=/home/mustafa/youarecoder/.env
+ExecStart=/home/mustafa/youarecoder/venv/bin/python /home/mustafa/youarecoder/run.py
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

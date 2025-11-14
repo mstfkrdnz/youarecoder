@@ -111,6 +111,16 @@ def create_app(config_name=None):
     # Changed from 'strong' to 'basic' to allow ForwardAuth requests from Traefik (different IP)
     login_manager.session_protection = 'basic'
 
+    # Initialize workspace provisioner based on environment
+    if app.config.get('MOCK_PROVISIONING'):
+        from app.services.mock_provisioner import MockWorkspaceProvisioner
+        app.provisioner = MockWorkspaceProvisioner()
+        app.logger.info("🔧 Using MOCK provisioner for development")
+    else:
+        from app.services.workspace_provisioner import WorkspaceProvisioner
+        app.provisioner = WorkspaceProvisioner()
+        app.logger.info("⚙️ Using REAL provisioner for production")
+
     # Register blueprints
     from app.routes import auth, main, workspace, api, billing, legal, admin, metrics, auth_verify
     app.register_blueprint(auth.bp)

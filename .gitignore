@@ -84,6 +84,23 @@ config/secrets.py
 config/paytr_credentials.json
 config/database_credentials.json
 
-# Test files with credentials
-test_*.py
-*_test.py
+# Temporary and backup files
+*.tmp
+*.temp
+*.backup
+*.bak
+*~backup*
+
+# MCP server caches
+.serena/
+.playwright/
+.spek/
+
+# Archived directories (don't commit archives)
+scripts/archived/
+docs/archived-reports/
+
+# Backup directory
+backups/
+*.tar.gz
+*.zip
