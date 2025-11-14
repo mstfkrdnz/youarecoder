@@ -22,6 +22,23 @@ logger = logging.getLogger(__name__)
 bp = Blueprint('billing', __name__, url_prefix='/billing')
 
 
+@bp.route('/debug-config', methods=['GET'])
+@login_required
+def debug_config():
+    """Debug endpoint to check PayTR configuration (development only)."""
+    from flask import current_app
+
+    config_info = {
+        'merchant_id': current_app.config.get('PAYTR_MERCHANT_ID', 'NOT SET'),
+        'merchant_key_length': len(current_app.config.get('PAYTR_MERCHANT_KEY', '')),
+        'merchant_salt_length': len(current_app.config.get('PAYTR_MERCHANT_SALT', '')),
+        'test_mode': current_app.config.get('PAYTR_TEST_MODE', 'NOT SET'),
+        'base_url': current_app.config.get('BASE_URL', 'NOT SET')
+    }
+
+    return jsonify(config_info)
+
+
 @bp.route('/subscribe/<plan>', methods=['POST'])
 @login_required
 def subscribe(plan):
