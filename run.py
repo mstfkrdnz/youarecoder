@@ -1,7 +1,12 @@
 #!/usr/bin/env python3
 """Development server for youarecoder Flask app."""
-from app import create_app
+from dotenv import load_dotenv
 import os
+
+# Load .env file before importing app
+load_dotenv()
+
+from app import create_app
 
 app = create_app()
 
