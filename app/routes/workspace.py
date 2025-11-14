@@ -99,9 +99,8 @@ def create():
         is_active=True
     ).all()
 
-    # Build choices list: [(0, 'No Template')] + template options
-    form.template_id.choices = [(0, 'No Template (Blank Workspace)')]
-    form.template_id.choices += [(t.id, f"{t.name} ({t.category})") for t in official_templates]
+    # Build choices list: template options only (no blank workspace option)
+    form.template_id.choices = [(t.id, f"{t.name} ({t.category})") for t in official_templates]
     if company_templates:
         form.template_id.choices += [(t.id, f"{t.name} (Company)") for t in company_templates]
 
@@ -143,8 +142,8 @@ def create():
             # Sanitize workspace name for Linux username (replace hyphens with underscores)
             sanitized_name = form.name.data.replace('-', '_')
 
-            # Get template_id (0 means no template)
-            template_id = form.template_id.data if form.template_id.data != 0 else None
+            # Get template_id (now required, no blank workspace option)
+            template_id = form.template_id.data
 
             workspace = Workspace(
                 name=form.name.data,
