@@ -50,10 +50,34 @@ class WorkspaceProvisioner:
     """
 
     def __init__(self):
-        self.port_range_start = current_app.config['WORKSPACE_PORT_RANGE_START']
-        self.port_range_end = current_app.config['WORKSPACE_PORT_RANGE_END']
-        self.base_dir = current_app.config['WORKSPACE_BASE_DIR']
-        self.traefik_manager = TraefikManager()
+        self._port_range_start = None
+        self._port_range_end = None
+        self._base_dir = None
+        self._traefik_manager = None
+
+    @property
+    def port_range_start(self):
+        if self._port_range_start is None:
+            self._port_range_start = current_app.config['WORKSPACE_PORT_RANGE_START']
+        return self._port_range_start
+
+    @property
+    def port_range_end(self):
+        if self._port_range_end is None:
+            self._port_range_end = current_app.config['WORKSPACE_PORT_RANGE_END']
+        return self._port_range_end
+
+    @property
+    def base_dir(self):
+        if self._base_dir is None:
+            self._base_dir = current_app.config['WORKSPACE_BASE_DIR']
+        return self._base_dir
+
+    @property
+    def traefik_manager(self):
+        if self._traefik_manager is None:
+            self._traefik_manager = TraefikManager()
+        return self._traefik_manager
 
     def allocate_port(self) -> int:
         """
