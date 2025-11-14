@@ -48,6 +48,21 @@ class ConfigFileActionHandler(BaseActionHandler):
 
         self.log_info(f"Writing config file: {file_path} (format: {file_format})")
 
+        # Mock mode: simulate config file creation
+        if self.mock_mode:
+            self.log_info("MOCK MODE: Simulating config file write")
+            content_size = len(str(content)) if isinstance(content, str) else len(json.dumps(content))
+            return {
+                'success': True,
+                'file_path': file_path,
+                'mode': oct(mode),
+                'format': file_format,
+                'file_existed': False,
+                'backup_path': None,
+                'size_bytes': content_size,
+                'mock': True
+            }
+
         backup_path = None
         file_existed = os.path.exists(file_path)
 

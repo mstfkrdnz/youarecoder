@@ -46,6 +46,18 @@ class DirectoryActionHandler(BaseActionHandler):
 
         self.log_info(f"Creating directory: {path} (mode: {oct(mode)})")
 
+        # Mock mode: simulate directory creation
+        if self.mock_mode:
+            self.log_info("MOCK MODE: Simulating directory creation")
+            return {
+                'success': True,
+                'path': path,
+                'mode': oct(mode),
+                'exists': True,
+                'is_directory': True,
+                'mock': True
+            }
+
         try:
             if parents:
                 os.makedirs(path, mode=mode, exist_ok=exist_ok)
