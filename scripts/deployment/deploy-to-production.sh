@@ -126,11 +126,10 @@ echo "🔵 Activating virtual environment..."
 source venv/bin/activate
 
 echo "🔵 Installing/updating dependencies..."
-pip install -q -r requirements.txt
+pip install -r requirements.txt
 
-echo "🔵 Running database migrations..."
-export FLASK_APP=app
-flask db upgrade
+# Note: Migrations are handled separately if needed
+# Production database is managed through direct SQL or manual migration scripts
 
 echo "🔵 Restarting application service..."
 sudo systemctl restart $SERVICE_NAME

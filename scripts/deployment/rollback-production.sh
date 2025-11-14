@@ -78,9 +78,8 @@ source venv/bin/activate
 echo "🔵 Reinstalling dependencies (in case they changed)..."
 pip install -q -r requirements.txt
 
-echo "🔵 Running database migrations..."
-export FLASK_APP=app
-flask db upgrade
+# Note: Migrations are handled separately if needed
+# Production database is managed through direct SQL or manual migration scripts
 
 echo "🔵 Restarting service..."
 sudo systemctl restart $SERVICE_NAME
