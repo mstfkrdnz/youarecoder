@@ -29,6 +29,7 @@ from app.services.action_handlers import (
     ShellScriptActionHandler,
     SystemdServiceActionHandler,
     CompletionMessageActionHandler,
+    ManualActionHandler,
 )
 
 
@@ -65,6 +66,7 @@ class ActionExecutor:
         'systemd_service': SystemdServiceActionHandler,
         'create_systemd_service': SystemdServiceActionHandler,  # Alias
         'display_completion_message': CompletionMessageActionHandler,
+        'manual_action': ManualActionHandler,
     }
 
     def __init__(self, workspace: Workspace, template: WorkspaceTemplate):

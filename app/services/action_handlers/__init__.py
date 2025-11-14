@@ -12,6 +12,7 @@ from .env_vars import EnvironmentVariablesActionHandler
 from .shell_script import ShellScriptActionHandler
 from .systemd_service import SystemdServiceActionHandler
 from .completion import CompletionMessageActionHandler
+from .manual_action import ManualActionHandler
 
 __all__ = [
     'SSHKeyActionHandler',
@@ -28,4 +29,5 @@ __all__ = [
     'ShellScriptActionHandler',
     'SystemdServiceActionHandler',
     'CompletionMessageActionHandler',
+    'ManualActionHandler',
 ]
