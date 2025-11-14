@@ -461,41 +461,51 @@ def status(workspace_id):
     provisioner = WorkspaceProvisioner()
 
     try:
-        # Get action executions for provisioning progress
+        # Get all actions from template and their execution status
         action_executions = []
         if workspace.template_id:
             from app.models import WorkspaceActionExecution, TemplateActionSequence
             from datetime import datetime
 
-            # Join with template_action_sequences to get the execution order and action details
-            executions = db.session.query(WorkspaceActionExecution, TemplateActionSequence).join(
-                TemplateActionSequence,
-                WorkspaceActionExecution.action_sequence_id == TemplateActionSequence.id
-            ).filter(
-                WorkspaceActionExecution.workspace_id == workspace.id
+            # Get ALL template actions first (to show all steps from the start)
+            template_actions = TemplateActionSequence.query.filter_by(
+                template_id=workspace.template_id,
+                enabled=True
             ).order_by(TemplateActionSequence.order).all()
 
-            for execution, action_sequence in executions:
+            # Get executions mapping
+            executions_map = {}
+            executions = WorkspaceActionExecution.query.filter_by(
+                workspace_id=workspace.id
+            ).all()
+
+            for execution in executions:
+                executions_map[execution.action_sequence_id] = execution
+
+            # Build action list with all template actions
+            for action_sequence in template_actions:
+                execution = executions_map.get(action_sequence.id)
+
                 action_data = {
-                    'action_name': execution.action_id,
+                    'action_name': action_sequence.action_id,
                     'description': action_sequence.display_name,
-                    'status': execution.status,
-                    'started_at': execution.started_at.isoformat() if execution.started_at else None,
-                    'completed_at': execution.completed_at.isoformat() if execution.completed_at else None,
+                    'status': execution.status if execution else 'pending',
+                    'started_at': execution.started_at.isoformat() if execution and execution.started_at else None,
+                    'completed_at': execution.completed_at.isoformat() if execution and execution.completed_at else None,
                 }
 
                 # Calculate duration for completed actions
-                if execution.started_at and execution.completed_at:
+                if execution and execution.started_at and execution.completed_at:
                     duration = (execution.completed_at - execution.started_at).total_seconds()
                     action_data['duration_seconds'] = round(duration, 1)
 
                 # Calculate elapsed time for running actions
-                if execution.status == 'running' and execution.started_at:
+                if execution and execution.status == 'running' and execution.started_at:
                     elapsed = (datetime.utcnow() - execution.started_at).total_seconds()
                     action_data['elapsed_seconds'] = round(elapsed, 1)
 
                 # Include error message for failed actions
-                if execution.status == 'failed' and execution.error_message:
+                if execution and execution.status == 'failed' and execution.error_message:
                     action_data['error_message'] = execution.error_message
 
                 action_executions.append(action_data)
