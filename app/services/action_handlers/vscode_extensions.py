@@ -13,6 +13,10 @@ class VSCodeExtensionsActionHandler(BaseActionHandler):
     REQUIRED_PARAMETERS = ['extensions']
     OPTIONAL_PARAMETERS = []
 
+    DISPLAY_NAME = 'Install VS Code Extensions'
+    CATEGORY = 'development'
+    DESCRIPTION = 'Installs Visual Studio Code extensions for enhanced development experience'
+
     def execute(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
         """
         Install VS Code extensions.

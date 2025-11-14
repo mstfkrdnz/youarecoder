@@ -13,6 +13,10 @@ class PostgreSQLDatabaseActionHandler(BaseActionHandler):
     REQUIRED_PARAMETERS = ['database_name']
     OPTIONAL_PARAMETERS = ['username', 'password', 'owner', 'encoding', 'locale']
 
+    DISPLAY_NAME = 'Create PostgreSQL Database'
+    CATEGORY = 'database'
+    DESCRIPTION = 'Creates PostgreSQL databases with user authentication and permissions'
+
     def execute(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
         """
         Create PostgreSQL database.

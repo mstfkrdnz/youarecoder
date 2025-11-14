@@ -9,14 +9,12 @@ from datetime import datetime
 from collections import defaultdict, deque
 
 from app import db
-from flask import current_app
 from app.models import (
     Workspace, WorkspaceTemplate, TemplateActionSequence,
     WorkspaceActionExecution
 )
 from app.services.action_handlers import (
     SSHKeyActionHandler,
-    VerifySSHKeyHandler,
     GitCloneActionHandler,
     SystemPackagesActionHandler,
     PythonVenvActionHandler,
@@ -47,7 +45,6 @@ class ActionExecutor:
     # Handler registry - maps action_type to handler class
     HANDLER_REGISTRY = {
         'generate_ssh_key': SSHKeyActionHandler,
-        'verify_ssh_key': VerifySSHKeyHandler,
         'clone_git_repository': GitCloneActionHandler,
         'clone_git_repo': GitCloneActionHandler,  # Alias for backward compatibility
         'install_system_packages': SystemPackagesActionHandler,
@@ -116,13 +113,6 @@ class ActionExecutor:
                 self._skip_action(action_seq)
                 continue
 
-            # Check if should pause BEFORE executing this action (for verify_ssh_key with show_modal)
-            if self._should_pause_for_ssh_verification(action_seq):
-                # Store current step before pausing (this action hasn't run yet)
-                self.workspace.provisioning_step = idx
-                db.session.commit()
-                return self._pause_for_ssh_verification(action_seq, idx)
-
             # Create execution record
             execution = WorkspaceActionExecution(
                 workspace_id=self.workspace.id,
@@ -141,22 +131,11 @@ class ActionExecutor:
             if success:
                 self.completed_actions.append(execution)
 
-                # Store SSH public key if this was generate_ssh_key action
-                if action_seq.action_type == 'generate_ssh_key':
-                    execution_result = execution.result or {}
-                    if execution_result.get('public_key'):
-                        self.workspace.ssh_public_key = execution_result['public_key']
-                        current_app.logger.info(
-                            f"Stored SSH public key for workspace {self.workspace.id}"
-                        )
-
                 # Update progress tracking
                 self.workspace.provisioning_step = idx
                 self.workspace.progress_percent = int((idx / total_steps) * 100)
                 self.workspace.progress_message = f"Completed: {action_seq.action_id}"
                 db.session.commit()
-
-                # No longer check after execution - moved to before execution
             else:
                 self.failed_action = execution
 
@@ -404,240 +383,6 @@ class ActionExecutor:
         )
         db.session.add(execution)
         db.session.commit()
-
-
-    def _should_pause_for_ssh_verification(self, action_seq: TemplateActionSequence) -> bool:
-        """
-        Check if provisioning should pause BEFORE executing verify_ssh_key action.
-
-        Pauses before verify_ssh_key if:
-        - Action type is 'verify_ssh_key'
-        - Action has 'show_modal: true' in parameters
-        - Workspace doesn't have verified SSH already
-
-        Args:
-            action_seq: The action sequence to be executed
-
-        Returns:
-            True if should pause before executing this action
-        """
-        # Only check verify_ssh_key actions
-        if action_seq.action_type != 'verify_ssh_key':
-            return False
-
-        # Check if this action requires modal
-        parameters = action_seq.parameters or {}
-        if not parameters.get('show_modal'):
-            return False
-
-        # Don't pause if SSH already verified (resuming from pause)
-        if self.workspace.extra_data and self.workspace.extra_data.get('ssh_verified'):
-            return False
-
-        # Check if SSH public key exists (from previous generate_ssh_key action)
-        if not self.workspace.ssh_public_key:
-            return False
-
-        return True
-
-    def _pause_for_ssh_verification(self, action_seq: TemplateActionSequence, current_step: int) -> Dict[str, Any]:
-        """
-        Pause provisioning before executing verify_ssh_key action.
-
-        Args:
-            action_seq: The verify_ssh_key action that triggered the pause
-            current_step: The step index where we paused (1-based)
-
-        Returns:
-            Dict indicating provisioning paused for SSH verification
-        """
-        # Create paused WorkspaceActionExecution record for the verify_ssh_key action
-        # This ensures the action is tracked in the database for frontend display
-        paused_execution = WorkspaceActionExecution(
-            workspace_id=self.workspace.id,
-            template_id=self.template.id,
-            action_sequence_id=action_seq.id,
-            action_id=action_seq.action_id,
-            action_type=action_seq.action_type,
-            status='paused',  # Mark as paused, not pending
-            max_attempts=action_seq.retry_config.get('max_attempts', 1)
-        )
-        db.session.add(paused_execution)
-
-        current_app.logger.info(
-            f"✓ Created paused WorkspaceActionExecution for {action_seq.action_id}"
-        )
-
-        # Set provisioning state to awaiting SSH verification
-        self.workspace.provisioning_state = 'awaiting_ssh_verification'
-        self.workspace.progress_message = 'Awaiting SSH key verification'
-
-        # Store metadata about pause
-        extra_data = self.workspace.extra_data or {}
-        extra_data['paused_at_action'] = action_seq.action_id
-        extra_data['paused_before_action'] = True  # Indicates we paused BEFORE this action
-        extra_data['pause_timestamp'] = time.time()
-        self.workspace.extra_data = extra_data
-
-        db.session.commit()
-
-        current_app.logger.info(
-            f"Provisioning paused for workspace {self.workspace.id} before {action_seq.action_id}"
-        )
-
-        return {
-            'success': True,
-            'paused_for_ssh': True,
-            'completed_actions': [a.action_id for a in self.completed_actions],
-            'message': 'Provisioning paused for SSH key verification',
-            'ssh_public_key': self.workspace.ssh_public_key,
-            'paused_before_action': action_seq.action_id
-        }
-
-    def resume_from_current_step(self) -> Dict[str, Any]:
-        """
-        Resume action execution from current provisioning step.
-
-        This method continues executing remaining actions after a pause
-        (e.g., after SSH key verification).
-
-        Returns:
-            Dict with success status and completed actions
-        """
-        # Get all action sequences for this template
-        action_sequences = TemplateActionSequence.query.filter_by(
-            template_id=self.template.id,
-            enabled=True
-        ).order_by(TemplateActionSequence.order).all()
-
-        if not action_sequences:
-            return {
-                'success': True,
-                'message': 'No actions to execute',
-                'completed_actions': []
-            }
-
-        # Resolve dependencies
-        execution_plan = self._resolve_dependencies(action_sequences)
-
-        # Get current step
-        current_step = self.workspace.provisioning_step
-        total_steps = len(execution_plan)
-
-        # Check if we paused BEFORE executing an action
-        extra_data = self.workspace.extra_data or {}
-        paused_before_action = extra_data.get('paused_before_action', False)
-
-        # If paused before action, resume from current step (action not yet executed)
-        # Otherwise resume from next step (current action already completed)
-        resume_from = current_step if paused_before_action else current_step + 1
-        
-        # Clear the paused_before_action flag
-        if paused_before_action:
-            extra_data['paused_before_action'] = False
-            self.workspace.extra_data = extra_data
-            db.session.commit()
-
-        current_app.logger.info(
-            f"Resuming from step {resume_from}/{total_steps} for workspace {self.workspace.id} "
-            f"(paused_before_action={paused_before_action})"
-        )
-
-        # Execute remaining actions
-        for idx in range(resume_from - 1, total_steps):
-            action_seq = execution_plan[idx]
-            actual_idx = idx + 1  # 1-based index
-
-            # Check if action should be executed
-            if not self._should_execute_action(action_seq):
-                self._skip_action(action_seq)
-                continue
-
-            # Check if this action has a paused execution record (from previous pause)
-            # If so, mark it as completed and skip re-execution
-            paused_exec = WorkspaceActionExecution.query.filter_by(
-                workspace_id=self.workspace.id,
-                action_id=action_seq.action_id,
-                status='paused'
-            ).first()
-
-            if paused_exec:
-                # This action was paused (e.g., verify_ssh_key after SSH setup)
-                # Mark as completed since user has performed the verification
-                paused_exec.mark_completed(
-                    result={'verified': True, 'method': 'manual_verification'},
-                    duration_seconds=0
-                )
-                db.session.commit()
-                self.completed_actions.append(paused_exec)
-
-                current_app.logger.info(
-                    f"✓ Marked paused action {action_seq.action_id} as completed during resume"
-                )
-
-                # Update progress
-                self.workspace.provisioning_step = actual_idx
-                self.workspace.progress_percent = int((actual_idx / total_steps) * 100)
-                self.workspace.progress_message = f"Completed: {action_seq.action_id}"
-                db.session.commit()
-
-                continue
-
-            # Check if should pause BEFORE executing this action (for verify_ssh_key with show_modal)
-            if self._should_pause_for_ssh_verification(action_seq):
-                # Store current step before pausing (this action hasn't run yet)
-                self.workspace.provisioning_step = idx
-                db.session.commit()
-                return self._pause_for_ssh_verification(action_seq, idx)
-
-            # Create execution record
-            execution = WorkspaceActionExecution(
-                workspace_id=self.workspace.id,
-                template_id=self.template.id,
-                action_sequence_id=action_seq.id,
-                action_id=action_seq.action_id,
-                action_type=action_seq.action_type,
-                max_attempts=action_seq.retry_config.get('max_attempts', 1)
-            )
-            db.session.add(execution)
-            db.session.commit()
-
-            # Execute action with retry
-            success = self._execute_action_with_retry(action_seq, execution)
-
-            if success:
-                self.completed_actions.append(execution)
-
-                # Update progress
-                self.workspace.provisioning_step = actual_idx
-                self.workspace.progress_percent = int((actual_idx / total_steps) * 100)
-                self.workspace.progress_message = f"Completed: {action_seq.action_id}"
-                db.session.commit()
-            else:
-                self.failed_action = execution
-
-                # Check if fatal error
-                if action_seq.fatal_on_error:
-                    if self.template.rollback_on_fatal_error:
-                        self._rollback_completed_actions()
-
-                    return {
-                        'success': False,
-                        'error': f"Fatal error in action {action_seq.action_id}",
-                        'failed_action': action_seq.action_id,
-                        'completed_actions': [a.action_id for a in self.completed_actions],
-                        'rolled_back': self.template.rollback_on_fatal_error
-                    }
-                else:
-                    # Non-fatal, continue
-                    continue
-
-        return {
-            'success': True,
-            'completed_actions': [a.action_id for a in self.completed_actions],
-            'total_actions': total_steps,
-            'resumed_from_step': current_step
-        }
 
     def _rollback_completed_actions(self):
         """

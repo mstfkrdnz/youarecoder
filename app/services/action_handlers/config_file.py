@@ -14,6 +14,10 @@ class ConfigFileActionHandler(BaseActionHandler):
     REQUIRED_PARAMETERS = ['file_path', 'content']
     OPTIONAL_PARAMETERS = ['mode', 'format', 'backup_existing']
 
+    DISPLAY_NAME = 'Write Configuration File'
+    CATEGORY = 'configuration'
+    DESCRIPTION = 'Writes configuration files with content formatting and backup support'
+
     def execute(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
         """
         Write configuration file.

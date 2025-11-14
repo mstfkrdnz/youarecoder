@@ -13,6 +13,10 @@ class SystemPackagesActionHandler(BaseActionHandler):
     REQUIRED_PARAMETERS = ['packages']
     OPTIONAL_PARAMETERS = ['update_cache']
 
+    DISPLAY_NAME = 'Install System Packages'
+    CATEGORY = 'system'
+    DESCRIPTION = 'Installs system packages using apt-get package manager'
+
     def execute(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
         """
         Install system packages using apt-get.
@@ -30,7 +34,8 @@ class SystemPackagesActionHandler(BaseActionHandler):
 
         packages = params['packages']
         if isinstance(packages, str):
-            packages = [packages]
+            # Split newline-separated package string into list
+            packages = [pkg.strip() for pkg in packages.split('\n') if pkg.strip()]
 
         update_cache = params.get('update_cache', True)
 

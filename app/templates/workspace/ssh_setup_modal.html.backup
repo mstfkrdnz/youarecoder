@@ -225,30 +225,18 @@ function copySshKey() {
 }
 
 // Verify SSH and open workspace
-
 async function verifySshAndOpen() {
-    console.log("🔵 FUNCTION CALLED - verifySshAndOpen started at", new Date().toISOString());
     const button = document.getElementById('verify-button');
     const statusDiv = document.getElementById('verification-status');
 
-    // Prevent double-click
-    if (verificationInProgress) {
-        console.log('Verification already in progress, ignoring click');
-        return;
-    }
-
-    verificationInProgress = true;
-
-    // Disable button IMMEDIATELY with visual feedback
+    // Show loading state
     button.disabled = true;
-    button.style.opacity = '0.5';
-    button.style.cursor = 'not-allowed';
     button.innerHTML = `
         <svg class="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
         </svg>
-        Checking GitHub Access...
+        Verifying SSH Connection...
     `;
 
     try {
@@ -263,10 +251,6 @@ async function verifySshAndOpen() {
         });
 
         const data = await response.json();
-        console.log("🔴 RAW FETCH RESPONSE:", data);
-        console.log("🔴 data.success:", data.success, "Type:", typeof data.success);
-        console.log("🔴 data.ssh_verified:", data.ssh_verified, "Type:", typeof data.ssh_verified);
-        console.log("🔴 Condition (data.success && data.ssh_verified):", (data.success && data.ssh_verified));
 
         statusDiv.classList.remove('hidden');
 
@@ -290,19 +274,10 @@ async function verifySshAndOpen() {
                 </div>
             `;
 
-            // Close modal immediately
-            document.getElementById('ssh-setup-modal').classList.add('hidden');
-            
-            // Show success notification and resume button
-            showSuccessNotification('✓ SSH verified successfully! Click Resume to continue provisioning.');
-            
-            // Show resume button in banner
-            console.log('🟢 About to call showResumeButton');
-            showResumeButton();
-            console.log('🟢 showResumeButton() call completed');
-            
-            // Refresh provisioning status to continue (polling will handle this)
-            // Do NOT redirect - let provisioning complete naturally
+            // Close modal and let provisioning continue
+            setTimeout(() => {
+                document.getElementById('ssh-setup-modal').classList.add('hidden');
+            }, 2000);
 
         } else {
             // SSH verification failed
@@ -363,7 +338,6 @@ async function verifySshAndOpen() {
         `;
     }
 }
-
 
 // Skip SSH setup and go to workspace
 function skipSshSetup() {

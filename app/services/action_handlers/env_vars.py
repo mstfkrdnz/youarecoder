@@ -13,6 +13,10 @@ class EnvironmentVariablesActionHandler(BaseActionHandler):
     REQUIRED_PARAMETERS = ['variables']
     OPTIONAL_PARAMETERS = ['shell_config_file', 'export_format']
 
+    DISPLAY_NAME = 'Set Environment Variables'
+    CATEGORY = 'environment'
+    DESCRIPTION = 'Configures environment variables in shell configuration files'
+
     def execute(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
         """
         Set environment variables.

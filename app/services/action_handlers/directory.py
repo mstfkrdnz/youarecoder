@@ -14,6 +14,10 @@ class DirectoryActionHandler(BaseActionHandler):
     REQUIRED_PARAMETERS = ['path']
     OPTIONAL_PARAMETERS = ['mode', 'parents', 'exist_ok']
 
+    DISPLAY_NAME = 'Create Directory'
+    CATEGORY = 'filesystem'
+    DESCRIPTION = 'Creates directories with specified permissions and parent directory support'
+
     def execute(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
         """
         Create directory with specified permissions.

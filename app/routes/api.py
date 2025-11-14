@@ -168,3 +168,39 @@ def workspace_logs(workspace_id):
             'success': False,
             'error': 'Log retrieval timed out'
         }), 500
+
+
+@bp.route('/actions/types', methods=['GET'])
+def get_action_types():
+    """
+    Return all available action types with metadata for dynamic UI loading.
+
+    Returns:
+        JSON object with action types and their metadata:
+        {
+            'action_type': {
+                'name': 'Display Name',
+                'category': 'category',
+                'description': 'Description',
+                'parameters': {
+                    'required': ['param1', 'param2'],
+                    'optional': ['param3']
+                }
+            },
+            ...
+        }
+    """
+    from app.services.action_executor import ActionExecutor
+
+    action_types = {}
+
+    # Iterate through handler registry
+    for action_type, handler_class in ActionExecutor.HANDLER_REGISTRY.items():
+        action_types[action_type] = {
+            'name': handler_class.get_display_name(),
+            'category': handler_class.get_category(),
+            'description': handler_class.get_description(),
+            'parameters': handler_class.get_parameters_schema()
+        }
+
+    return jsonify(action_types)

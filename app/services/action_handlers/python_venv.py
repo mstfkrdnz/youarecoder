@@ -14,6 +14,10 @@ class PythonVenvActionHandler(BaseActionHandler):
     REQUIRED_PARAMETERS = ['venv_path']
     OPTIONAL_PARAMETERS = ['python_version', 'system_site_packages']
 
+    DISPLAY_NAME = 'Create Python Virtual Environment'
+    CATEGORY = 'environment'
+    DESCRIPTION = 'Creates isolated Python virtual environments for dependency management'
+
     def execute(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
         """
         Create Python virtual environment.

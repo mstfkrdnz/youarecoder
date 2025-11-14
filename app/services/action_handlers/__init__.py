@@ -1,4 +1,5 @@
 from .ssh_key import SSHKeyActionHandler
+from .ssh_verify import VerifySSHKeyHandler
 from .git_clone import GitCloneActionHandler
 from .system_packages import SystemPackagesActionHandler
 from .python_venv import PythonVenvActionHandler
@@ -9,10 +10,12 @@ from .postgres import PostgreSQLDatabaseActionHandler
 from .vscode_extensions import VSCodeExtensionsActionHandler
 from .env_vars import EnvironmentVariablesActionHandler
 from .shell_script import ShellScriptActionHandler
+from .systemd_service import SystemdServiceActionHandler
 from .completion import CompletionMessageActionHandler
 
 __all__ = [
     'SSHKeyActionHandler',
+    'VerifySSHKeyHandler',
     'GitCloneActionHandler',
     'SystemPackagesActionHandler',
     'PythonVenvActionHandler',
@@ -23,5 +26,6 @@ __all__ = [
     'VSCodeExtensionsActionHandler',
     'EnvironmentVariablesActionHandler',
     'ShellScriptActionHandler',
+    'SystemdServiceActionHandler',
     'CompletionMessageActionHandler',
 ]

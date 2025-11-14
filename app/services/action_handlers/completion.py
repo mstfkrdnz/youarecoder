@@ -12,6 +12,10 @@ class CompletionMessageActionHandler(BaseActionHandler):
     REQUIRED_PARAMETERS = []
     OPTIONAL_PARAMETERS = ['message', 'include_credentials', 'include_urls']
 
+    DISPLAY_NAME = 'Display Completion Message'
+    CATEGORY = 'notification'
+    DESCRIPTION = 'Displays workspace provisioning completion message with credentials and URLs'
+
     def execute(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
         """
         Display completion message.

@@ -13,7 +13,11 @@ class GitCloneActionHandler(BaseActionHandler):
     """Clone Git repository to workspace"""
 
     REQUIRED_PARAMETERS = ['repo_url', 'destination_path']
-    OPTIONAL_PARAMETERS = ['branch', 'depth', 'use_ssh', 'recursive']
+    OPTIONAL_PARAMETERS = ['branch', 'depth', 'use_ssh', 'recursive', 'is_private']
+
+    DISPLAY_NAME = 'Clone Git Repository'
+    CATEGORY = 'repository'
+    DESCRIPTION = 'Clones Git repositories with support for SSH, branches, and submodules'
 
     def execute(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -35,12 +39,48 @@ class GitCloneActionHandler(BaseActionHandler):
         # Substitute variables
         params = self.substitute_variables(parameters)
 
-        repo_url = params['repo_url']
-        destination = params['destination_path']
+        # Backward compatibility: support both old and new parameter names
+        repo_url = params.get('repo_url') or params.get('url')
+        destination = params.get('destination_path') or params.get('path')
+
+        # Validate required parameters
+        if not repo_url:
+            raise ValueError("Missing required parameter: 'repo_url' (or legacy 'url')")
+        if not destination:
+            raise ValueError("Missing required parameter: 'destination_path' (or legacy 'path')")
         branch = params.get('branch')
         depth = params.get('depth')
         use_ssh = params.get('use_ssh', False)
         recursive = params.get('recursive', False)
+        is_private = params.get('is_private', False)
+
+        # Private repository validation and SSH key check
+        if is_private:
+            # Check if SSH key exists
+            ssh_key_path = f"{self.home_directory}/.ssh/id_ed25519"
+            if not os.path.exists(ssh_key_path):
+                # Also check for RSA key as fallback
+                ssh_key_path_rsa = f"{self.home_directory}/.ssh/id_rsa"
+                if not os.path.exists(ssh_key_path_rsa):
+                    raise ValueError(
+                        f"Private repository requires SSH key, but no key found at {ssh_key_path} or {ssh_key_path_rsa}. "
+                        "Please add 'Generate SSH Key' action before this clone action."
+                    )
+                ssh_key_path = ssh_key_path_rsa
+
+            self.log_info(f"Private repository detected, SSH key verified at {ssh_key_path}")
+
+            # Auto-convert HTTPS URLs to SSH format for private repos
+            if repo_url.startswith('https://github.com/'):
+                repo_url = repo_url.replace('https://github.com/', 'git@github.com:')
+                if not repo_url.endswith('.git'):
+                    repo_url = repo_url + '.git'
+                self.log_info(f"Converted HTTPS URL to SSH format: {repo_url}")
+            elif repo_url.startswith('https://gitlab.com/'):
+                repo_url = repo_url.replace('https://gitlab.com/', 'git@gitlab.com:')
+                if not repo_url.endswith('.git'):
+                    repo_url = repo_url + '.git'
+                self.log_info(f"Converted HTTPS URL to SSH format: {repo_url}")
 
         self.log_info(f"Cloning repository: {repo_url} → {destination}")
 
@@ -49,7 +89,7 @@ class GitCloneActionHandler(BaseActionHandler):
             raise ValueError(f"Destination already exists: {destination}")
 
         # Build git clone command
-        cmd = ['git', 'clone']
+        cmd = ['/usr/bin/git', 'clone']
 
         # Add branch if specified
         if branch:
@@ -68,18 +108,31 @@ class GitCloneActionHandler(BaseActionHandler):
 
         try:
             # Execute git clone
+            # Set up environment for SSH with StrictHostKeyChecking=no
+            git_env = os.environ.copy()
+            
+            # Use ssh_key_path from parameters if provided for SSH authentication
+            ssh_key_path = params.get('ssh_key_path')
+            if ssh_key_path and os.path.exists(ssh_key_path):
+                git_env['GIT_SSH_COMMAND'] = f'ssh -i {ssh_key_path} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
+                self.log_info(f"Using SSH key: {ssh_key_path}")
+            else:
+                git_env['GIT_SSH_COMMAND'] = 'ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
+                self.log_info("Using default SSH configuration")
+            
             result = subprocess.run(
                 cmd,
                 check=True,
                 capture_output=True,
                 text=True,
-                cwd=os.path.dirname(destination) or '/'
+                cwd=os.path.dirname(destination) or '/',
+                env=git_env
             )
             self.log_info(f"Repository cloned successfully")
 
             # Get current commit hash and branch
             commit_hash = subprocess.run(
-                ['git', 'rev-parse', 'HEAD'],
+                ['/usr/bin/git', 'rev-parse', 'HEAD'],
                 capture_output=True,
                 text=True,
                 cwd=destination,
@@ -87,7 +140,7 @@ class GitCloneActionHandler(BaseActionHandler):
             ).stdout.strip()
 
             current_branch = subprocess.run(
-                ['git', 'rev-parse', '--abbrev-ref', 'HEAD'],
+                ['/usr/bin/git', 'rev-parse', '--abbrev-ref', 'HEAD'],
                 capture_output=True,
                 text=True,
                 cwd=destination,

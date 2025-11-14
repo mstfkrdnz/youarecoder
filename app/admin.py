@@ -11,7 +11,7 @@ from flask import Blueprint, jsonify, abort, send_file
 from flask_login import login_required, current_user
 
 from app import db
-from app.models import User, Company, AuditLog, WorkspaceSession, Payment, Invoice, WorkspaceTemplate, TemplateActionSequence
+from app.models import User, Company, AuditLog, WorkspaceSession, Payment, Invoice, WorkspaceTemplate
 from app.utils.decorators import require_company_admin
 from app.services.proof_package_generator import ChargebackProofGenerator
 
@@ -774,13 +774,16 @@ def template_create():
         if not data.get('name'):
             return jsonify({'error': 'Template name is required'}), 400
 
+        if not data.get('config'):
+            return jsonify({'error': 'Template configuration is required'}), 400
+
         # Create template
         template = WorkspaceTemplate(
             name=data['name'],
             description=data.get('description', ''),
             category=data.get('category', 'general'),
             visibility=data.get('visibility', 'company'),
-            config=data.get('config', {}),  # Default to empty dict if not provided
+            config=data['config'],
             rollback_on_fatal_error=data.get('rollback_on_fatal_error', False),
             company_id=current_user.company_id if data.get('visibility') != 'official' else None,
             created_by=current_user.id
@@ -790,6 +793,7 @@ def template_create():
         db.session.flush()  # Get template ID before creating action sequences
 
         # Create action sequences if provided
+        from app.models import TemplateActionSequence
         actions = data.get('actions', [])
         for action_data in actions:
             action_sequence = TemplateActionSequence(
@@ -906,6 +910,8 @@ def template_detail(template_id):
 
             # Update action sequences if provided
             if 'actions' in data:
+                from app.models import TemplateActionSequence
+
                 # Delete existing action sequences
                 TemplateActionSequence.query.filter_by(template_id=template.id).delete()
 

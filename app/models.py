@@ -123,6 +123,11 @@ class User(UserMixin, db.Model):
     # Relationships
     owned_workspaces = db.relationship('Workspace', foreign_keys='Workspace.owner_id', back_populates='owner', lazy='dynamic', overlaps="workspaces")
 
+    @property
+    def workspaces(self):
+        """Alias for owned_workspaces to maintain backward compatibility."""
+        return self.owned_workspaces
+
     def __repr__(self):
         return f'<User {self.email}>'
 
@@ -219,6 +224,7 @@ class Workspace(db.Model):
     # Authentication and SSH fields (Phase 3 - Template System)
     access_token = db.Column(db.String(64), unique=True, nullable=True)  # Token-based code-server auth
     ssh_public_key = db.Column(db.Text, nullable=True)  # SSH key for private GitHub repos
+    is_ssh_verified = db.Column(db.Boolean, nullable=False, default=False)  # Whether SSH key has been verified with GitHub
     extra_data = db.Column(db.JSON, nullable=True)  # Additional workspace data (e.g., pending_private_repos)
 
     # State machine fields for provisioning tracking (Phase 5)
@@ -271,6 +277,21 @@ class Workspace(db.Model):
         if self.access_token:
             return f"https://{self.subdomain}.youarecoder.com/?token={self.access_token}"
         return f"https://{self.subdomain}.youarecoder.com"
+
+    @property
+    def home_directory(self):
+        """Get home directory path for the workspace Linux user."""
+        return f"/home/{self.linux_username}"
+
+    @property
+    def user(self):
+        """Alias for owner - for backward compatibility with action executor."""
+        return self.owner
+
+    @property
+    def user_id(self):
+        """Alias for owner_id - for backward compatibility with action executor."""
+        return self.owner_id
 
 
 class LoginAttempt(db.Model):
@@ -715,6 +736,7 @@ class WorkspaceTemplate(db.Model):
     category = db.Column(db.String(50))  # web, data-science, mobile, devops, etc.
     visibility = db.Column(db.String(20), nullable=False, default='company')  # official, company, user
     is_active = db.Column(db.Boolean, nullable=False, default=True)
+    rollback_on_fatal_error = db.Column(db.Boolean, nullable=False, default=False)  # Rollback on fatal action errors
 
     # Template configuration stored as JSON
     # Schema: {
@@ -739,11 +761,17 @@ class WorkspaceTemplate(db.Model):
 
     # Relationships
     workspaces = db.relationship('Workspace', backref='template', lazy='dynamic')
+    # Note: action_sequences backref is defined in TemplateActionSequence model
     creator = db.relationship('User', foreign_keys=[created_by])
     company = db.relationship('Company', backref=db.backref('templates', lazy='dynamic'))
 
     def __repr__(self):
         return f'<WorkspaceTemplate {self.name} ({self.category})>'
+
+    @property
+    def is_action_based(self):
+        """Check if template has action sequences configured."""
+        return self.action_sequences.count() > 0
 
     def increment_usage(self):
         """Increment usage counter when template is used."""
@@ -752,6 +780,9 @@ class WorkspaceTemplate(db.Model):
 
     def to_dict(self):
         """Convert to dictionary for JSON serialization."""
+        # Get action sequences from relationship, ordered by order field
+        action_sequences = self.action_sequences.order_by(TemplateActionSequence.order).all()
+
         return {
             'id': self.id,
             'name': self.name,
@@ -759,12 +790,29 @@ class WorkspaceTemplate(db.Model):
             'category': self.category,
             'visibility': self.visibility,
             'is_active': self.is_active,
+            'rollback_on_fatal_error': self.rollback_on_fatal_error,
             'config': self.config,
             'company_id': self.company_id,
             'created_by': self.created_by,
             'usage_count': self.usage_count,
             'created_at': self.created_at.isoformat(),
-            'updated_at': self.updated_at.isoformat()
+            'updated_at': self.updated_at.isoformat(),
+            'action_sequences': [
+                {
+                    'id': action.id,
+                    'action_id': action.action_id,
+                    'action_type': action.action_type,
+                    'display_name': action.display_name,
+                    'description': action.description,
+                    'category': action.category,
+                    'order': action.order,
+                    'enabled': action.enabled,
+                    'fatal_on_error': action.fatal_on_error,
+                    'retry_config': action.retry_config,
+                    'parameters': action.parameters,
+                    'dependencies': action.dependencies
+                } for action in action_sequences
+            ]
         }
 
 
@@ -998,6 +1046,29 @@ class TemplateActionSequence(db.Model):
         db.Index('ix_template_action_sequences_template_order', 'template_id', 'order'),
     )
 
+    def to_dict(self):
+        """Serialize action sequence to dictionary for JSON encoding"""
+        return {
+            'id': self.id,
+            'template_id': self.template_id,
+            'action_id': self.action_id,
+            'action_type': self.action_type,
+            'display_name': self.display_name,
+            'description': self.description,
+            'category': self.category,
+            'order': self.order,
+            'enabled': self.enabled,
+            'fatal_on_error': self.fatal_on_error,
+            'retry_config': self.retry_config,
+            'parameters': self.parameters,
+            'dependencies': self.dependencies,
+            'condition': self.condition,
+            'validation': self.validation,
+            'rollback': self.rollback,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+        }
+
     def __repr__(self):
         return f'<TemplateActionSequence {self.template_id}:{self.action_id}>'
 
@@ -1060,6 +1131,13 @@ class WorkspaceActionExecution(db.Model):
         self.started_at = datetime.utcnow()
 
     def mark_completed(self, result=None, duration_seconds=None):
+        # Check if result indicates failure
+        if result and isinstance(result, dict) and result.get('success') is False:
+            # Mark as failed instead
+            error_msg = result.get('error') or result.get('stderr') or 'Action returned success=false'
+            self.mark_failed(error_msg)
+            return
+        
         self.status = self.STATUS_COMPLETED
         self.completed_at = datetime.utcnow()
         self.result = result

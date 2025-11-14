@@ -14,6 +14,10 @@ class SSHKeyActionHandler(BaseActionHandler):
     REQUIRED_PARAMETERS = ['key_type']
     OPTIONAL_PARAMETERS = ['key_comment', 'key_path', 'add_github_to_known_hosts']
 
+    DISPLAY_NAME = 'Generate SSH Key'
+    CATEGORY = 'security'
+    DESCRIPTION = 'Generates ED25519 or RSA SSH key pairs for secure authentication'
+
     def execute(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
         """
         Generate SSH key pair.
@@ -46,7 +50,7 @@ class SSHKeyActionHandler(BaseActionHandler):
 
         # Generate SSH key
         cmd = [
-            'ssh-keygen',
+            '/usr/bin/ssh-keygen',
             '-t', key_type,
             '-f', key_path,
             '-N', '',  # No passphrase
@@ -74,7 +78,13 @@ class SSHKeyActionHandler(BaseActionHandler):
         os.chmod(f'{key_path}.pub', 0o644)  # Public key: rw-r--r--
         os.chmod(ssh_dir, 0o700)  # .ssh directory: rwx------
 
-        self.log_info("Set SSH key permissions")
+        # Set correct ownership (FIXED)
+        import shutil
+        shutil.chown(ssh_dir, user=self.linux_username, group=self.linux_username)
+        shutil.chown(key_path, user=self.linux_username, group=self.linux_username)
+        shutil.chown(f'{key_path}.pub', user=self.linux_username, group=self.linux_username)
+
+        self.log_info("Set SSH key permissions and ownership")
 
         # Read public key
         with open(f'{key_path}.pub', 'r') as f:
@@ -143,4 +153,9 @@ class SSHKeyActionHandler(BaseActionHandler):
                 f.write(f'{key}\n')
 
         os.chmod(known_hosts_path, 0o644)
+        
+        # Set ownership on known_hosts (FIXED)
+        import shutil
+        shutil.chown(known_hosts_path, user=self.linux_username, group=self.linux_username)
+        
         self.log_info("Added GitHub to known_hosts")

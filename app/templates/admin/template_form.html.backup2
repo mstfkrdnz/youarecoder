@@ -147,34 +147,6 @@ async function loadActionTypes() {
 // Initialize action types on page load
 document.addEventListener('DOMContentLoaded', async function() {
     await loadActionTypes();
-
-    // Load existing actions after actionTypes is loaded
-    {% if action_sequences %}
-    const sequences = {{ action_sequences | tojson | safe }};
-    sequences.forEach(action => {
-        addAction();
-        const actionId = actions[actions.length - 1];
-        const container = document.getElementById(actionId);
-
-        container.querySelector('.action-type').value = action.action_type;
-        container.querySelector('.action-display-name').value = action.display_name;
-        container.querySelector('.action-id').value = action.action_id;
-        container.querySelector('.action-enabled').checked = action.enabled;
-        container.querySelector('.action-fatal').checked = action.fatal_on_error;
-        container.querySelector('.action-retries').value = action.retry_config?.max_attempts || 1;
-        container.querySelector('.action-order').value = action.order;
-
-        updateActionParameters(actionId, action.action_type);
-
-        // Set parameter values
-        setTimeout(() => {
-            for (const [key, value] of Object.entries(action.parameters || {})) {
-                const input = container.querySelector(`.param-${key}`);
-                if (input) input.value = value;
-            }
-        }, 100);
-    });
-    {% endif %}
 });
 
 function addAction() {
@@ -336,6 +308,35 @@ function collectActions() {
     return actionsData;
 }
 
+// Load existing actions if editing
+{% if action_sequences %}
+window.addEventListener('DOMContentLoaded', function() {
+    const sequences = {{ action_sequences | tojson | safe }};
+    sequences.forEach(action => {
+        addAction();
+        const actionId = actions[actions.length - 1];
+        const container = document.getElementById(actionId);
+
+        container.querySelector('.action-type').value = action.action_type;
+        container.querySelector('.action-display-name').value = action.display_name;
+        container.querySelector('.action-id').value = action.action_id;
+        container.querySelector('.action-enabled').checked = action.enabled;
+        container.querySelector('.action-fatal').checked = action.fatal_on_error;
+        container.querySelector('.action-retries').value = action.retry_config?.max_attempts || 1;
+        container.querySelector('.action-order').value = action.order;
+
+        updateActionParameters(actionId, action.action_type);
+
+        // Set parameter values
+        setTimeout(() => {
+            for (const [key, value] of Object.entries(action.parameters || {})) {
+                const input = container.querySelector(`.param-${key}`);
+                if (input) input.value = value;
+            }
+        }, 100);
+    });
+});
+{% endif %}
 
 document.getElementById('template-form').addEventListener('submit', async function(e) {
     e.preventDefault();

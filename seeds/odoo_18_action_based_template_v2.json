@@ -1,0 +1,554 @@
+{
+  "name": "Odoo 18 Development (Action-Based)",
+  "description": "Complete Odoo 18.4 development environment with PostgreSQL, Python venv, community/enterprise repositories, systemd service, and dedicated Odoo subdomain",
+  "category": "backend",
+  "visibility": "official",
+  "is_active": true,
+  "is_action_based": true,
+  "config": {
+    "template_metadata": {
+      "additional_services": [
+        {
+          "name": "odoo",
+          "port": 8069,
+          "subdomain_suffix": "odoo",
+          "priority": 100,
+          "description": "Odoo web interface accessible at {workspace}-odoo.youarecoder.com"
+        }
+      ],
+      "environment_defaults": {
+        "ODOO_RC": "{home_directory}/odoo-dev-tools/odoo.conf",
+        "PYTHONPATH": "{home_directory}/odoo-community:{home_directory}/odoo-enterprise:{home_directory}/odoo-customs"
+      }
+    },
+    "actions": [
+      {
+        "action_id": "001_generate_ssh_key",
+        "action_type": "generate_ssh_key",
+        "display_name": "Generate SSH Key",
+        "description": "Generate SSH key pair for accessing private Git repositories",
+        "category": "security",
+        "order": 1,
+        "enabled": true,
+        "fatal_on_error": false,
+        "retry_config": {
+          "max_attempts": 1,
+          "retry_delay_seconds": 0,
+          "exponential_backoff": false
+        },
+        "parameters": {
+          "key_name": "id_rsa_odoo",
+          "key_type": "rsa",
+          "key_bits": 4096,
+          "comment": "odoo-workspace-{workspace_id}"
+        },
+        "dependencies": [],
+        "condition": {},
+        "validation": null,
+        "rollback": null
+      },
+      {
+        "action_id": "002_install_system_packages",
+        "action_type": "install_system_packages",
+        "display_name": "Install System Packages",
+        "description": "Install required system packages for Odoo development",
+        "category": "system",
+        "order": 2,
+        "enabled": true,
+        "fatal_on_error": false,
+        "retry_config": {
+          "max_attempts": 1,
+          "retry_delay_seconds": 0,
+          "exponential_backoff": false
+        },
+        "parameters": {
+          "packages": [
+            "python3",
+            "python3-pip",
+            "python3-venv",
+            "postgresql",
+            "postgresql-contrib",
+            "libpq-dev",
+            "python3-dev",
+            "build-essential",
+            "libxml2-dev",
+            "libxslt1-dev",
+            "libldap2-dev",
+            "libsasl2-dev",
+            "libjpeg-dev",
+            "libpng-dev",
+            "libfreetype6-dev",
+            "liblcms2-dev",
+            "libwebp-dev",
+            "libtiff5-dev",
+            "libopenjp2-7-dev",
+            "zlib1g-dev",
+            "git",
+            "curl",
+            "wget",
+            "wkhtmltopdf",
+            "node-less"
+          ]
+        },
+        "dependencies": [],
+        "condition": {},
+        "validation": null,
+        "rollback": null
+      },
+      {
+        "action_id": "003_clone_odoo_community",
+        "action_type": "clone_git_repository",
+        "display_name": "Clone Odoo Community",
+        "description": "Clone Odoo Community Edition repository (shallow clone)",
+        "category": "repository",
+        "order": 3,
+        "enabled": true,
+        "fatal_on_error": false,
+        "retry_config": {
+          "max_attempts": 1,
+          "retry_delay_seconds": 0,
+          "exponential_backoff": false
+        },
+        "parameters": {
+          "repo_url": "https://github.com/odoo/odoo.git",
+          "branch": "18.0",
+          "target_directory": "{home_directory}/odoo-community",
+          "shallow": true,
+          "use_ssh": false
+        },
+        "dependencies": [
+          "001_generate_ssh_key",
+          "002_install_system_packages"
+        ],
+        "condition": {},
+        "validation": null,
+        "rollback": null
+      },
+      {
+        "action_id": "004_clone_odoo_enterprise",
+        "action_type": "clone_git_repository",
+        "display_name": "Clone Odoo Enterprise",
+        "description": "Clone Odoo Enterprise repository (shallow clone, requires SSH key)",
+        "category": "repository",
+        "order": 4,
+        "enabled": true,
+        "fatal_on_error": false,
+        "retry_config": {
+          "max_attempts": 1,
+          "retry_delay_seconds": 0,
+          "exponential_backoff": false
+        },
+        "parameters": {
+          "repo_url": "git@github.com:odoo/enterprise.git",
+          "branch": "18.0",
+          "target_directory": "{home_directory}/odoo-enterprise",
+          "shallow": true,
+          "use_ssh": true,
+          "ssh_key_path": "{home_directory}/.ssh/id_rsa_odoo"
+        },
+        "dependencies": [
+          "001_generate_ssh_key",
+          "002_install_system_packages"
+        ],
+        "condition": {},
+        "validation": null,
+        "rollback": null
+      },
+      {
+        "action_id": "005_clone_development_tools",
+        "action_type": "clone_git_repository",
+        "display_name": "Clone Development Tools",
+        "description": "Clone Odoo development tools repository",
+        "category": "repository",
+        "order": 5,
+        "enabled": true,
+        "fatal_on_error": false,
+        "retry_config": {
+          "max_attempts": 1,
+          "retry_delay_seconds": 0,
+          "exponential_backoff": false
+        },
+        "parameters": {
+          "repo_url": "https://github.com/alkedos/m0-odoo-development.git",
+          "branch": "main",
+          "target_directory": "{home_directory}/odoo-dev-tools",
+          "shallow": false,
+          "use_ssh": false
+        },
+        "dependencies": [
+          "001_generate_ssh_key",
+          "002_install_system_packages"
+        ],
+        "condition": {},
+        "validation": null,
+        "rollback": null
+      },
+      {
+        "action_id": "006_create_custom_modules_directory",
+        "action_type": "create_directory",
+        "display_name": "Create Custom Modules Directory",
+        "description": "Create directory for custom Odoo modules",
+        "category": "filesystem",
+        "order": 6,
+        "enabled": true,
+        "fatal_on_error": false,
+        "retry_config": {
+          "max_attempts": 1,
+          "retry_delay_seconds": 0,
+          "exponential_backoff": false
+        },
+        "parameters": {
+          "path": "{home_directory}/odoo-customs",
+          "mode": "0755"
+        },
+        "dependencies": [],
+        "condition": {},
+        "validation": null,
+        "rollback": null
+      },
+      {
+        "action_id": "007_create_odoo_data_directory",
+        "action_type": "create_directory",
+        "display_name": "Create Odoo Data Directory",
+        "description": "Create directory for Odoo file storage",
+        "category": "filesystem",
+        "order": 7,
+        "enabled": true,
+        "fatal_on_error": false,
+        "retry_config": {
+          "max_attempts": 1,
+          "retry_delay_seconds": 0,
+          "exponential_backoff": false
+        },
+        "parameters": {
+          "path": "{home_directory}/odoo-data",
+          "mode": "0755"
+        },
+        "dependencies": [],
+        "condition": {},
+        "validation": null,
+        "rollback": null
+      },
+      {
+        "action_id": "008_create_python_virtual_environment",
+        "action_type": "create_python_venv",
+        "display_name": "Create Python Virtual Environment",
+        "description": "Create Python virtual environment in odoo-dev-tools",
+        "category": "environment",
+        "order": 8,
+        "enabled": true,
+        "fatal_on_error": false,
+        "retry_config": {
+          "max_attempts": 1,
+          "retry_delay_seconds": 0,
+          "exponential_backoff": false
+        },
+        "parameters": {
+          "venv_path": "{home_directory}/odoo-dev-tools/venv",
+          "python_version": "python3"
+        },
+        "dependencies": [
+          "005_clone_development_tools",
+          "002_install_system_packages"
+        ],
+        "condition": {},
+        "validation": null,
+        "rollback": null
+      },
+      {
+        "action_id": "009_install_odoo_community_requirements",
+        "action_type": "install_pip_requirements",
+        "display_name": "Install Odoo Community Requirements",
+        "description": "Install Python dependencies for Odoo Community",
+        "category": "system",
+        "order": 9,
+        "enabled": true,
+        "fatal_on_error": false,
+        "retry_config": {
+          "max_attempts": 1,
+          "retry_delay_seconds": 0,
+          "exponential_backoff": false
+        },
+        "parameters": {
+          "venv_path": "{home_directory}/odoo-dev-tools/venv",
+          "requirements_file": "{home_directory}/odoo-community/requirements.txt"
+        },
+        "dependencies": [
+          "008_create_python_virtual_environment",
+          "003_clone_odoo_community"
+        ],
+        "condition": {},
+        "validation": null,
+        "rollback": null
+      },
+      {
+        "action_id": "010_install_dev_tools_requirements",
+        "action_type": "install_pip_requirements",
+        "display_name": "Install Dev Tools Requirements",
+        "description": "Install Python dependencies for development tools",
+        "category": "system",
+        "order": 10,
+        "enabled": true,
+        "fatal_on_error": false,
+        "retry_config": {
+          "max_attempts": 1,
+          "retry_delay_seconds": 0,
+          "exponential_backoff": false
+        },
+        "parameters": {
+          "venv_path": "{home_directory}/odoo-dev-tools/venv",
+          "requirements_file": "{home_directory}/odoo-dev-tools/requirements.txt"
+        },
+        "dependencies": [
+          "008_create_python_virtual_environment",
+          "005_clone_development_tools"
+        ],
+        "condition": {},
+        "validation": null,
+        "rollback": null
+      },
+      {
+        "action_id": "011_create_postgresql_database",
+        "action_type": "create_postgresql_database",
+        "display_name": "Create PostgreSQL Database",
+        "description": "Create PostgreSQL database for Odoo development",
+        "category": "database",
+        "order": 11,
+        "enabled": true,
+        "fatal_on_error": false,
+        "retry_config": {
+          "max_attempts": 1,
+          "retry_delay_seconds": 0,
+          "exponential_backoff": false
+        },
+        "parameters": {
+          "database_name": "odoo_dev_{workspace_id}",
+          "owner": "{workspace_linux_username}",
+          "encoding": "UTF8",
+          "locale": "en_US.UTF-8"
+        },
+        "dependencies": [
+          "002_install_system_packages"
+        ],
+        "condition": {},
+        "validation": null,
+        "rollback": null
+      },
+      {
+        "action_id": "012_create_odoo_configuration_file",
+        "action_type": "write_configuration_file",
+        "display_name": "Create Odoo Configuration File",
+        "description": "Create Odoo configuration file with paths and database settings",
+        "category": "filesystem",
+        "order": 12,
+        "enabled": true,
+        "fatal_on_error": false,
+        "retry_config": {
+          "max_attempts": 1,
+          "retry_delay_seconds": 0,
+          "exponential_backoff": false
+        },
+        "parameters": {
+          "file_path": "{home_directory}/odoo-dev-tools/odoo.conf",
+          "content": "[options]\naddons_path = {home_directory}/odoo-community/addons,{home_directory}/odoo-enterprise,{home_directory}/odoo-customs\ndata_dir = {home_directory}/odoo-data\ndb_host = localhost\ndb_port = 5432\ndb_user = {workspace_linux_username}\ndb_password = False\ndb_name = odoo_dev_{workspace_id}\nhttp_port = 8069\nhttp_interface = 127.0.0.1\nlogfile = {home_directory}/odoo.log\nlog_level = info\n",
+          "mode": "0644"
+        },
+        "dependencies": [
+          "005_clone_development_tools",
+          "011_create_postgresql_database"
+        ],
+        "condition": {},
+        "validation": null,
+        "rollback": null
+      },
+      {
+        "action_id": "013_create_vs_code_workspace_file",
+        "action_type": "write_configuration_file",
+        "display_name": "Create VS Code Workspace File",
+        "description": "Create VS Code multi-root workspace file",
+        "category": "filesystem",
+        "order": 13,
+        "enabled": true,
+        "fatal_on_error": false,
+        "retry_config": {
+          "max_attempts": 1,
+          "retry_delay_seconds": 0,
+          "exponential_backoff": false
+        },
+        "parameters": {
+          "file_path": "{home_directory}/odoo.code-workspace",
+          "content": "{\n  \"folders\": [\n    {\"name\": \"Odoo Community\", \"path\": \"odoo-community\"},\n    {\"name\": \"Odoo Enterprise\", \"path\": \"odoo-enterprise\"},\n    {\"name\": \"Custom Modules\", \"path\": \"odoo-customs\"},\n    {\"name\": \"Development Tools\", \"path\": \"odoo-dev-tools\"}\n  ],\n  \"settings\": {\n    \"workbench.colorTheme\": \"Default Dark Modern\",\n    \"python.defaultInterpreterPath\": \"${workspaceFolder:Development Tools}/venv/bin/python\",\n    \"python.linting.enabled\": true,\n    \"python.linting.pylintEnabled\": true,\n    \"python.formatting.provider\": \"black\",\n    \"files.exclude\": {\n      \"**/__pycache__\": true,\n      \"**/*.pyc\": true,\n      \"**/.pytest_cache\": true\n    },\n    \"editor.formatOnSave\": true,\n    \"editor.rulers\": [80, 120],\n    \"python.analysis.extraPaths\": [\n      \"${workspaceFolder:Odoo Community}\",\n      \"${workspaceFolder:Odoo Enterprise}\",\n      \"${workspaceFolder:Custom Modules}\"\n    ]\n  },\n  \"launch\": {\n    \"version\": \"0.2.0\",\n    \"configurations\": [\n      {\n        \"name\": \"Odoo: Run Development Server\",\n        \"type\": \"debugpy\",\n        \"request\": \"launch\",\n        \"program\": \"${workspaceFolder:Development Tools}/odoo-run.py\",\n        \"console\": \"integratedTerminal\",\n        \"args\": [\n          \"--config=${workspaceFolder:Development Tools}/odoo.conf\",\n          \"-d\", \"odoo_dev_{workspace_id}\",\n          \"-i\", \"base\",\n          \"--dev=all\"\n        ],\n        \"justMyCode\": false,\n        \"env\": {\n          \"PYTHONPATH\": \"${workspaceFolder:Odoo Community}:${workspaceFolder:Odoo Enterprise}:${workspaceFolder:Custom Modules}\"\n        }\n      },\n      {\n        \"name\": \"Odoo: Update Module\",\n        \"type\": \"debugpy\",\n        \"request\": \"launch\",\n        \"program\": \"${workspaceFolder:Development Tools}/odoo-run.py\",\n        \"console\": \"integratedTerminal\",\n        \"args\": [\n          \"--config=${workspaceFolder:Development Tools}/odoo.conf\",\n          \"-d\", \"odoo_dev_{workspace_id}\",\n          \"-u\", \"${input:moduleName}\",\n          \"--dev=all\"\n        ],\n        \"justMyCode\": false,\n        \"env\": {\n          \"PYTHONPATH\": \"${workspaceFolder:Odoo Community}:${workspaceFolder:Odoo Enterprise}:${workspaceFolder:Custom Modules}\"\n        }\n      }\n    ],\n    \"inputs\": [\n      {\n        \"id\": \"moduleName\",\n        \"type\": \"promptString\",\n        \"description\": \"Enter the module name to update\",\n        \"default\": \"base\"\n      }\n    ]\n  }\n}",
+          "mode": "0644"
+        },
+        "dependencies": [
+          "003_clone_odoo_community",
+          "004_clone_odoo_enterprise",
+          "005_clone_development_tools",
+          "006_create_custom_modules_directory"
+        ],
+        "condition": {},
+        "validation": null,
+        "rollback": null
+      },
+      {
+        "action_id": "014_install_vs_code_extensions",
+        "action_type": "install_vscode_extensions",
+        "display_name": "Install VS Code Extensions",
+        "description": "Install recommended VS Code extensions for Odoo development",
+        "category": "system",
+        "order": 14,
+        "enabled": true,
+        "fatal_on_error": false,
+        "retry_config": {
+          "max_attempts": 1,
+          "retry_delay_seconds": 0,
+          "exponential_backoff": false
+        },
+        "parameters": {
+          "extensions": [
+            "anthropic.claude-code",
+            "ms-python.python",
+            "ms-python.debugpy",
+            "jigar-patel.odoosnippets"
+          ]
+        },
+        "dependencies": [],
+        "condition": {},
+        "validation": null,
+        "rollback": null
+      },
+      {
+        "action_id": "015_set_environment_variables",
+        "action_type": "set_environment_variables",
+        "display_name": "Set Environment Variables",
+        "description": "Set Odoo environment variables in user profile",
+        "category": "environment",
+        "order": 15,
+        "enabled": true,
+        "fatal_on_error": false,
+        "retry_config": {
+          "max_attempts": 1,
+          "retry_delay_seconds": 0,
+          "exponential_backoff": false
+        },
+        "parameters": {
+          "variables": {
+            "ODOO_RC": "{home_directory}/odoo-dev-tools/odoo.conf",
+            "PYTHONPATH": "{home_directory}/odoo-community:{home_directory}/odoo-enterprise:{home_directory}/odoo-customs"
+          },
+          "scope": "user"
+        },
+        "dependencies": [
+          "012_create_odoo_configuration_file"
+        ],
+        "condition": {},
+        "validation": null,
+        "rollback": null
+      },
+      {
+        "action_id": "016_initialize_odoo_database",
+        "action_type": "execute_shell_script",
+        "display_name": "Initialize Odoo Database",
+        "description": "Initialize Odoo database with base module",
+        "category": "execution",
+        "order": 16,
+        "enabled": true,
+        "fatal_on_error": false,
+        "retry_config": {
+          "max_attempts": 1,
+          "retry_delay_seconds": 0,
+          "exponential_backoff": false
+        },
+        "parameters": {
+          "script_content": "#!/bin/bash\nset -e\ncd {home_directory}/odoo-dev-tools\nsource venv/bin/activate\nexport PYTHONPATH=\"{home_directory}/odoo-community:{home_directory}/odoo-enterprise:{home_directory}/odoo-customs\"\npython3 odoo-run.py --config=odoo.conf -d odoo_dev_{workspace_id} -i base --stop-after-init\necho \"Odoo database initialized successfully!\"",
+          "working_directory": "{home_directory}/odoo-dev-tools",
+          "timeout": 300,
+          "environment": {
+            "PYTHONPATH": "{home_directory}/odoo-community:{home_directory}/odoo-enterprise:{home_directory}/odoo-customs"
+          }
+        },
+        "dependencies": [
+          "008_create_python_virtual_environment",
+          "009_install_odoo_community_requirements",
+          "011_create_postgresql_database",
+          "012_create_odoo_configuration_file"
+        ],
+        "condition": {},
+        "validation": null,
+        "rollback": null
+      },
+      {
+        "action_id": "017_create_odoo_systemd_service",
+        "action_type": "create_systemd_service",
+        "display_name": "Create Odoo Systemd Service",
+        "description": "Create systemd service to run Odoo automatically",
+        "category": "service",
+        "order": 17,
+        "enabled": true,
+        "fatal_on_error": false,
+        "retry_config": {
+          "max_attempts": 1,
+          "retry_delay_seconds": 0,
+          "exponential_backoff": false
+        },
+        "parameters": {
+          "service_name": "odoo-{workspace_id}",
+          "user": "{workspace_linux_username}",
+          "user_mode": false,
+          "exec_start": "{home_directory}/odoo-dev-tools/venv/bin/python3 {home_directory}/odoo-dev-tools/odoo-run.py --config={home_directory}/odoo-dev-tools/odoo.conf -d odoo_dev_{workspace_id}",
+          "working_directory": "{home_directory}/odoo-dev-tools",
+          "description": "Odoo 18 Development Server for workspace {workspace_id}",
+          "restart": "on-failure",
+          "restart_sec": 5,
+          "enabled": true,
+          "after": [
+            "network.target",
+            "postgresql.service"
+          ],
+          "type": "simple",
+          "environment": {
+            "PYTHONPATH": "{home_directory}/odoo-community:{home_directory}/odoo-enterprise:{home_directory}/odoo-customs",
+            "ODOO_RC": "{home_directory}/odoo-dev-tools/odoo.conf"
+          },
+          "standard_output": "append:{home_directory}/odoo-systemd.log",
+          "standard_error": "append:{home_directory}/odoo-systemd-error.log"
+        },
+        "dependencies": [
+          "008_create_python_virtual_environment",
+          "009_install_odoo_community_requirements",
+          "011_create_postgresql_database",
+          "012_create_odoo_configuration_file",
+          "016_initialize_odoo_database"
+        ],
+        "condition": {},
+        "validation": null,
+        "rollback": null
+      },
+      {
+        "action_id": "018_display_completion_message",
+        "action_type": "display_completion_message",
+        "display_name": "Display Completion Message",
+        "description": "Show success message with access instructions",
+        "category": "notification",
+        "order": 18,
+        "enabled": true,
+        "fatal_on_error": false,
+        "retry_config": {
+          "max_attempts": 1,
+          "retry_delay_seconds": 0,
+          "exponential_backoff": false
+        },
+        "parameters": {
+          "message": "\ud83c\udf89 Odoo 18.4 Development Environment Ready!\n\n\ud83d\udccd Access Points:\n  \u2022 Code Editor: https://{workspace_subdomain}.youarecoder.com\n  \u2022 Odoo Interface: https://{workspace_subdomain}-odoo.youarecoder.com\n\n\ud83d\udcc2 Project Structure:\n  \u2022 Odoo Community: ~/odoo-community\n  \u2022 Odoo Enterprise: ~/odoo-enterprise\n  \u2022 Custom Modules: ~/odoo-customs\n  \u2022 Dev Tools: ~/odoo-dev-tools\n\n\ud83d\uddc4\ufe0f Database: odoo_dev_{workspace_id}\n\n\ud83d\udd27 Configuration: ~/odoo-dev-tools/odoo.conf\n\n\ud83d\ude80 Systemd Service:\n  \u2022 Service: odoo-{workspace_id}\n  \u2022 Status: sudo systemctl status odoo-{workspace_id}\n  \u2022 Logs: journalctl -u odoo-{workspace_id} -f\n\n\ud83d\udca1 VS Code Workspace: ~/odoo.code-workspace\n\n\ud83d\udd11 SSH Key: ~/.ssh/id_rsa_odoo (add to GitHub for enterprise access)\n\nHappy coding! \ud83d\ude80",
+          "level": "success"
+        },
+        "dependencies": [
+          "017_create_odoo_systemd_service"
+        ],
+        "condition": {},
+        "validation": null,
+        "rollback": null
+      }
+    ]
+  }
+}

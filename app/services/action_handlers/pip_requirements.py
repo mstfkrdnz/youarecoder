@@ -14,6 +14,10 @@ class PipRequirementsActionHandler(BaseActionHandler):
     REQUIRED_PARAMETERS = []
     OPTIONAL_PARAMETERS = ['requirements_file', 'packages', 'venv_path', 'upgrade']
 
+    DISPLAY_NAME = 'Install Python Packages'
+    CATEGORY = 'dependencies'
+    DESCRIPTION = 'Installs Python packages via pip from requirements file or package list'
+
     def execute(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
         """
         Install Python packages via pip.
@@ -37,7 +41,8 @@ class PipRequirementsActionHandler(BaseActionHandler):
         upgrade = params.get('upgrade', False)
 
         if isinstance(packages, str):
-            packages = [packages]
+            # Split newline-separated package string into list
+            packages = [pkg.strip() for pkg in packages.split('\n') if pkg.strip()]
 
         # Determine pip command
         if venv_path:

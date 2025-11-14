@@ -14,6 +14,10 @@ class ShellScriptActionHandler(BaseActionHandler):
     REQUIRED_PARAMETERS = []
     OPTIONAL_PARAMETERS = ['command', 'script_path', 'script_content', 'working_directory', 'timeout', 'shell']
 
+    DISPLAY_NAME = 'Execute Shell Script'
+    CATEGORY = 'execution'
+    DESCRIPTION = 'Executes shell commands and scripts with timeout and working directory support'
+
     def execute(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
         """
         Execute shell script or command.
@@ -37,6 +41,12 @@ class ShellScriptActionHandler(BaseActionHandler):
         script_path = params.get('script_path')
         script_content = params.get('script_content')
         working_dir = params.get('working_directory', self.home_directory)
+        # Expand ~ to workspace user's home directory (not root's home)
+        if working_dir == '~' or working_dir.startswith('~/'):
+            working_dir = working_dir.replace('~', self.home_directory, 1)
+        else:
+            # Fallback to os.path.expanduser for other cases
+            working_dir = os.path.expanduser(working_dir)
         timeout = params.get('timeout', 300)
         shell = params.get('shell', '/bin/bash')
 
@@ -75,15 +85,29 @@ class ShellScriptActionHandler(BaseActionHandler):
             else:
                 raise ValueError("Must specify one of: command, script_path, or script_content")
 
-            # Execute
-            result = subprocess.run(
-                cmd,
-                cwd=working_dir,
-                capture_output=True,
-                text=True,
-                timeout=timeout,
-                check=False  # Don't raise on non-zero exit, we'll handle it
-            )
+            # Execute as workspace user using sudo -u
+            # Wrap command to run as workspace user
+            if self.linux_username:
+                # Use sudo -u to switch to workspace user
+                sudo_cmd = ['sudo', '-u', self.linux_username] + cmd
+                result = subprocess.run(
+                    sudo_cmd,
+                    cwd=working_dir,
+                    capture_output=True,
+                    text=True,
+                    timeout=timeout,
+                    check=False  # Don't raise on non-zero exit, we'll handle it
+                )
+            else:
+                # Fallback: run as current user if no linux_username specified
+                result = subprocess.run(
+                    cmd,
+                    cwd=working_dir,
+                    capture_output=True,
+                    text=True,
+                    timeout=timeout,
+                    check=False  # Don't raise on non-zero exit, we'll handle it
+                )
 
             # Clean up temp script
             if temp_script_path and os.path.exists(temp_script_path):

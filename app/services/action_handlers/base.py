@@ -22,6 +22,110 @@ class BaseActionHandler(ABC):
     REQUIRED_PARAMETERS: List[str] = []
     OPTIONAL_PARAMETERS: List[str] = []
 
+    # Metadata - override in subclasses for UI display
+    DISPLAY_NAME: str = None
+    CATEGORY: str = 'general'
+    DESCRIPTION: str = None
+
+    @classmethod
+    def get_display_name(cls) -> str:
+        """Return human-readable action name."""
+        if cls.DISPLAY_NAME:
+            return cls.DISPLAY_NAME
+        # Fallback: generate from class name
+        return cls.__name__.replace('ActionHandler', '').replace('_', ' ')
+
+    @classmethod
+    def get_category(cls) -> str:
+        """Return action category."""
+        return cls.CATEGORY
+
+    @classmethod
+    def get_description(cls) -> str:
+        """Return action description."""
+        if cls.DESCRIPTION:
+            return cls.DESCRIPTION
+        return cls.__doc__ or ''
+
+    @classmethod
+    def get_parameters_schema(cls) -> Dict[str, Any]:
+        """
+        Return detailed JSON schema for parameters with type and label metadata.
+
+        Generates user-friendly labels from parameter names automatically.
+        Subclasses can override PARAMETERS_METADATA to provide custom configurations.
+
+        Returns:
+            Dict mapping parameter names to their schema:
+            {
+                'param_name': {
+                    'type': 'text|textarea|number|checkbox|select',
+                    'label': 'Human Readable Label',
+                    'required': True|False,
+                    'default': default_value (optional),
+                    'options': [] (for select type)
+                }
+            }
+        """
+        # Check if subclass provides custom metadata
+        if hasattr(cls, 'PARAMETERS_METADATA'):
+            return cls.PARAMETERS_METADATA
+
+        # Auto-generate schema from parameter names
+        schema = {}
+
+        # Helper to generate label from parameter name
+        def generate_label(param_name: str) -> str:
+            """Convert param_name to Human Readable Label"""
+            return ' '.join(word.capitalize() for word in param_name.replace('_', ' ').split())
+
+        # Helper to infer type from parameter name
+        def infer_type(param_name: str) -> str:
+            """Infer input type from parameter name"""
+            name_lower = param_name.lower()
+
+            # Boolean parameters
+            if name_lower.startswith('is_') or name_lower.startswith('enabled') or \
+               name_lower.startswith('fatal') or name_lower in ['recursive', 'force', 'debug']:
+                return 'checkbox'
+
+            # Number parameters
+            if any(x in name_lower for x in ['port', 'timeout', 'retry', 'max', 'min', 'count', 'depth', 'quota']):
+                return 'number'
+
+            # Text area for long content
+            if any(x in name_lower for x in ['content', 'script', 'template', 'config_data', 'message']):
+                return 'textarea'
+
+            # Default to text input
+            return 'text'
+
+        # Process required parameters
+        for param in cls.REQUIRED_PARAMETERS:
+            schema[param] = {
+                'type': infer_type(param),
+                'label': generate_label(param),
+                'required': True
+            }
+
+        # Process optional parameters
+        for param in cls.OPTIONAL_PARAMETERS:
+            schema[param] = {
+                'type': infer_type(param),
+                'label': generate_label(param),
+                'required': False
+            }
+
+            # Add sensible defaults for common parameters
+            if param == 'branch':
+                schema[param]['default'] = 'main'
+            elif param == 'depth':
+                schema[param]['default'] = 0
+            elif param.startswith('is_') or param in ['recursive', 'force', 'debug']:
+                schema[param]['default'] = False
+
+        return schema
+
     def __init__(self,
                  workspace_id: int,
                  workspace_name: str,
@@ -30,7 +134,8 @@ class BaseActionHandler(ABC):
                  user_email: Optional[str] = None,
                  user_id: Optional[int] = None,
                  company_name: Optional[str] = None,
-                 subdomain: Optional[str] = None):
+                 subdomain: Optional[str] = None,
+                 port: Optional[int] = None):
         """
         Initialize action handler with workspace context.
 
@@ -43,6 +148,7 @@ class BaseActionHandler(ABC):
             user_id: Optional user ID
             company_name: Optional company name
             subdomain: Optional workspace subdomain
+            port: Optional workspace port for code-server
         """
         self.workspace_id = workspace_id
         self.workspace_name = workspace_name
@@ -52,6 +158,7 @@ class BaseActionHandler(ABC):
         self.user_id = user_id
         self.company_name = company_name
         self.subdomain = subdomain
+        self.port = port
 
         # Logging
         self.logger = logging.getLogger(self.__class__.__name__)
@@ -119,6 +226,7 @@ class BaseActionHandler(ABC):
         - {user_id} - User database ID
         - {company_name} - Company name
         - {home_directory} - Home directory path
+        - {port} - Workspace port for code-server
         - ${HOME} - Home directory (shell style)
         - ${USER} - Linux username (shell style)
 
@@ -137,6 +245,7 @@ class BaseActionHandler(ABC):
             '{user_id}': str(self.user_id) if self.user_id else '',
             '{company_name}': self.company_name or '',
             '{home_directory}': self.home_directory,
+            '{port}': str(self.port) if self.port else '',
             '${HOME}': self.home_directory,
             '${USER}': self.linux_username,
         }
