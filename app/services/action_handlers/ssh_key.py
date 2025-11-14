@@ -43,6 +43,19 @@ class SSHKeyActionHandler(BaseActionHandler):
 
         self.log_info(f"Generating {key_type} SSH key at {key_path}")
 
+        # Mock mode: simulate SSH key generation
+        if self.mock_mode:
+            self.log_info("MOCK MODE: Simulating SSH key generation")
+            mock_public_key = f"ssh-{key_type} AAAAB3NzaC1mock123456789== {key_comment}"
+            return {
+                'success': True,
+                'public_key': mock_public_key,
+                'private_key_path': key_path,
+                'public_key_path': f'{key_path}.pub',
+                'key_type': key_type,
+                'mock': True
+            }
+
         # Create .ssh directory
         ssh_dir = os.path.dirname(key_path)
         os.makedirs(ssh_dir, mode=0o700, exist_ok=True)

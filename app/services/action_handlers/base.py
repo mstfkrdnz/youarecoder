@@ -135,7 +135,8 @@ class BaseActionHandler(ABC):
                  user_id: Optional[int] = None,
                  company_name: Optional[str] = None,
                  subdomain: Optional[str] = None,
-                 port: Optional[int] = None):
+                 port: Optional[int] = None,
+                 mock_mode: bool = False):
         """
         Initialize action handler with workspace context.
 
@@ -149,6 +150,7 @@ class BaseActionHandler(ABC):
             company_name: Optional company name
             subdomain: Optional workspace subdomain
             port: Optional workspace port for code-server
+            mock_mode: If True, simulate operations without executing them
         """
         self.workspace_id = workspace_id
         self.workspace_name = workspace_name
@@ -159,6 +161,7 @@ class BaseActionHandler(ABC):
         self.company_name = company_name
         self.subdomain = subdomain
         self.port = port
+        self.mock_mode = mock_mode
 
         # Logging
         self.logger = logging.getLogger(self.__class__.__name__)

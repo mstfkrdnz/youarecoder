@@ -77,10 +77,13 @@ class ActionExecutor:
             workspace: Workspace instance
             template: WorkspaceTemplate instance with action sequences
         """
+        from flask import current_app
+
         self.workspace = workspace
         self.template = template
         self.completed_actions: List[WorkspaceActionExecution] = []
         self.failed_action: Optional[WorkspaceActionExecution] = None
+        self.mock_mode = current_app.config.get('MOCK_PROVISIONING', False)
 
     def execute_template_actions(self) -> Dict[str, Any]:
         """
@@ -699,5 +702,6 @@ class ActionExecutor:
             user_id=self.workspace.owner_id,
             company_name=self.workspace.company.name if self.workspace.company else None,
             subdomain=self.workspace.subdomain,
-            port=self.workspace.port
+            port=self.workspace.port,
+            mock_mode=self.mock_mode
         )
