@@ -10,8 +10,66 @@ from app.services.workspace_provisioner import WorkspaceProvisioner, WorkspacePr
 from app.services.email_service import send_workspace_ready_email
 from app.services.audit_logger import AuditLogger, WorkspaceSessionTracker
 from app.utils.decorators import require_workspace_ownership
+import threading
 
 bp = Blueprint('workspace', __name__, url_prefix='/workspace')
+
+def provision_workspace_async(app, workspace_id, user_id):
+    """
+    Run workspace provisioning in background thread.
+    This allows the HTTP request to return immediately while provisioning continues.
+
+    Args:
+        app: Flask application instance
+        workspace_id: ID of the workspace to provision
+        user_id: ID of the user creating the workspace
+    """
+    from flask import current_app
+
+    with app.app_context():
+        try:
+            workspace = Workspace.query.get(workspace_id)
+            if not workspace:
+                current_app.logger.error(f"Workspace {workspace_id} not found for async provisioning")
+                return
+
+            # Update status to provisioning
+            workspace.status = 'provisioning'
+            db.session.commit()
+
+            provisioner = WorkspaceProvisioner()
+            result = provisioner.provision_workspace(workspace)
+
+            if result['success']:
+                # Audit log
+                AuditLogger.log_workspace_create(workspace)
+
+                # Send email
+                try:
+                    from app.models import User
+                    user = User.query.get(user_id)
+                    if user:
+                        send_workspace_ready_email(user, workspace)
+                        current_app.logger.info(f"Workspace ready email sent for {workspace.id}")
+                except Exception as e:
+                    current_app.logger.error(f"Failed to send workspace email: {str(e)}")
+
+                current_app.logger.info(f"Workspace provisioned successfully: {workspace.id}")
+            else:
+                current_app.logger.warning(f"Workspace provisioning incomplete: {workspace.id}")
+
+        except WorkspaceProvisionerError as e:
+            current_app.logger.error(f"Workspace provisioning error in background: {str(e)}")
+            if workspace:
+                workspace.status = 'error'
+                workspace.progress_message = str(e)
+                db.session.commit()
+        except Exception as e:
+            current_app.logger.error(f"Unexpected error in background provisioning: {str(e)}")
+            if workspace:
+                workspace.status = 'error'
+                workspace.progress_message = "Unexpected error during provisioning"
+                db.session.commit()
 
 @bp.route('/')
 @login_required
@@ -104,35 +162,21 @@ def create():
             db.session.add(workspace)
             db.session.commit()
 
-            # Provision workspace (Linux user, code-server, systemd service)
-            result = provisioner.provision_workspace(workspace)
+            current_app.logger.info(f"Workspace created: {workspace.id} on port {port}")
 
-            if result['success']:
-                # Audit log: workspace created successfully
-                AuditLogger.log_workspace_create(workspace)
+            # Start provisioning in background thread
+            # This allows the user to see the provisioning page immediately
+            thread = threading.Thread(
+                target=provision_workspace_async,
+                args=(current_app._get_current_object(), workspace.id, current_user.id)
+            )
+            thread.daemon = True
+            thread.start()
 
-                # Send workspace ready email
-                try:
-                    send_workspace_ready_email(current_user, workspace)
-                    current_app.logger.info(f"Workspace ready email sent for {workspace.id}")
-                except Exception as e:
-                    current_app.logger.error(f"Failed to send workspace email to {current_user.email}: {str(e)}")
+            # Redirect to provisioning page immediately
+            # JavaScript polling will show progress in real-time
+            return redirect(url_for("workspace.provisioning", workspace_id=workspace.id))
 
-                flash(f'Workspace "{form.name.data}" created and provisioned successfully!', 'success')
-                current_app.logger.info(f"Workspace created: {workspace.id} on port {port}")
-
-                # If workspace has SSH key (template requires private repos), redirect to SSH setup
-                if workspace.ssh_public_key:
-                    flash('Please add the SSH key to your GitHub account to access private repositories.', 'info')
-                    return redirect(url_for('workspace.ssh_setup', workspace_id=workspace.id))
-
-            else:
-                flash(f'Workspace created but provisioning incomplete', 'warning')
-
-        except WorkspaceProvisionerError as e:
-            current_app.logger.error(f"Workspace provisioning error: {str(e)}")
-            flash(f'Error creating workspace: {str(e)}', 'error')
-            return redirect(url_for("main.dashboard"))
         except Exception as e:
             db.session.rollback()
             current_app.logger.error(f"Unexpected error creating workspace: {str(e)}")
@@ -145,10 +189,24 @@ def create():
             flash('An unexpected error occurred while creating the workspace. Please try again.', 'error')
             return redirect(url_for("main.dashboard"))
 
-        return redirect(url_for("main.dashboard"))
+        return redirect(url_for("workspace.provisioning", workspace_id=workspace.id))
 
     # GET request - return full page template
     return render_template('workspace/create.html', form=form)
+
+@bp.route('/<int:workspace_id>/provisioning')
+@login_required
+@require_workspace_ownership
+def provisioning(workspace_id):
+    """Display workspace provisioning progress."""
+    workspace = Workspace.query.get_or_404(workspace_id)
+
+    # If workspace is already active or stopped, redirect to view page
+    if workspace.status in ['active', 'stopped']:
+        return redirect(url_for('workspace.view', workspace_id=workspace.id))
+
+    # Render provisioning progress page
+    return render_template('workspace/provisioning.html', workspace=workspace)
 
 @bp.route('/<int:workspace_id>/settings')
 @login_required
@@ -404,10 +462,45 @@ def status(workspace_id):
     provisioner = WorkspaceProvisioner()
 
     try:
-        # Get real-time service status
-        service_status = provisioner.get_workspace_service_status(workspace)
+        # Get action executions for provisioning progress
+        action_executions = []
+        if workspace.template_id:
+            from app.models import WorkspaceActionExecution, TemplateActionSequence
+            from datetime import datetime
 
-        return jsonify({
+            # Join with template_action_sequences to get the execution order
+            executions = db.session.query(WorkspaceActionExecution).join(
+                TemplateActionSequence,
+                WorkspaceActionExecution.action_sequence_id == TemplateActionSequence.id
+            ).filter(
+                WorkspaceActionExecution.workspace_id == workspace.id
+            ).order_by(TemplateActionSequence.order).all()
+
+            for execution in executions:
+                action_data = {
+                    'description': execution.action_id,  # Use action_id as description since we don't have action relationship
+                    'status': execution.status,
+                    'started_at': execution.started_at.isoformat() if execution.started_at else None,
+                    'completed_at': execution.completed_at.isoformat() if execution.completed_at else None,
+                }
+
+                # Calculate duration for completed actions
+                if execution.started_at and execution.completed_at:
+                    duration = (execution.completed_at - execution.started_at).total_seconds()
+                    action_data['duration_seconds'] = round(duration, 1)
+
+                # Calculate elapsed time for running actions
+                if execution.status == 'running' and execution.started_at:
+                    elapsed = (datetime.utcnow() - execution.started_at).total_seconds()
+                    action_data['elapsed_seconds'] = round(elapsed, 1)
+
+                # Include error message for failed actions
+                if execution.status == 'failed' and execution.error_message:
+                    action_data['error_message'] = execution.error_message
+
+                action_executions.append(action_data)
+
+        response = {
             'success': True,
             'workspace_id': workspace.id,
             'is_running': workspace.is_running,
@@ -415,11 +508,19 @@ def status(workspace_id):
             'last_started_at': workspace.last_started_at.isoformat() if workspace.last_started_at else None,
             'last_stopped_at': workspace.last_stopped_at.isoformat() if workspace.last_stopped_at else None,
             'last_accessed_at': workspace.last_accessed_at.isoformat() if workspace.last_accessed_at else None,
-            'service_status': service_status,
             'cpu_limit_percent': workspace.cpu_limit_percent,
             'memory_limit_mb': workspace.memory_limit_mb,
-            'auto_stop_hours': workspace.auto_stop_hours
-        }), 200
+            'auto_stop_hours': workspace.auto_stop_hours,
+            # Progress fields
+            'progress_percent': workspace.progress_percent or 0,
+            'progress_message': workspace.progress_message or '',
+            'provisioning_state': workspace.provisioning_state or '',
+            'provisioning_step': workspace.provisioning_step or 0,
+            'total_steps': workspace.total_steps or 0,
+            'actions': action_executions
+        }
+
+        return jsonify(response), 200
 
     except WorkspaceProvisionerError as e:
         current_app.logger.error(f"Error getting workspace {workspace_id} status: {str(e)}")
