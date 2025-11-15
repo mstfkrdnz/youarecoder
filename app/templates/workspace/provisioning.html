@@ -650,30 +650,102 @@ function updateProgress(data) {
     }
 }
 
+// Define mock provisioning steps (must match backend)
+const MOCK_PROVISIONING_STEPS = [
+    "Generate SSH Key",
+    "Add SSH Key to GitHub",
+    "Install System Packages",
+    "Clone Odoo Community",
+    "Clone Odoo Enterprise",
+    "Clone Development Tools",
+    "Create Custom Modules Directory",
+    "Create Odoo Data Directory",
+    "Create Python Virtual Environment",
+    "Install Odoo Community Requirements",
+    "Install Dev Tools Requirements",
+    "Create PostgreSQL Database",
+    "Create Odoo Configuration File",
+    "Create VS Code Workspace File",
+    "Install VS Code Extensions",
+    "Set Environment Variables",
+    "Initialize Odoo Database",
+    "Create Odoo Systemd Service",
+    "Display Completion Message"
+];
+
 function updateActionsList(actions) {
     const actionsList = document.getElementById('actions-list');
+
+    // Check if we're in mock provisioning mode (no actions array, but have provisioning_step)
+    const workspaceData = window.workspaceData || {};
+    const isMockProvisioning = !actions || actions.length === 0;
+    const currentStep = workspaceData.provisioning_step || 0;
+    const totalSteps = workspaceData.total_steps || MOCK_PROVISIONING_STEPS.length;
+
+    if (isMockProvisioning && MOCK_PROVISIONING_STEPS.length > 0) {
+        // Render mock provisioning steps with visual indicators
+        actionsList.innerHTML = '';
+
+        MOCK_PROVISIONING_STEPS.forEach((stepName, idx) => {
+            const stepNumber = idx + 1;
+            const actionDiv = document.createElement('div');
+            actionDiv.className = 'flex items-start space-x-3';
+
+            let icon, statusClass, statusText;
+
+            if (stepNumber < currentStep) {
+                // Completed step - green checkmark
+                icon = '<svg class="h-6 w-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>';
+                statusClass = 'text-gray-700';
+                statusText = stepName;
+            } else if (stepNumber === currentStep) {
+                // Currently processing - blue spinner
+                icon = '<svg class="h-6 w-6 text-blue-500 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>';
+                statusClass = 'text-blue-900 font-semibold';
+                statusText = stepName;
+            } else {
+                // Pending step - gray circle
+                icon = '<svg class="h-6 w-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" stroke-width="2" /></svg>';
+                statusClass = 'text-gray-400';
+                statusText = stepName;
+            }
+
+            actionDiv.innerHTML = `
+                <div class="flex-shrink-0 mt-0.5">${icon}</div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm ${statusClass}">${statusText}</p>
+                </div>
+            `;
+
+            actionsList.appendChild(actionDiv);
+        });
+
+        return; // Exit early for mock provisioning
+    }
+
+    // Original action-based rendering for real provisioning
     actionsList.innerHTML = '';
 
     actions.forEach(action => {
         const actionDiv = document.createElement('div');
-        
+
         // Special handling for SSH verification step - show button when awaiting verification
         if (action.action_name === '002_verify_ssh_key') {
             // Check if workspace is awaiting SSH verification
-            const isAwaitingVerification = window.workspaceData && 
+            const isAwaitingVerification = window.workspaceData &&
                                           window.workspaceData.provisioning_state === 'awaiting_ssh_verification';
-            
+
             if (isAwaitingVerification) {
                 // EK-1 & EK-2: Determine if user has already opened the SSH modal
                 const isSshVerified = window.workspaceData.is_ssh_verified || false;
                 const extraData = window.workspaceData.extra_data || {};
                 const hasSeenModal = extraData.ssh_modal_opened === true;
-                
+
                 const buttonText = isSshVerified ? 'Setup SSH Key' : (hasSeenModal ? 'Verify & Continue' : 'Setup SSH Key');
                 const statusMessage = isSshVerified ? '✓ SSH Verified' : (hasSeenModal ? '⚠️ Ready to Continue' : '⚠️ Action Required');
                 const buttonDisabled = isSshVerified;
                 const statusClass = isSshVerified ? 'text-green-600' : 'text-indigo-600';
-                
+
                 // Show highlighted card with Setup button
                 actionDiv.className = 'border-2 border-indigo-300 bg-indigo-50 rounded-lg p-3';
                 actionDiv.setAttribute('data-step', 'ssh-verification');
@@ -688,8 +760,8 @@ function updateActionsList(actions) {
                                 <div class="text-xs ${statusClass} mt-1 font-medium" id="ssh-status-message">${statusMessage}</div>
                             </div>
                         </div>
-                        <button 
-                            onclick="openSshSetupModal()" 
+                        <button
+                            onclick="openSshSetupModal()"
                             class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-semibold rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
                             <svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1 0 17 21z" />
@@ -704,7 +776,7 @@ function updateActionsList(actions) {
             // Otherwise fall through to normal rendering
         }
 
-actionDiv.className = 'flex items-start space-x-3';
+        actionDiv.className = 'flex items-start space-x-3';
 
         let icon, statusClass, statusText, timeText = '';
 
