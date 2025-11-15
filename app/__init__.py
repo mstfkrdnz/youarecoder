@@ -68,14 +68,8 @@ def create_app(config_name=None):
 
     # Configure security headers (production only)
     if config_name == 'production':
-        # Exempt /billing/callback from Talisman's HTTPS redirect for PayTR webhooks
-        @app.before_request
-        def check_talisman_exempt():
-            if request.path == '/billing/callback':
-                request.environ['TALISMAN_FORCE_HTTPS'] = False
-
         talisman.init_app(app,
-            force_https=True,
+            force_https=False,  # Disabled - Traefik handles HTTPS redirect via sslRedirect middleware
             strict_transport_security=True,
             strict_transport_security_max_age=31536000,  # 1 year
             strict_transport_security_include_subdomains=True,
