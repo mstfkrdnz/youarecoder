@@ -42,9 +42,12 @@ class MockWorkspaceProvisioner:
         logger.info(f"[MOCK] Would create user: {workspace.subdomain}")
         logger.info(f"[MOCK] Would allocate port: {workspace.port}")
 
-        # Simulate success
-        workspace.provisioning_state = 'active'
-        workspace.provisioned_at = datetime.utcnow()
+        # Simulate success - update status and provisioning state
+        workspace.status = 'active'
+        workspace.provisioning_state = 'completed'
+        workspace.progress_percent = 100
+        workspace.progress_message = 'Mock provisioning completed successfully'
+
         return {'success': True, 'message': 'Mock provisioning successful'}
 
     def deprovision_workspace(self, workspace):
