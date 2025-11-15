@@ -70,6 +70,7 @@ def create_app(config_name=None):
     if config_name == 'production':
         talisman.init_app(app,
             force_https=True,
+            force_https_exempt=['/billing/callback'],  # Exempt PayTR webhook callback
             strict_transport_security=True,
             strict_transport_security_max_age=31536000,  # 1 year
             strict_transport_security_include_subdomains=True,
