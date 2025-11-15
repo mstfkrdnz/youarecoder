@@ -41,6 +41,9 @@ def provision_workspace_async(app, workspace_id, user_id):
             result = provisioner.provision_workspace(workspace)
 
             if result['success']:
+                # Commit workspace status changes to database
+                db.session.commit()
+
                 # Audit log
                 AuditLogger.log_workspace_create(workspace)
 
