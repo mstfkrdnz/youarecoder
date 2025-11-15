@@ -2,6 +2,8 @@
 import logging
 import secrets
 import string
+import time
+import random
 from datetime import datetime
 
 logger = logging.getLogger(__name__)
@@ -37,16 +39,63 @@ class MockWorkspaceProvisioner:
         return password
 
     def provision_workspace(self, workspace):
-        """Simulate workspace provisioning."""
+        """Simulate workspace provisioning with realistic delays."""
+        from app import db
+
         logger.info(f"[MOCK] Provisioning workspace: {workspace.name}")
         logger.info(f"[MOCK] Would create user: {workspace.subdomain}")
         logger.info(f"[MOCK] Would allocate port: {workspace.port}")
 
-        # Simulate success - update status and provisioning state
+        # Define provisioning steps with realistic durations (in seconds)
+        steps = [
+            ("Generate SSH Key", 2, 3),
+            ("Add SSH Key to GitHub", 3, 5),
+            ("Install System Packages", 4, 7),
+            ("Clone Odoo Community", 5, 7),
+            ("Clone Odoo Enterprise", 4, 6),
+            ("Clone Development Tools", 3, 5),
+            ("Create Custom Modules Directory", 2, 3),
+            ("Create Odoo Data Directory", 2, 3),
+            ("Create Python Virtual Environment", 3, 5),
+            ("Install Odoo Community Requirements", 5, 7),
+            ("Install Dev Tools Requirements", 4, 6),
+            ("Create PostgreSQL Database", 3, 5),
+            ("Create Odoo Configuration File", 2, 3),
+            ("Create VS Code Workspace File", 2, 3),
+            ("Install VS Code Extensions", 3, 4),
+            ("Set Environment Variables", 2, 3),
+            ("Initialize Odoo Database", 5, 7),
+            ("Create Odoo Systemd Service", 2, 3),
+            ("Display Completion Message", 2, 2),
+        ]
+
+        total_steps = len(steps)
+        workspace.total_steps = total_steps
+        workspace.provisioning_step = 0
+        db.session.commit()
+
+        # Execute each step with delay
+        for idx, (step_name, min_delay, max_delay) in enumerate(steps, 1):
+            # Random delay between min and max
+            delay = random.uniform(min_delay, max_delay)
+
+            logger.info(f"[MOCK] Step {idx}/{total_steps}: {step_name} (sleeping {delay:.1f}s)")
+            time.sleep(delay)
+
+            # Update progress
+            workspace.provisioning_step = idx
+            workspace.progress_percent = int((idx / total_steps) * 100)
+            workspace.progress_message = f"Completed: {step_name}"
+            db.session.commit()
+
+            logger.info(f"[MOCK] Completed step {idx}/{total_steps}: {step_name}")
+
+        # Final success state
         workspace.status = 'active'
         workspace.provisioning_state = 'completed'
         workspace.progress_percent = 100
         workspace.progress_message = 'Mock provisioning completed successfully'
+        db.session.commit()
 
         return {'success': True, 'message': 'Mock provisioning successful'}
 
