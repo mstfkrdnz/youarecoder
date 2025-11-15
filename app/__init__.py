@@ -1,7 +1,7 @@
 """
 Flask application factory module.
 """
-from flask import Flask
+from flask import Flask, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_bcrypt import Bcrypt
@@ -68,9 +68,14 @@ def create_app(config_name=None):
 
     # Configure security headers (production only)
     if config_name == 'production':
+        # Exempt /billing/callback from Talisman's HTTPS redirect for PayTR webhooks
+        @app.before_request
+        def check_talisman_exempt():
+            if request.path == '/billing/callback':
+                request.environ['TALISMAN_FORCE_HTTPS'] = False
+
         talisman.init_app(app,
             force_https=True,
-            force_https_exempt=['/billing/callback'],  # Exempt PayTR webhook callback
             strict_transport_security=True,
             strict_transport_security_max_age=31536000,  # 1 year
             strict_transport_security_include_subdomains=True,
