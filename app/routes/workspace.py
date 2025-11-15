@@ -37,7 +37,7 @@ def provision_workspace_async(app, workspace_id, user_id):
             workspace.status = 'provisioning'
             db.session.commit()
 
-            provisioner = WorkspaceProvisioner()
+            provisioner = current_app.provisioner
             result = provisioner.provision_workspace(workspace)
 
             if result['success']:
@@ -129,7 +129,7 @@ def create():
             return redirect(url_for('main.dashboard'))
 
         # Initialize provisioner
-        provisioner = WorkspaceProvisioner()
+        provisioner = current_app.provisioner
 
         try:
             # Allocate port
@@ -310,7 +310,7 @@ def delete(workspace_id):
     workspace = Workspace.query.get_or_404(workspace_id)
 
     # Initialize provisioner
-    provisioner = WorkspaceProvisioner()
+    provisioner = current_app.provisioner
 
     try:
         # Audit log: workspace deletion (log before delete for workspace data)
@@ -359,7 +359,7 @@ def start(workspace_id):
     if workspace.is_running:
         return jsonify({'error': 'Workspace is already running'}), 400
 
-    provisioner = WorkspaceProvisioner()
+    provisioner = current_app.provisioner
 
     try:
         # Start code-server systemd service
@@ -394,7 +394,7 @@ def stop(workspace_id):
     if not workspace.is_running:
         return jsonify({'error': 'Workspace is not running'}), 400
 
-    provisioner = WorkspaceProvisioner()
+    provisioner = current_app.provisioner
 
     try:
         # Stop code-server systemd service
@@ -426,7 +426,7 @@ def restart(workspace_id):
     """Restart workspace code-server service."""
     workspace = Workspace.query.get_or_404(workspace_id)
 
-    provisioner = WorkspaceProvisioner()
+    provisioner = current_app.provisioner
 
     try:
         # Restart code-server systemd service
@@ -458,7 +458,7 @@ def status(workspace_id):
     """Get workspace current status and metrics."""
     workspace = Workspace.query.get_or_404(workspace_id)
 
-    provisioner = WorkspaceProvisioner()
+    provisioner = current_app.provisioner
 
     try:
         # Get all actions from template and their execution status
@@ -547,7 +547,7 @@ def logs(workspace_id):
     lines = request.args.get('lines', 100, type=int)
     since = request.args.get('since', None)  # e.g., "1 hour ago", "2024-01-01"
 
-    provisioner = WorkspaceProvisioner()
+    provisioner = current_app.provisioner
 
     try:
         # Fetch logs from systemd journal
@@ -598,7 +598,7 @@ def verify_ssh(workspace_id):
             'message': 'No SSH key configured for this workspace'
         }), 400
 
-    provisioner = WorkspaceProvisioner()
+    provisioner = current_app.provisioner
 
     try:
         # Verify SSH connection to GitHub
